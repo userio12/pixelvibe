@@ -1,6 +1,9 @@
 package com.pixelvibe.vedioplayer.pixelvibe
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Build
 import android.util.Rational
@@ -11,6 +14,7 @@ import io.flutter.plugin.common.MethodChannel
 import com.pixelvibe.vedioplayer.pixelvibe.background.PlaybackService
 import com.pixelvibe.vedioplayer.pixelvibe.mediasession.MediaSessionCallback
 import com.pixelvibe.vedioplayer.pixelvibe.pip.PiPHelper
+import com.pixelvibe.vedioplayer.pixelvibe.scan.MediaScanner
 
 class MainActivity : FlutterActivity() {
     private val pipChannel = "com.pixelvibe/pip"
@@ -18,19 +22,30 @@ class MainActivity : FlutterActivity() {
 
     private var pipHelper: PiPHelper? = null
     private var mediaSessionCallback: MediaSessionCallback? = null
+    private var pipMethodChannel: MethodChannel? = null
+    private val pipActionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == PlaybackService.ACTION_TOGGLE) {
+                pipMethodChannel?.invokeMethod("togglePlayback", null)
+            }
+        }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
         pipHelper = PiPHelper(this)
 
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, pipChannel).apply {
+        registerReceiver(pipActionReceiver, IntentFilter(PlaybackService.ACTION_TOGGLE), Context.RECEIVER_EXPORTED)
+
+        pipMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, pipChannel).apply {
             setMethodCallHandler { call, result ->
                 when (call.method) {
                     "enterPip" -> {
                         val w = (call.argument("width") as? Int) ?: 16
                         val h = (call.argument("height") as? Int) ?: 9
-                        pipHelper?.enterPip(Rational(w, h))
+                        val playing = (call.argument("playing") as? Boolean) ?: true
+                        pipHelper?.enterPip(Rational(w, h), playing)
                         result.success(true)
                     }
                     "isPipSupported" -> {
@@ -80,12 +95,24 @@ class MainActivity : FlutterActivity() {
         networkChannel.setMethodCallHandler { call, result ->
             networkPlugin.handle(call, result)
         }
+
+        val mediaScanner = MediaScanner(this)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.pixelvibe/scan").apply {
+            setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "scanVideos" -> {
+                        result.success(mediaScanner.scanVideos())
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        pipHelper?.enterPip(Rational(16, 9))
+        pipHelper?.enterPip(Rational(16, 9), true)
     }
 
     override fun onPictureInPictureModeChanged(
@@ -101,6 +128,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         mediaSessionCallback?.release()
+        unregisterReceiver(pipActionReceiver)
         super.onDestroy()
     }
 

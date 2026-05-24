@@ -21,9 +21,11 @@
 -keep class fi.iki.elonen.** { *; }
 -dontwarn fi.iki.elonen.**
 
-# jcifs-ng (SMB)
--keep class eu.agno3.jcifs.** { *; }
--dontwarn eu.agno3.jcifs.**
+# smbj (SMB)
+-keep class com.hierynomus.** { *; }
+-keep class net.engio.** { *; }
+-dontwarn com.hierynomus.**
+-dontwarn net.engio.****
 
 # Apache Commons Net (FTP)
 -keep class org.apache.commons.net.** { *; }

@@ -14,7 +14,7 @@ object NetworkClientFactory {
         password: String
     ): NetworkClient {
         return when (protocol.lowercase()) {
-            "smb" -> SMBClient(host, port, username, password)
+            "smb" -> SmbClient(host, port, username, password)
             "ftp" -> FTPClient(host, port, username, password)
             "webdav", "dav" -> WebDAVClient(host, port, username, password)
             else -> throw IllegalArgumentException("Unsupported protocol: $protocol")

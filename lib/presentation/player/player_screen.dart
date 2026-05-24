@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
@@ -7,6 +8,7 @@ import '../../core/di/platform_providers.dart';
 import '../../core/di/providers.dart';
 import '../../presentation/playlist/widgets/add_to_playlist_sheet.dart';
 import 'player_provider.dart';
+import 'widgets/frame_navigation_controls.dart';
 import 'widgets/media_info_sheet.dart';
 import 'widgets/player_controls.dart';
 import 'widgets/seek_bar.dart';
@@ -87,7 +89,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   }
 
   void _setupPipCallback() {
-    ref.read(pipServiceProvider).onPipModeChanged((isInPip) {
+    final pip = ref.read(pipServiceProvider);
+    pip.onPipModeChanged((isInPip) {
       if (!mounted) return;
       if (isInPip) {
         _wasPlayingBeforePip = ref.read(playerIsPlayingProvider).asData?.value ?? false;
@@ -98,6 +101,15 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         if (_wasPlayingBeforePip) {
           ref.read(playerProvider).play();
         }
+      }
+    });
+    pip.onTogglePlayback.listen((_) {
+      if (!mounted) return;
+      final player = ref.read(playerProvider);
+      if (ref.read(playerIsPlayingProvider).asData?.value ?? false) {
+        player.pause();
+      } else {
+        player.play();
       }
     });
   }
@@ -118,8 +130,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     final pip = ref.read(pipServiceProvider);
     final supported = await pip.isPipSupported();
     if (supported) {
-      _wasPlayingBeforePip = ref.read(playerIsPlayingProvider).asData?.value ?? false;
-      await pip.enterPip();
+      final playing = ref.read(playerIsPlayingProvider).asData?.value ?? false;
+      _wasPlayingBeforePip = playing;
+      await pip.enterPip(playing: playing);
     }
   }
 
@@ -140,6 +153,23 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         durationMs: player.state.duration.inMilliseconds,
       ),
     );
+  }
+
+  Future<void> _loadSubtitle() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['srt', 'ass', 'ssa', 'vtt', 'sub', 'webvtt'],
+    );
+    if (result == null || result.files.isEmpty) return;
+    final path = result.files.first.path;
+    if (path == null) return;
+    final player = ref.read(playerProvider);
+    await player.setSubtitleTrack(SubtitleTrack.uri(path));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Subtitle loaded: ${result.files.first.name}')),
+      );
+    }
   }
 
   @override
@@ -207,6 +237,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
             onPressed: _showAddToPlaylist,
           ),
           IconButton(
+            icon: const Icon(Icons.subtitles_outlined, color: Colors.white),
+            tooltip: 'Load subtitles',
+            onPressed: _loadSubtitle,
+          ),
+          IconButton(
             icon: const Icon(Icons.picture_in_picture_alt, color: Colors.white),
             onPressed: _enterPip,
           ),
@@ -255,6 +290,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
           onSkipBack: () => _skip(-10),
           onSkipForward: () => _skip(10),
         ),
+        if (!isPlaying) ...[
+          const SizedBox(height: 8),
+          FrameNavigationControls(
+            onStepBack: () => ref.read(frameStepProvider).stepBackward(),
+            onStepForward: () => ref.read(frameStepProvider).stepForward(),
+          ),
+        ],
       ],
     );
   }

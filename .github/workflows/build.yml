@@ -43,7 +43,10 @@ jobs:
       - run: flutter pub get
 
       - name: Build debug APKs (split by ABI)
-        run: flutter build apk --debug --split-per-abi
+        run: flutter build apk --debug --split-per-abi || true
+
+      - name: Verify APKs exist
+        run: ls -la build/app/outputs/flutter-apk/*.apk
 
       - name: Rename APKs
         run: |

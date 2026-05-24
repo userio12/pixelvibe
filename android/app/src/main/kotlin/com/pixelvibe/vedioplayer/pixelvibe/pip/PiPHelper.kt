@@ -16,14 +16,11 @@ class PiPHelper(private val activity: FlutterActivity) {
 
     fun isPipSupported(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 
-    fun enterPip(aspectRatio: Rational) {
+    fun enterPip(aspectRatio: Rational, isPlaying: Boolean = true) {
         if (!isPipSupported()) return
 
-        val params = android.app.PictureInPictureParams.Builder()
-            .setAspectRatio(aspectRatio)
-            .setAutoEnterEnabled(true)
-            .build()
-
+        val actions = listOf(createPlayPauseAction(activity, isPlaying))
+        val params = buildPipParams(aspectRatio, actions)
         activity.enterPictureInPictureMode(params)
     }
 

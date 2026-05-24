@@ -37,6 +37,11 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> {
       appBar: AppBar(
         title: const Text('Browse'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Rescan device',
+            onPressed: () => ref.invalidate(browserProvider),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ViewModeToggle(

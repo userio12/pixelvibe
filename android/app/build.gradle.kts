@@ -58,6 +58,7 @@ dependencies {
     implementation("androidx.media:media:1.7.0")
     implementation("org.nanohttpd:nanohttpd:2.3.1")
     implementation("commons-net:commons-net:3.11.1")
+    implementation("com.hierynomus:smbj:0.13.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

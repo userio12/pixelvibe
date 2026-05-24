@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/media_repository.dart';
 import '../../domain/models/media_file.dart';
+import '../../utils/permissions/permission_handler.dart';
 import 'enums/view_mode.dart';
 
 final viewModeProvider = NotifierProvider<ViewModeNotifier, ViewMode>(ViewModeNotifier.new);
@@ -12,6 +13,9 @@ class ViewModeNotifier extends Notifier<ViewMode> {
 }
 
 final browserProvider = FutureProvider<List<MediaFile>>((ref) async {
+  final granted = await requestStoragePermission();
+  if (!granted) return [];
+
   final repo = ref.watch(mediaRepositoryProvider);
   return repo.scanDevice();
 });
