@@ -1,0 +1,4 @@
+storeFile=../android/app/upload-keystore.jks
+storePassword=
+keyAlias=upload
+keyPassword=
