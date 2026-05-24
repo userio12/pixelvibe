@@ -61,7 +61,12 @@ class AddToPlaylistSheet extends ConsumerWidget {
                           title,
                           durationMs,
                         );
-                        if (context.mounted) Navigator.of(context).pop();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Added to "${pl.name}"')),
+                          );
+                          Navigator.of(context).pop();
+                        }
                       },
                     );
                   },

@@ -14,6 +14,7 @@ class PixelvibeApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final useDynamicColor = ref.watch(dynamicColorProvider);
     final router = AppRouter(
       browseScreen: const BrowserScreen(),
       playlistsScreen: const PlaylistListScreen(),
@@ -23,8 +24,8 @@ class PixelvibeApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'pixelvibe',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(useDynamicColor: useDynamicColor),
+      darkTheme: AppTheme.dark(useDynamicColor: useDynamicColor),
       themeMode: themeMode,
       routerConfig: router.router,
     );

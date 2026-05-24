@@ -63,6 +63,11 @@ class PlaylistListScreen extends ConsumerWidget {
     if (name != null && name.isNotEmpty) {
       await ref.read(playlistDaoProvider).createPlaylist(name);
       ref.invalidate(playlistListProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Playlist "$name" created')),
+        );
+      }
     }
   }
 }

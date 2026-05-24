@@ -15,6 +15,7 @@ import com.pixelvibe.vedioplayer.pixelvibe.background.PlaybackService
 import com.pixelvibe.vedioplayer.pixelvibe.mediasession.MediaSessionCallback
 import com.pixelvibe.vedioplayer.pixelvibe.pip.PiPHelper
 import com.pixelvibe.vedioplayer.pixelvibe.scan.MediaScanner
+import com.pixelvibe.vedioplayer.pixelvibe.scan.ThumbnailHelper
 
 class MainActivity : FlutterActivity() {
     private val pipChannel = "com.pixelvibe/pip"
@@ -102,6 +103,21 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "scanVideos" -> {
                         result.success(mediaScanner.scanVideos())
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        }
+
+        val thumbnailHelper = ThumbnailHelper(this)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.pixelvibe/thumbnails").apply {
+            setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getThumbnail" -> {
+                        val path = call.argument<String>("path") ?: return@apply result.error("NO_PATH", "Path required", null)
+                        val width = call.argument<Int>("width") ?: 320
+                        val thumbnailPath = thumbnailHelper.getThumbnail(path, width)
+                        result.success(thumbnailPath)
                     }
                     else -> result.notImplemented()
                 }

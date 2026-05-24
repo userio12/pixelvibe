@@ -1,10 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
+import '../settings/settings_provider.dart';
 
 final playerProvider = Provider<Player>((ref) {
   final player = Player();
   ref.onDispose(() => player.dispose());
   return player;
+});
+
+final playerConfigWatcherProvider = Provider<void>((ref) {
+  final player = ref.watch(playerProvider);
+
+  ref.listen(defaultSpeedProvider, (_, speed) {
+    if (speed != 1.0) player.setRate(speed);
+  });
 });
 
 final playerPositionProvider = StreamProvider<Duration>((ref) {
@@ -17,10 +26,6 @@ final playerDurationProvider = StreamProvider<Duration>((ref) {
 
 final playerVolumeProvider = StreamProvider<double>((ref) {
   return ref.watch(playerProvider).stream.volume;
-});
-
-final playerRateProvider = StreamProvider<double>((ref) {
-  return ref.watch(playerProvider).stream.rate;
 });
 
 final playerIsPlayingProvider = StreamProvider<bool>((ref) {

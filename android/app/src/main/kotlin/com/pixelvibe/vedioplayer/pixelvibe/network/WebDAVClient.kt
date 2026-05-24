@@ -1,8 +1,5 @@
 package com.pixelvibe.vedioplayer.pixelvibe.network
 
-import org.json.JSONArray
-import org.json.JSONObject
-import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Base64

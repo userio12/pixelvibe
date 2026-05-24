@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class NetworkFile {
@@ -47,6 +48,7 @@ class NetworkService {
       });
       return result ?? false;
     } catch (e) {
+      debugPrint('NetworkService.connect error: $e');
       return false;
     }
   }
@@ -64,6 +66,7 @@ class NetworkService {
       final list = jsonDecode(result) as List<dynamic>;
       return list.map((e) => NetworkFile.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
+      debugPrint('NetworkService.listFiles error: $e');
       return [];
     }
   }
@@ -75,6 +78,7 @@ class NetworkService {
         'path': path,
       });
     } catch (e) {
+      debugPrint('NetworkService.streamFile error: $e');
       return null;
     }
   }
@@ -84,6 +88,7 @@ class NetworkService {
       final result = await _channel.invokeMethod<bool>('disconnect', {'id': id});
       return result ?? false;
     } catch (e) {
+      debugPrint('NetworkService.disconnect error: $e');
       return false;
     }
   }

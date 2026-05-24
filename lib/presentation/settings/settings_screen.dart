@@ -14,12 +14,22 @@ class SettingsScreen extends ConsumerWidget {
     final resume = ref.watch(resumePlaybackProvider);
     final autoPip = ref.watch(autoPipProvider);
     final skipInterval = ref.watch(skipIntervalProvider);
-    final fontSize = ref.watch(subtitleFontSizeProvider);
-    final hwdec = ref.watch(hwdecProvider);
-    final gpuApi = ref.watch(gpuApiProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            tooltip: 'Done',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Settings saved')),
+              );
+            },
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
@@ -62,74 +72,6 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(height: 32),
 
-          _SectionHeader(title: 'Subtitles'),
-          ListTile(
-            title: const Text('Font size'),
-            subtitle: Text('${fontSize.round()}pt'),
-            trailing: SizedBox(
-              width: 200,
-              child: Slider(
-                value: fontSize,
-                min: 10,
-                max: 36,
-                divisions: 13,
-                onChanged: (v) => ref.read(subtitleFontSizeProvider.notifier).update(v),
-              ),
-            ),
-          ),
-          const Divider(height: 32),
-
-          _SectionHeader(title: 'Decoder'),
-          ListTile(
-            title: const Text('Hardware decoding'),
-            trailing: DropdownButton<String>(
-              value: hwdec,
-              items: const [
-                DropdownMenuItem(value: 'auto', child: Text('Auto')),
-                DropdownMenuItem(value: 'yes', child: Text('Force on')),
-                DropdownMenuItem(value: 'no', child: Text('Force off')),
-              ],
-              onChanged: (v) => ref.read(hwdecProvider.notifier).update(v ?? 'auto'),
-            ),
-          ),
-          ListTile(
-            title: const Text('GPU API'),
-            trailing: DropdownButton<String>(
-              value: gpuApi,
-              items: const [
-                DropdownMenuItem(value: 'auto', child: Text('Auto')),
-                DropdownMenuItem(value: 'vulkan', child: Text('Vulkan')),
-                DropdownMenuItem(value: 'opengl', child: Text('OpenGL')),
-              ],
-              onChanged: (v) => ref.read(gpuApiProvider.notifier).update(v ?? 'auto'),
-            ),
-          ),
-          const Divider(height: 32),
-
-          _SectionHeader(title: 'Advanced'),
-          ListTile(
-            leading: const Icon(Icons.code),
-            title: const Text('mpv.conf'),
-            subtitle: const Text('Load and edit mpv configuration'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _editConfig(context, 'mpv.conf'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.code),
-            title: const Text('input.conf'),
-            subtitle: const Text('Load and edit mpv input bindings'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _editConfig(context, 'input.conf'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.extension),
-            title: const Text('Lua scripts'),
-            subtitle: const Text('Browse and load scripts into mpv'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _browseScripts(context),
-          ),
-          const Divider(height: 32),
-
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('About pixelvibe'),
@@ -141,19 +83,6 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _editConfig(BuildContext context, String filename) {
-    // TODO: Implement config file picker + editor
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$filename editor coming soon')),
-    );
-  }
-
-  void _browseScripts(BuildContext context) {
-    // TODO: Implement Lua script browser
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Lua script browser coming soon')),
-    );
-  }
 }
 
 class _SectionHeader extends StatelessWidget {

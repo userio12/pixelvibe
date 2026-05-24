@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static ThemeData light() {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF6750A4),
-      brightness: Brightness.light,
-    );
+  static const _seedColor = Color(0xFF6750A4);
+
+  static ThemeData light({bool useDynamicColor = true}) {
+    final colorScheme = useDynamicColor
+        ? ColorScheme.fromSeed(seedColor: _seedColor, brightness: Brightness.light)
+        : ColorScheme.fromSwatch(primarySwatch: Colors.deepPurple, brightness: Brightness.light);
     return ThemeData(
-      useMaterial3: true,
+      useMaterial3: useDynamicColor,
       colorScheme: colorScheme,
       appBarTheme: AppBarTheme(
         centerTitle: true,
@@ -22,13 +23,12 @@ class AppTheme {
     );
   }
 
-  static ThemeData dark() {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF6750A4),
-      brightness: Brightness.dark,
-    );
+  static ThemeData dark({bool useDynamicColor = true}) {
+    final colorScheme = useDynamicColor
+        ? ColorScheme.fromSeed(seedColor: _seedColor, brightness: Brightness.dark)
+        : ColorScheme.fromSwatch(primarySwatch: Colors.deepPurple, brightness: Brightness.dark);
     return ThemeData(
-      useMaterial3: true,
+      useMaterial3: useDynamicColor,
       colorScheme: colorScheme,
       appBarTheme: AppBarTheme(
         centerTitle: true,

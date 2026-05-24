@@ -1,10 +1,5 @@
 package com.pixelvibe.vedioplayer.pixelvibe.network
 
-sealed class NetworkResult {
-    data class Success(val files: List<NetworkFile>) : NetworkResult()
-    data class Error(val message: String) : NetworkResult()
-}
-
 object NetworkClientFactory {
     fun create(
         protocol: String,

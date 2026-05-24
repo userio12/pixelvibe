@@ -31,7 +31,8 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> {
   @override
   Widget build(BuildContext context) {
     final viewMode = ref.watch(viewModeProvider);
-    final videosAsync = ref.watch(browserProvider);
+    final videosAsync = ref.watch(filteredVideosProvider);
+    final recentCount = ref.watch(recentItemsProvider).asData?.value.length ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -61,7 +62,7 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> {
               ref.read(searchQueryProvider.notifier).update('');
             },
           ),
-          Expanded(child: _buildContent(context, videosAsync, viewMode)),
+          Expanded(child: _buildContent(context, videosAsync, viewMode, recentCount)),
         ],
       ),
     );
@@ -71,6 +72,7 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> {
     BuildContext context,
     AsyncValue<List<MediaFile>> videosAsync,
     ViewMode viewMode,
+    int recentCount,
   ) {
     return videosAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -84,20 +86,20 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> {
           return const EmptyState(
             icon: Icons.video_library_outlined,
             title: 'No videos found',
-            subtitle: 'Tap the refresh button to scan your device',
+            subtitle: 'Tap the refresh button to scan. Ensure the app has permission to access media.',
           );
         }
         return Column(
           children: [
             const RecentlyPlayedSection(),
-            Expanded(child: _buildView(context, videos, viewMode)),
+            Expanded(child: _buildView(context, videos, viewMode, recentCount)),
           ],
         );
       },
     );
   }
 
-  Widget _buildView(BuildContext context, List<MediaFile> videos, ViewMode viewMode) {
+  Widget _buildView(BuildContext context, List<MediaFile> videos, ViewMode viewMode, int recentCount) {
     switch (viewMode) {
       case ViewMode.grid:
         return GridView.builder(
@@ -127,8 +129,16 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> {
         return ListView(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           children: [
-            FolderListTile(name: 'All Videos', itemCount: videos.length, onTap: () {}),
-            FolderListTile(name: 'Recent', itemCount: 0, onTap: () {}),
+            FolderListTile(
+              name: 'All Videos',
+              itemCount: videos.length,
+              onTap: () => ref.read(viewModeProvider.notifier).update(ViewMode.grid),
+            ),
+            FolderListTile(
+              name: 'Recent',
+              itemCount: recentCount,
+              onTap: () => ref.read(viewModeProvider.notifier).update(ViewMode.grid),
+            ),
           ],
         );
     }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class PiPService {
@@ -6,12 +7,14 @@ class PiPService {
 
   final _toggleController = StreamController<void>.broadcast();
   Stream<void> get onTogglePlayback => _toggleController.stream;
+  bool _handlerSet = false;
 
   Future<bool> isPipSupported() async {
     try {
       final result = await _channel.invokeMethod<bool>('isPipSupported');
       return result ?? false;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('PiPService.isPipSupported error: $e');
       return false;
     }
   }
@@ -23,10 +26,14 @@ class PiPService {
         'height': height,
         'playing': playing,
       });
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('PiPService.enterPip error: $e');
+    }
   }
 
   void onPipModeChanged(void Function(bool isInPip) callback) {
+    if (_handlerSet) return;
+    _handlerSet = true;
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'onPictureInPictureModeChanged') {
         final args = call.arguments as Map<dynamic, dynamic>;

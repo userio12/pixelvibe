@@ -9,7 +9,6 @@ import android.os.Build
 import android.util.Rational
 import androidx.annotation.RequiresApi
 import io.flutter.embedding.android.FlutterActivity
-import io.flutter.plugin.common.MethodChannel
 
 @RequiresApi(Build.VERSION_CODES.O)
 class PiPHelper(private val activity: FlutterActivity) {
@@ -33,10 +32,6 @@ class PiPHelper(private val activity: FlutterActivity) {
             .setAutoEnterEnabled(true)
             .setActions(actions)
             .build()
-    }
-
-    fun onPictureInPictureModeChanged(isInPipMode: Boolean, channel: MethodChannel) {
-        channel.invokeMethod("onPictureInPictureModeChanged", mapOf("isInPip" to isInPipMode))
     }
 
     companion object {

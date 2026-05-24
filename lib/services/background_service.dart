@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class BackgroundService {
@@ -9,13 +10,17 @@ class BackgroundService {
         'title': title,
         'content': content,
       });
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('BackgroundService.startService error: $e');
+    }
   }
 
   Future<void> stopService() async {
     try {
       await _channel.invokeMethod('stopService');
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('BackgroundService.stopService error: $e');
+    }
   }
 
   Future<void> updateMetadata({required String title, required int durationMs}) async {
@@ -24,7 +29,9 @@ class BackgroundService {
         'title': title,
         'duration': durationMs,
       });
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('BackgroundService.updateMetadata error: $e');
+    }
   }
 
   Future<void> updatePlaybackState({required bool playing, required int positionMs}) async {
@@ -33,6 +40,8 @@ class BackgroundService {
         'playing': playing,
         'position': positionMs,
       });
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('BackgroundService.updatePlaybackState error: $e');
+    }
   }
 }

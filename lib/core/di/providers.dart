@@ -6,6 +6,7 @@ import '../../data/database/daos/recently_played_dao.dart';
 import '../../data/database/daos/video_metadata_dao.dart';
 import '../../data/database/daos/network_connection_dao.dart';
 import '../../data/database/daos/playlist_dao.dart';
+import '../../services/preferences_service.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) => database);
 final playbackStateDaoProvider = Provider<PlaybackStateDao>((ref) => ref.watch(databaseProvider).playbackStateDao);
@@ -14,4 +15,4 @@ final videoMetadataDaoProvider = Provider<VideoMetadataDao>((ref) => ref.watch(d
 final networkConnectionDaoProvider = Provider<NetworkConnectionDao>((ref) => ref.watch(databaseProvider).networkConnectionDao);
 final playlistDaoProvider = Provider<PlaylistDao>((ref) => ref.watch(databaseProvider).playlistDao);
 
-final isPlayingProvider = Provider<bool>((ref) => false);
+final preferencesServiceProvider = Provider<PreferencesService>((ref) => preferencesService);

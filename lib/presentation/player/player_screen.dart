@@ -7,10 +7,12 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../../core/di/platform_providers.dart';
 import '../../core/di/providers.dart';
 import '../../presentation/playlist/widgets/add_to_playlist_sheet.dart';
+import '../settings/settings_provider.dart';
 import 'player_provider.dart';
 import 'widgets/frame_navigation_controls.dart';
 import 'widgets/media_info_sheet.dart';
 import 'widgets/player_controls.dart';
+import 'widgets/resume_dialog.dart';
 import 'widgets/seek_bar.dart';
 import 'widgets/volume_slider.dart';
 
@@ -37,6 +39,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _startSaveTimer();
     _setupPipCallback();
     _recordRecentlyPlayed();
+    _checkResume();
   }
 
   @override
@@ -50,6 +53,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   void _openMedia() {
     final player = ref.read(playerProvider);
     player.open(Media(widget.filePath), play: true);
+    _applyPlayerConfig(player);
+  }
+
+  void _applyPlayerConfig(Player player) {
+    final speed = ref.read(defaultSpeedProvider);
+    if (speed != 1.0) player.setRate(speed);
   }
 
   void _startHideTimer() {
@@ -60,27 +69,35 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   }
 
   void _startSaveTimer() {
-    _saveTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _saveTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
       if (!mounted) return;
-      final player = ref.read(playerProvider);
-      final pos = player.state.position;
-      final dur = player.state.duration;
-      if (pos.inMilliseconds > 0) {
-        ref.read(playbackStateDaoProvider).upsetPosition(
-          widget.filePath,
-          pos.inMilliseconds,
-          dur.inMilliseconds,
-        );
+      try {
+        final player = ref.read(playerProvider);
+        final pos = player.state.position;
+        final dur = player.state.duration;
+        if (pos.inMilliseconds > 0) {
+          await ref.read(playbackStateDaoProvider).upsetPosition(
+            widget.filePath,
+            pos.inMilliseconds,
+            dur.inMilliseconds,
+          );
+        }
+      } catch (e) {
+        debugPrint('Save position error: $e');
       }
     });
   }
 
-  void _recordRecentlyPlayed() {
-    ref.read(recentlyPlayedDaoProvider).record(
-      widget.filePath,
-      widget.filePath.split('/').last.split('.').first,
-      null,
-    );
+  Future<void> _recordRecentlyPlayed() async {
+    try {
+      await ref.read(recentlyPlayedDaoProvider).record(
+        widget.filePath,
+        widget.filePath.split('/').last.split('.').first,
+        null,
+      );
+    } catch (e) {
+      debugPrint('Record recently played error: $e');
+    }
   }
 
   void _toggleControls() {
@@ -126,7 +143,31 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     bg.updatePlaybackState(playing: true, positionMs: pos.inMilliseconds);
   }
 
+  Future<void> _checkResume() async {
+    if (!ref.read(resumePlaybackProvider)) return;
+    final dao = ref.read(playbackStateDaoProvider);
+    try {
+      final state = await dao.findByPath(widget.filePath);
+      if (state == null || state.positionMs <= 0 || !mounted) return;
+      final resume = await showDialog<bool>(
+        context: context,
+        builder: (_) => ResumeDialog(
+          filePath: widget.filePath,
+          title: widget.filePath.split('/').last,
+          positionMs: state.positionMs,
+        ),
+      );
+      if (resume == true && mounted) {
+        final player = ref.read(playerProvider);
+        await player.seek(Duration(milliseconds: state.positionMs));
+      }
+    } catch (e) {
+      debugPrint('Resume check error: $e');
+    }
+  }
+
   void _enterPip() async {
+    if (!ref.read(autoPipProvider)) return;
     final pip = ref.read(pipServiceProvider);
     final supported = await pip.isPipSupported();
     if (supported) {
@@ -180,6 +221,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     final isPlaying = ref.watch(playerIsPlayingProvider).asData?.value ?? false;
     final volume = ref.watch(playerVolumeProvider).asData?.value ?? 1.0;
     final buffer = ref.watch(playerBufferProvider).asData?.value ?? Duration.zero;
+    ref.watch(playerConfigWatcherProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -187,10 +229,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         onTap: _toggleControls,
         onDoubleTapDown: (details) {
           final half = context.size!.width / 2;
+          final interval = ref.read(skipIntervalProvider);
           if (details.localPosition.dx < half) {
-            _skip(-10);
+            _skip(-interval);
           } else {
-            _skip(10);
+            _skip(interval);
           }
         },
         child: Stack(
@@ -287,8 +330,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
               player.play();
             }
           },
-          onSkipBack: () => _skip(-10),
-          onSkipForward: () => _skip(10),
+          onSkipBack: () {
+            final interval = ref.read(skipIntervalProvider);
+            _skip(-interval);
+          },
+          onSkipForward: () {
+            final interval = ref.read(skipIntervalProvider);
+            _skip(interval);
+          },
         ),
         if (!isPlaying) ...[
           const SizedBox(height: 8),

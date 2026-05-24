@@ -48,15 +48,14 @@ jobs:
       - name: Verify APKs exist
         run: ls -la build/app/outputs/flutter-apk/*.apk
 
-      - name: Rename APKs
-        run: |
-          cd build/app/outputs/flutter-apk
-          for f in *.apk; do
-            mv "$f" "pixelvibe-${f}"
-          done
-
-      - name: Upload APKs
+      - name: Upload arm64-v8a APK
         uses: actions/upload-artifact@v4
         with:
-          name: pixelvibe-apks-${{ github.sha }}
-          path: build/app/outputs/flutter-apk/*.apk
+          name: pixelvibe-arm64-v8a-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-debug.apk
+
+      - name: Upload armeabi-v7a APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixelvibe-armeabi-v7a-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk

@@ -17,8 +17,16 @@ class RecentlyPlayedSection extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return recent.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      loading: () => const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: Text('Could not load recent: $e'),
+        ),
+      ),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         return Column(

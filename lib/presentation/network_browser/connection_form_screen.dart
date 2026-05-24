@@ -61,10 +61,10 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
     }
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_nameCtrl.text.isEmpty || _hostCtrl.text.isEmpty) return;
 
-    ref.read(networkConnectionDaoProvider).insertOne(
+    await ref.read(networkConnectionDaoProvider).insertOne(
       NetworkConnectionsCompanion(
         name: Value(_nameCtrl.text),
         protocol: Value(_protocol),
@@ -75,7 +75,12 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
         path: Value(_pathCtrl.text),
       ),
     );
-    Navigator.of(context).maybePop();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Connection saved')),
+      );
+      Navigator.of(context).maybePop();
+    }
   }
 
   @override
