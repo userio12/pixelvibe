@@ -7,8 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('App loads without crashing', (WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({});
-    await bootstrap();
+    await tester.runAsync(() async {
+      SharedPreferences.setMockInitialValues({});
+      await bootstrap();
+    });
     await tester.pumpWidget(const ProviderScope(child: PixelvibeApp()));
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationDestination), findsNWidgets(3));
