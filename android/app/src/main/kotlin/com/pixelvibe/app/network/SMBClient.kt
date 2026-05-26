@@ -4,6 +4,7 @@ import com.hierynomus.msdtyp.AccessMask
 import com.hierynomus.msfscc.FileAttributes
 import com.hierynomus.mssmb2.SMB2CreateDisposition
 import com.hierynomus.mssmb2.SMB2ShareAccess
+import android.util.Log
 import com.hierynomus.smbj.SMBClient
 import com.hierynomus.smbj.auth.AuthenticationContext
 import com.hierynomus.smbj.share.DiskShare
@@ -80,7 +81,7 @@ class SmbClient(
     }
 
     override suspend fun disconnect() = withContext(Dispatchers.IO) {
-        try { client?.close() } catch (_: Exception) {}
+        try { client?.close() } catch (e: Exception) { Log.e("SMBClient", "Disconnect error", e) }
         client = null
         session = null
     }

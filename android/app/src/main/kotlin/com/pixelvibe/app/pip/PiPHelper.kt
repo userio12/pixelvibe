@@ -27,11 +27,13 @@ class PiPHelper(private val activity: FlutterActivity) {
         aspectRatio: Rational = Rational(16, 9),
         actions: List<RemoteAction> = emptyList()
     ): android.app.PictureInPictureParams {
-        return android.app.PictureInPictureParams.Builder()
+        val builder = android.app.PictureInPictureParams.Builder()
             .setAspectRatio(aspectRatio)
-            .setAutoEnterEnabled(true)
-            .setActions(actions)
-            .build()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.setAutoEnterEnabled(true)
+        }
+        builder.setActions(actions)
+        return builder.build()
     }
 
     companion object {

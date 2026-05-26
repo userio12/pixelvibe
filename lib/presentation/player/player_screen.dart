@@ -7,6 +7,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../../core/di/platform_providers.dart';
 import '../../core/di/providers.dart';
 import '../../presentation/playlist/widgets/add_to_playlist_sheet.dart';
+import '../../utils/permissions/permission_handler.dart';
 import '../settings/settings_provider.dart';
 import 'player_provider.dart';
 import 'widgets/frame_navigation_controls.dart';
@@ -134,6 +135,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   }
 
   void _updateBackgroundService() {
+    requestNotificationPermission();
     final pos = ref.read(playerPositionProvider).asData?.value ?? Duration.zero;
     final dur = ref.read(playerDurationProvider).asData?.value ?? Duration.zero;
     final bg = ref.read(backgroundServiceProvider);

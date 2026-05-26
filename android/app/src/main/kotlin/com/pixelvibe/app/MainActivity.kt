@@ -6,8 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Build
-import android.util.Rational
-import androidx.annotation.RequiresApi
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -127,12 +125,6 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-        pipHelper?.enterPip(Rational(16, 9), true)
     }
 
     override fun onPictureInPictureModeChanged(
