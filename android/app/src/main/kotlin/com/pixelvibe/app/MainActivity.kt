@@ -1,4 +1,4 @@
-package com.pixelvibe.vedioplayer.pixelvibe
+package com.pixelvibe.app
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -11,11 +11,11 @@ import androidx.annotation.RequiresApi
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import com.pixelvibe.vedioplayer.pixelvibe.background.PlaybackService
-import com.pixelvibe.vedioplayer.pixelvibe.mediasession.MediaSessionCallback
-import com.pixelvibe.vedioplayer.pixelvibe.pip.PiPHelper
-import com.pixelvibe.vedioplayer.pixelvibe.scan.MediaScanner
-import com.pixelvibe.vedioplayer.pixelvibe.scan.ThumbnailHelper
+import com.pixelvibe.app.background.PlaybackService
+import com.pixelvibe.app.mediasession.MediaSessionCallback
+import com.pixelvibe.app.pip.PiPHelper
+import com.pixelvibe.app.scan.MediaScanner
+import com.pixelvibe.app.scan.ThumbnailHelper
 
 class MainActivity : FlutterActivity() {
     private val pipChannel = "com.pixelvibe/pip"
@@ -159,7 +159,6 @@ class MainActivity : FlutterActivity() {
         } else {
             startService(intent)
         }
-        // Update notification content after service is running
         val updateIntent = Intent(this, PlaybackService::class.java).apply {
             putExtra("title", title)
             putExtra("content", content)

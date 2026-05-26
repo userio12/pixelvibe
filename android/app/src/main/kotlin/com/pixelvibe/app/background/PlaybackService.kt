@@ -1,4 +1,4 @@
-package com.pixelvibe.vedioplayer.pixelvibe.background
+package com.pixelvibe.app.background
 
 import android.app.Notification
 import android.app.NotificationChannel

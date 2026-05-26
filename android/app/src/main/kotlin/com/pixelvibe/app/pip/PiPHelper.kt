@@ -1,4 +1,4 @@
-package com.pixelvibe.vedioplayer.pixelvibe.pip
+package com.pixelvibe.app.pip
 
 import android.app.PendingIntent
 import android.app.RemoteAction

@@ -1,4 +1,4 @@
-package com.pixelvibe.vedioplayer.pixelvibe.network
+package com.pixelvibe.app.network
 
 import com.hierynomus.msdtyp.AccessMask
 import com.hierynomus.msfscc.FileAttributes

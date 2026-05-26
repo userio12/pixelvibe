@@ -1,6 +1,7 @@
-package com.pixelvibe.vedioplayer.pixelvibe.proxy
+package com.pixelvibe.app.proxy
 
 import android.util.Log
+import com.pixelvibe.app.network.NetworkClient
 import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.runBlocking
 
@@ -8,11 +9,11 @@ class StreamingProxy(private val port: Int = 8765) : NanoHTTPD(port) {
 
     companion object {
         const val TAG = "StreamingProxy"
-        private var currentClient: com.pixelvibe.vedioplayer.pixelvibe.network.NetworkClient? = null
+        private var currentClient: NetworkClient? = null
         private var currentPath: String? = null
     }
 
-    fun setStreamSource(client: com.pixelvibe.vedioplayer.pixelvibe.network.NetworkClient, path: String) {
+    fun setStreamSource(client: NetworkClient, path: String) {
         currentClient?.let { runBlocking { it.disconnect() } }
         currentClient = client
         currentPath = path

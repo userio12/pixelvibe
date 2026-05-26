@@ -1,4 +1,4 @@
-package com.pixelvibe.vedioplayer.pixelvibe.network
+package com.pixelvibe.app.network
 
 data class NetworkFile(
     val name: String,

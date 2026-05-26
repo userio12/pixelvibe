@@ -1,4 +1,4 @@
-package com.pixelvibe.vedioplayer.pixelvibe.network
+package com.pixelvibe.app.network
 
 import java.net.HttpURLConnection
 import java.net.URL
@@ -86,6 +86,5 @@ class WebDAVClient(
     }
 
     override suspend fun disconnect() {
-        // HTTP connections are stateless
     }
 }

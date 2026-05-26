@@ -1,4 +1,4 @@
-package com.pixelvibe.vedioplayer.pixelvibe.mediasession
+package com.pixelvibe.app.mediasession
 
 import android.content.BroadcastReceiver
 import android.content.Context

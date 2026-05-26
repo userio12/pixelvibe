@@ -1,4 +1,4 @@
-package com.pixelvibe.vedioplayer.pixelvibe.network
+package com.pixelvibe.app.network
 
 import org.apache.commons.net.ftp.FTPClient as ApacheFTPClient
 import org.apache.commons.net.ftp.FTPFile

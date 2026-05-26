@@ -1,4 +1,4 @@
-package com.pixelvibe.vedioplayer.pixelvibe.scan
+package com.pixelvibe.app.scan
 
 import android.content.Context
 import android.provider.MediaStore

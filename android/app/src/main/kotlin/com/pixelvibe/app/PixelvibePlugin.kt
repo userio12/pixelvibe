@@ -1,8 +1,8 @@
-package com.pixelvibe.vedioplayer.pixelvibe
+package com.pixelvibe.app
 
 import android.util.Log
-import com.pixelvibe.vedioplayer.pixelvibe.network.NetworkClientFactory
-import com.pixelvibe.vedioplayer.pixelvibe.proxy.StreamingProxy
+import com.pixelvibe.app.network.NetworkClientFactory
+import com.pixelvibe.app.proxy.StreamingProxy
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
@@ -19,7 +19,7 @@ class PixelvibePlugin(private val channel: MethodChannel) {
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private val proxy = StreamingProxy()
-    private val activeClients = mutableMapOf<String, com.pixelvibe.vedioplayer.pixelvibe.network.NetworkClient>()
+    private val activeClients = mutableMapOf<String, com.pixelvibe.app.network.NetworkClient>()
 
     fun handle(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
