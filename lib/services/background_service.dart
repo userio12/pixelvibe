@@ -23,11 +23,12 @@ class BackgroundService {
     }
   }
 
-  Future<void> updateMetadata({required String title, required int durationMs}) async {
+  Future<void> updateMetadata({required String title, required int durationMs, String? thumbnail}) async {
     try {
       await _channel.invokeMethod('updateMetadata', {
         'title': title,
         'duration': durationMs,
+        if (thumbnail != null) 'thumbnail': thumbnail,
       });
     } catch (e) {
       Logger.error('BackgroundService.updateMetadata failed', e);

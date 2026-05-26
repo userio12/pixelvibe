@@ -40,13 +40,19 @@ class MediaSessionCallback(
         }, Context.RECEIVER_NOT_EXPORTED)
     }
 
-    fun updateMetadata(title: String, durationMs: Long) {
-        mediaSession.setMetadata(
-            MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, durationMs)
-                .build()
-        )
+    fun updateMetadata(title: String, durationMs: Long, thumbnailPath: String? = null) {
+        val builder = MediaMetadataCompat.Builder()
+            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, durationMs)
+        if (thumbnailPath != null) {
+            val artUri = if (thumbnailPath.startsWith("/")) {
+                android.net.Uri.fromFile(java.io.File(thumbnailPath))
+            } else {
+                android.net.Uri.parse(thumbnailPath)
+            }
+            builder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, artUri.toString())
+        }
+        mediaSession.setMetadata(builder.build())
     }
 
     fun updatePlaybackState(playing: Boolean, positionMs: Long) {

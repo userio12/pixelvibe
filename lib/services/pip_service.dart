@@ -7,8 +7,10 @@ class PiPService {
 
   final _toggleController = StreamController<void>.broadcast();
   final _noisyController = StreamController<void>.broadcast();
+  final _audioFocusController = StreamController<int>.broadcast();
   Stream<void> get onTogglePlayback => _toggleController.stream;
   Stream<void> get onNoisy => _noisyController.stream;
+  Stream<int> get onAudioFocusChange => _audioFocusController.stream;
   bool _handlerSet = false;
   bool _disposed = false;
 
@@ -34,6 +36,22 @@ class PiPService {
     }
   }
 
+  Future<void> requestAudioFocus() async {
+    try {
+      await _channel.invokeMethod('requestAudioFocus');
+    } catch (e) {
+      Logger.error('PiPService.requestAudioFocus error', e);
+    }
+  }
+
+  Future<void> abandonAudioFocus() async {
+    try {
+      await _channel.invokeMethod('abandonAudioFocus');
+    } catch (e) {
+      Logger.error('PiPService.abandonAudioFocus error', e);
+    }
+  }
+
   void onPipModeChanged(void Function(bool isInPip) callback) {
     if (_handlerSet) return;
     _handlerSet = true;
@@ -48,6 +66,8 @@ class PiPService {
         _toggleController.add(null);
       } else if (call.method == 'audioNoisy') {
         _noisyController.add(null);
+      } else if (call.method == 'audioFocusChange') {
+        _audioFocusController.add(call.arguments as int? ?? 0);
       }
       return null;
     });
@@ -58,5 +78,6 @@ class PiPService {
     _channel.setMethodCallHandler(null);
     _toggleController.close();
     _noisyController.close();
+    _audioFocusController.close();
   }
 }

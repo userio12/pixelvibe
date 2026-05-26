@@ -1,8 +1,14 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/di/providers.dart';
+import '../../services/logger.dart';
 import '../../utils/platform_helper.dart';
 import '../player/gesture_config_provider.dart';
+import '../player/video_quality_provider.dart';
+import '../player/widgets/control_layout_editor.dart';
 import 'settings_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -104,7 +110,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   _buildSwitch('Show time remaining', 'Show remaining instead of total', showRemaining, () => ref.read(showTimeRemainingProvider.notifier).toggle()),
                 if (_matches(['Reduce motion']))
                   _buildSwitch('Reduce motion', 'Minimize animations', reduceMotion, () => ref.read(reduceMotionProvider.notifier).toggle()),
-                if (_matches(['Playback', 'Speed', 'Resume', 'PiP', 'Skip', 'Autoplay', 'Time', 'Reduce']))
+                if (_matches(['Seekbar']))
+                  _buildSeekbarStyle(),
+                if (_matches(['Close after end']))
+                  _buildSwitch('Close after end', 'Close player when video ends', ref.watch(preferencesServiceProvider).getCloseAfterEnd(), () {
+                    final prefs = ref.read(preferencesServiceProvider);
+                    prefs.setCloseAfterEnd(!prefs.getCloseAfterEnd());
+                  }),
+                if (_matches(['Watched']))
+                  _buildSlider('Watched threshold', '${ref.watch(preferencesServiceProvider).getWatchedThreshold()}%', ref.watch(preferencesServiceProvider).getWatchedThreshold().toDouble(), 50, 100, 10, (v) {
+                    ref.read(preferencesServiceProvider).setWatchedThreshold(v.round());
+                  }),
+                if (_matches(['Control layout']))
+                  ListTile(
+                    leading: const Icon(Icons.grid_view),
+                    title: const Text('Control layout'),
+                    subtitle: const Text('Customize player buttons'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => showModalBottomSheet(
+                      context: context,
+                      builder: (_) => const ControlLayoutEditor(),
+                    ),
+                  ),
+                if (_matches(['Playback', 'Speed', 'Resume', 'PiP', 'Skip', 'Autoplay', 'Time', 'Reduce', 'Close', 'Watched', 'Control']))
                   const Divider(height: 32),
 
                 if (_matches(['Gesture', 'Swipe', 'Brightness', 'Volume', 'Pinch', 'Double', 'Sensitivity']))
@@ -140,6 +168,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => context.push('/about'),
                     ),
+                  ),
+                if (_matches(['Audio', 'Normalize', 'Channels']))
+                  _SectionHeader(title: 'Audio'),
+                if (_matches(['Audio background']))
+                  _buildSwitch('Audio background', 'Keep playing with notification when leaving', ref.watch(audioBackgroundProvider), () => ref.read(audioBackgroundProvider.notifier).toggle()),
+                if (_matches(['Normalize']))
+                  _buildSwitch('Volume normalization', 'Dynamic audio normalization (dynaudnorm)', ref.watch(volumeNormalizationProvider), () => ref.read(volumeNormalizationProvider.notifier).toggle()),
+                if (_matches(['Channels']))
+                  _buildAudioChannels(),
+                if (_matches(['Audio', 'Background', 'Normalize', 'Channels']))
+                  const Divider(height: 32),
+
+                if (_matches(['Video', 'Hwdec', 'Decoder', 'Gpu', 'Seek', 'Mirror', 'Flip', 'Subs']))
+                  _SectionHeader(title: 'Video'),
+                if (_matches(['Hwdec']))
+                  _buildHwdec(),
+                if (_matches(['Gpu']))
+                  _buildGpuApi(),
+                if (_matches(['Seek']))
+                  _buildSwitch('Precise seeking', 'hr-seek frame-accurate jumps', ref.watch(hrSeekProvider), () => ref.read(hrSeekProvider.notifier).toggle()),
+                if (_matches(['Mirror']))
+                  _buildSwitch('Mirror (hflip)', '', ref.watch(mirrorProvider), () => ref.read(mirrorProvider.notifier).toggle()),
+                if (_matches(['Flip']))
+                  _buildSwitch('Flip (vflip)', '', ref.watch(flipProvider), () => ref.read(flipProvider.notifier).toggle()),
+                if (_matches(['Subs']))
+                  _buildSwitch('Subtitles in screenshot', 'subs-with-subs', ref.watch(screenshotSubsProvider), () => ref.read(screenshotSubsProvider.notifier).toggle()),
+                if (_matches(['Video', 'Hwdec', 'Decoder', 'Gpu', 'Seek', 'Mirror', 'Flip', 'Subs']))
+                  const Divider(height: 32),
+
+                if (_matches(['Update', 'Auto.*update']))
+                  _buildSwitch('Auto-update check', 'Check for updates on startup', ref.watch(preferencesServiceProvider).getAutoUpdateCheck(), () async {
+                    await ref.read(preferencesServiceProvider).setAutoUpdateCheck(!ref.read(preferencesServiceProvider).getAutoUpdateCheck());
+                  }),
+                if (_matches(['Update', 'Auto.*update']))
+                  const Divider(height: 32),
+
+                if (_matches(['HTTP headers', 'Headers']))
+                  _buildHttpHeaders(),
+                if (_matches(['HTTP headers', 'Headers']))
+                  const Divider(height: 32),
+
+                if (_matches(['Export', 'Import', 'Settings']))
+                  _SectionHeader(title: 'Settings Data'),
+                if (_matches(['Export']))
+                  ListTile(
+                    leading: const Icon(Icons.file_upload_outlined),
+                    title: const Text('Export settings'),
+                    subtitle: const Text('Save settings to JSON file'),
+                    onTap: () => _exportSettings(context),
+                  ),
+                if (_matches(['Import']))
+                  ListTile(
+                    leading: const Icon(Icons.file_download_outlined),
+                    title: const Text('Import settings'),
+                    subtitle: const Text('Load settings from JSON file'),
+                    onTap: () => _importSettings(context),
                   ),
               ],
             ),
@@ -205,6 +289,170 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _exportSettings(BuildContext context) async {
+    try {
+      final prefs = ref.read(preferencesServiceProvider);
+      final json = prefs.exportToJson();
+      final result = await FilePicker.platform.saveFile(
+        dialogTitle: 'Export settings',
+        fileName: 'pixelvibe_settings.json',
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+      if (result == null) return;
+      await File(result).writeAsString(json);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Settings exported to $result')),
+        );
+      }
+    } catch (e) {
+      Logger.error('Export settings error', e);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _importSettings(BuildContext context) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+      if (result == null || result.files.isEmpty) return;
+      final path = result.files.first.path;
+      if (path == null) return;
+      final json = await File(path).readAsString();
+      final prefs = ref.read(preferencesServiceProvider);
+      await prefs.importFromJson(json);
+      ref.invalidate(preferencesServiceProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Settings imported. Restart the app for all changes to take effect.')),
+        );
+      }
+    } catch (e) {
+      Logger.error('Import settings error', e);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Import failed: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildSeekbarStyle() {
+    if (!_matches(['seekbar'])) return const SizedBox.shrink();
+    final style = ref.watch(seekbarStyleProvider);
+    return Semantics(
+      label: 'Seekbar style',
+      child: ListTile(
+        title: const Text('Seekbar style'),
+        trailing: SegmentedButton<SeekbarStyle>(
+          segments: const [
+            ButtonSegment(value: SeekbarStyle.standard, icon: Icon(Icons.bar_chart), label: Text('Std')),
+            ButtonSegment(value: SeekbarStyle.wavy, icon: Icon(Icons.waves), label: Text('Wave')),
+            ButtonSegment(value: SeekbarStyle.thick, icon: Icon(Icons.bubble_chart), label: Text('Thick')),
+          ],
+          selected: {style},
+          onSelectionChanged: (s) => ref.read(seekbarStyleProvider.notifier).update(s.first),
+          showSelectedIcon: false,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAudioChannels() {
+    if (!_matches(['channels'])) return const SizedBox.shrink();
+    final current = ref.watch(audioChannelsProvider);
+    const options = ['auto', 'stereo', 'surround', '5.1', '7.1'];
+    return ListTile(
+      title: const Text('Audio channels'),
+      trailing: DropdownButton<String>(
+        value: current,
+        items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
+        onChanged: (v) => ref.read(audioChannelsProvider.notifier).update(v ?? 'auto'),
+      ),
+    );
+  }
+
+  Widget _buildHwdec() {
+    if (!_matches(['hwdec'])) return const SizedBox.shrink();
+    final current = ref.watch(hwdecProvider);
+    return ListTile(
+      title: const Text('Hardware decoder'),
+      trailing: DropdownButton<String>(
+        value: current,
+        items: const [
+          DropdownMenuItem(value: 'auto', child: Text('Auto')),
+          DropdownMenuItem(value: 'auto-safe', child: Text('Auto (safe)')),
+          DropdownMenuItem(value: 'no', child: Text('Software')),
+          DropdownMenuItem(value: 'mediacodec', child: Text('MediaCodec')),
+          DropdownMenuItem(value: 'cuda', child: Text('CUDA')),
+        ],
+        onChanged: (v) => ref.read(hwdecProvider.notifier).update(v ?? 'auto'),
+      ),
+    );
+  }
+
+  Widget _buildGpuApi() {
+    if (!_matches(['gpu'])) return const SizedBox.shrink();
+    final current = ref.watch(gpuApiProvider);
+    return ListTile(
+      title: const Text('GPU backend'),
+      trailing: DropdownButton<String>(
+        value: current,
+        items: const [
+          DropdownMenuItem(value: 'auto', child: Text('Auto')),
+          DropdownMenuItem(value: 'vulkan', child: Text('Vulkan')),
+          DropdownMenuItem(value: 'opengl', child: Text('OpenGL')),
+        ],
+        onChanged: (v) => ref.read(gpuApiProvider.notifier).update(v ?? 'auto'),
+      ),
+    );
+  }
+
+  Widget _buildHttpHeaders() {
+    if (!_matches(['headers'])) return const SizedBox.shrink();
+    final current = ref.watch(preferencesServiceProvider).getHttpHeaders();
+    return ListTile(
+      title: const Text('HTTP headers'),
+      subtitle: const Text('One per line: Key: Value'),
+      trailing: IconButton(
+        icon: const Icon(Icons.edit),
+        onPressed: () => _editHttpHeaders(current),
+      ),
+    );
+  }
+
+  Future<void> _editHttpHeaders(String current) async {
+    final controller = TextEditingController(text: current);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('HTTP headers'),
+        content: TextField(
+          controller: controller,
+          maxLines: 6,
+          decoration: const InputDecoration(
+            hintText: 'Authorization: Bearer xxx\nX-Custom: value',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Save')),
+        ],
+      ),
+    );
+    if (result != null) {
+      await ref.read(preferencesServiceProvider).setHttpHeaders(result);
+    }
   }
 
   Widget _buildOrientation(PlayerOrientation orientation) {

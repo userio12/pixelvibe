@@ -9,15 +9,22 @@ class ViewModeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final all = ViewMode.values;
     return SegmentedButton<ViewMode>(
-      segments: const [
-        ButtonSegment(value: ViewMode.grid, icon: Icon(Icons.grid_view_outlined)),
-        ButtonSegment(value: ViewMode.list, icon: Icon(Icons.list_outlined)),
-        ButtonSegment(value: ViewMode.tree, icon: Icon(Icons.folder_outlined)),
-      ],
+      segments: all.map((v) => ButtonSegment(
+        value: v,
+        icon: Icon(_icon(v)),
+      )).toList(),
       selected: {current},
       onSelectionChanged: (s) => onChanged(s.first),
       showSelectedIcon: false,
     );
   }
+
+  IconData _icon(ViewMode mode) => switch (mode) {
+    ViewMode.grid => Icons.grid_view_outlined,
+    ViewMode.list => Icons.list_outlined,
+    ViewMode.tree => Icons.folder_outlined,
+    ViewMode.albums => Icons.photo_library_outlined,
+  };
 }

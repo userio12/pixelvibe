@@ -55,8 +55,7 @@ class UpdateChecker {
   }
 }
 
-Future<void> showUpdateDialog(BuildContext context, UpdateInfo update) async {
-  final currentVersion = '1.0.0';
+Future<void> showUpdateDialog(BuildContext context, UpdateInfo update, {String currentVersion = '1.0.0'}) async {
   if (update.version == currentVersion) return;
 
   final download = await showDialog<bool>(

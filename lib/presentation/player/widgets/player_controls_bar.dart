@@ -3,12 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import '../../settings/settings_provider.dart';
+import '../ab_loop_provider.dart';
+import '../control_layout_provider.dart';
+import '../player_button.dart';
 import '../player_provider.dart';
 import '../playlist_queue_provider.dart';
 import '../player_overlay.dart';
 import '../player_updates.dart';
-import 'frame_navigation_controls.dart';
-import 'player_controls.dart';
 import 'seek_bar.dart';
 import 'volume_slider.dart';
 
@@ -22,7 +23,6 @@ class PlayerControlsBar extends ConsumerWidget {
     final player = ref.watch(playerProvider);
     final position = ref.watch(playerPositionProvider).asData?.value ?? Duration.zero;
     final duration = ref.watch(playerDurationProvider).asData?.value ?? Duration.zero;
-    final volume = ref.watch(playerVolumeProvider).asData?.value ?? 1.0;
     final buffer = ref.watch(playerBufferProvider).asData?.value ?? Duration.zero;
     final queue = ref.watch(playlistQueueProvider);
     final repeatMode = ref.watch(repeatModeProvider);
@@ -43,39 +43,163 @@ class PlayerControlsBar extends ConsumerWidget {
         const SizedBox(height: 8),
         if (queue.hasMultiple)
           _PlaylistNavRow(queue: queue, repeatMode: repeatMode, isPlaying: isPlaying, player: player, ref: ref),
-        PlayerControls(
-          isPlaying: isPlaying,
-          onPlayPause: () {
-            if (isPlaying) {
-              player.pause();
-            } else {
-              player.play();
-            }
-          },
-          onSkipBack: () {
-            final interval = ref.read(skipIntervalProvider);
-            _skip(ref, -interval);
-          },
-          onSkipForward: () {
-            final interval = ref.read(skipIntervalProvider);
-            _skip(ref, interval);
-          },
-        ),
-        if (!isPlaying) ...[
-          const SizedBox(height: 8),
-          FrameNavigationControls(
-            onStepBack: () => ref.read(frameStepProvider).stepBackward(),
-            onStepForward: () => ref.read(frameStepProvider).stepForward(),
+        _ConfigurableCenterControls(isPlaying: isPlaying),
+      ],
+    );
+  }
+
+}
+
+class _ConfigurableCenterControls extends ConsumerWidget {
+  final bool isPlaying;
+
+  const _ConfigurableCenterControls({required this.isPlaying});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final layout = ref.watch(controlLayoutProvider);
+    final buttons = layout.bottomCenter;
+    if (buttons.isEmpty) return const SizedBox.shrink();
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (final btn in buttons) _buildCenterButton(context, ref, btn),
+      ],
+    );
+  }
+
+  Widget _buildCenterButton(BuildContext context, WidgetRef ref, PlayerButton btn) {
+    switch (btn) {
+      case PlayerButton.skipBack:
+        return _iconBtn(Icons.replay_10, btn.tooltip, () {
+          final interval = ref.read(skipIntervalProvider);
+          _skip(ref, -interval);
+        });
+      case PlayerButton.playPause:
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Theme.of(context).colorScheme.primaryContainer,
+            ),
+            child: IconButton(
+              icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, fill: 1),
+              iconSize: 40,
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                final p = ref.read(playerProvider);
+                if (isPlaying) { p.pause(); } else { p.play(); }
+              },
+            ),
           ),
-        ],
-        if (true) ...[
-          const SizedBox(height: 8),
-          VolumeSlider(
-            volume: volume,
+        );
+      case PlayerButton.skipForward:
+        return _iconBtn(Icons.forward_10, btn.tooltip, () {
+          final interval = ref.read(skipIntervalProvider);
+          _skip(ref, interval);
+        });
+      case PlayerButton.frameNav:
+        if (isPlaying) return const SizedBox.shrink();
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.skip_previous, color: Colors.white70, size: 20),
+              tooltip: 'Frame back',
+              onPressed: () => ref.read(frameStepProvider).stepBackward(),
+            ),
+            Text('Frame', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white54)),
+            IconButton(
+              icon: const Icon(Icons.skip_next, color: Colors.white70, size: 20),
+              tooltip: 'Frame forward',
+              onPressed: () => ref.read(frameStepProvider).stepForward(),
+            ),
+          ],
+        );
+      case PlayerButton.repeat:
+        return Consumer(
+          builder: (_, ref, child) {
+            final mode = ref.watch(repeatModeProvider);
+            final icon = switch (mode) {
+              LoopMode.off => Icons.repeat,
+              LoopMode.one => Icons.repeat_one,
+              LoopMode.all => Icons.repeat,
+            };
+            return _iconBtn(icon, 'Repeat: ${mode.name}', () {
+              ref.read(repeatModeProvider.notifier).cycle();
+              ref.read(playerOverlayProvider.notifier).show(RepeatModeChange(ref.read(repeatModeProvider).name));
+            }, active: ref.read(repeatModeProvider) != LoopMode.off);
+          },
+        );
+      case PlayerButton.shuffle:
+        return Consumer(
+          builder: (_, ref, child) {
+            final shuffled = ref.watch(shuffleEnabledProvider);
+            return _iconBtn(Icons.shuffle, 'Shuffle: ${shuffled ? "On" : "Off"}',
+              () => ref.read(shuffleEnabledProvider.notifier).toggle(),
+              active: shuffled,
+            );
+          },
+        );
+      case PlayerButton.playlist:
+        return _iconBtn(Icons.playlist_play, btn.tooltip, () {
+          final queue = ref.read(playlistQueueProvider);
+          showModalBottomSheet(
+            context: context,
+            builder: (_) => _PlaylistQueueSheet(queue: queue),
+          );
+        });
+      case PlayerButton.volume:
+        return SizedBox(
+          width: 120,
+          child: VolumeSlider(
+            volume: ref.watch(playerVolumeProvider).asData?.value ?? 1.0,
             onChanged: (v) => ref.read(playerProvider).setVolume(v),
           ),
-        ],
-      ],
+        );
+      case PlayerButton.abLoop:
+        return Consumer(
+          builder: (_, ref, child) {
+            final ab = ref.watch(abLoopProvider);
+            return _iconBtn(ab.isActive ? Icons.loop : Icons.loop_outlined, btn.tooltip, () {
+              if (ab.isActive) {
+                ref.read(abLoopProvider.notifier).clear();
+                ref.read(playerOverlayProvider.notifier).show(const ABLoopUpdate(false));
+                return;
+              }
+              final pos = ref.read(playerProvider).state.position.inMilliseconds;
+              if (ab.aPointMs == null) {
+                ref.read(abLoopProvider.notifier).setA(pos);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Point A set. Seek to B and press again.'), duration: Duration(seconds: 2)),
+                );
+              } else {
+                ref.read(abLoopProvider.notifier).setB(pos);
+                ref.read(playerOverlayProvider.notifier).show(const ABLoopUpdate(true));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('A-B loop activated'), duration: Duration(seconds: 2)),
+                );
+              }
+            }, active: ab.isActive);
+          },
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _iconBtn(IconData icon, String tooltip, VoidCallback onPressed, {bool active = false}) {
+    return IconButton(
+      icon: Icon(icon),
+      iconSize: 28,
+      color: active ? Colors.cyan : Colors.white70,
+      onPressed: () {
+        HapticFeedback.lightImpact();
+        onPressed();
+      },
+      tooltip: tooltip,
     );
   }
 
@@ -195,9 +319,10 @@ class _PlaylistNavRow extends StatelessWidget {
   }
 
   void _showPlaylistSheet(BuildContext context) {
+    final q = ref.read(playlistQueueProvider);
     showModalBottomSheet(
       context: context,
-      builder: (_) => _PlaylistQueueSheet(queue: queue),
+      builder: (_) => _PlaylistQueueSheet(queue: q),
     );
   }
 }

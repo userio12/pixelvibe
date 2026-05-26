@@ -6,6 +6,7 @@ import '../../data/database/daos/recently_played_dao.dart';
 import '../../data/database/daos/video_metadata_dao.dart';
 import '../../data/database/daos/network_connection_dao.dart';
 import '../../data/database/daos/playlist_dao.dart';
+import '../../services/deep_link_service.dart';
 import '../../services/preferences_service.dart';
 
 final databaseProvider = Provider.autoDispose<AppDatabase>((ref) => database);
@@ -16,6 +17,12 @@ final networkConnectionDaoProvider = Provider.autoDispose<NetworkConnectionDao>(
 final playlistDaoProvider = Provider.autoDispose<PlaylistDao>((ref) => ref.watch(databaseProvider).playlistDao);
 
 final preferencesServiceProvider = Provider.autoDispose<PreferencesService>((ref) => preferencesService);
+
+final deepLinkServiceProvider = Provider<DeepLinkService>((ref) {
+  final s = DeepLinkService();
+  ref.onDispose(() => s.dispose());
+  return s;
+});
 
 final videoMetadataByPathProvider = FutureProvider.autoDispose.family<VideoMetadataData?, String>(
   (ref, path) => ref.watch(videoMetadataDaoProvider).findByPath(path),

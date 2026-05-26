@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/di/providers.dart';
 import '../../data/database/app_database.dart';
 import '../../services/network_service.dart';
-import 'package:go_router/go_router.dart';
 
 final connectionListProvider = FutureProvider.autoDispose<List<NetworkConnection>>((ref) {
   return ref.watch(networkConnectionDaoProvider).getAll();
@@ -11,13 +11,25 @@ final connectionListProvider = FutureProvider.autoDispose<List<NetworkConnection
 
 final networkServiceProvider = Provider.autoDispose<NetworkService>((ref) => NetworkService());
 
-class NetworkBrowserScreen extends ConsumerWidget {
+class NetworkBrowserScreen extends ConsumerStatefulWidget {
   const NetworkBrowserScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NetworkBrowserScreen> createState() => _NetworkBrowserScreenState();
+}
+
+class _NetworkBrowserScreenState extends ConsumerState<NetworkBrowserScreen> {
+  bool _autoConnected = false;
+
+  @override
+  Widget build(BuildContext context) {
     final connections = ref.watch(connectionListProvider);
     final theme = Theme.of(context);
+
+    if (!_autoConnected) {
+      _autoConnected = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _autoConnect());
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -51,35 +63,41 @@ class NetworkBrowserScreen extends ConsumerWidget {
           return ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             itemCount: list.length,
-            itemBuilder: (_, i) => _ConnectionTile(connection: list[i]),
+            itemBuilder: (_, i) => _ConnectionTile(
+              connection: list[i],
+              onConnect: _connect,
+            ),
           );
         },
       ),
     );
   }
-}
 
-class _ConnectionTile extends ConsumerWidget {
-  final NetworkConnection connection;
-  const _ConnectionTile({required this.connection});
+  Future<void> _autoConnect() async {
+    final dao = ref.read(networkConnectionDaoProvider);
+    final connections = await dao.getAll();
+    final auto = connections.where((c) => c.autoConnect).firstOrNull;
+    if (auto == null || !mounted) return;
+    _connect(auto);
+  }
 
-  Future<void> _connect(BuildContext context, WidgetRef ref) async {
+  Future<void> _connect(NetworkConnection conn) async {
     final service = ref.read(networkServiceProvider);
-    final id = 'conn_${connection.id}';
+    final id = 'conn_${conn.id}';
 
     final scaffold = ScaffoldMessenger.of(context);
 
     scaffold.showSnackBar(
-      SnackBar(content: Text('Connecting to ${connection.name}...'), duration: const Duration(seconds: 1)),
+      SnackBar(content: Text('Connecting to ${conn.name}...'), duration: const Duration(seconds: 1)),
     );
 
     final ok = await service.connect(
       id: id,
-      protocol: connection.protocol,
-      host: connection.host,
-      port: connection.port,
-      username: connection.username,
-      password: connection.password,
+      protocol: conn.protocol,
+      host: conn.host,
+      port: conn.port,
+      username: conn.username,
+      password: conn.password,
     );
 
     if (!ok) {
@@ -100,7 +118,7 @@ class _ConnectionTile extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text('${connection.name} — /'),
+        title: Text('${conn.name} — /'),
         children: [
           ...files.take(20).map((f) => ListTile(
                 dense: true,
@@ -121,6 +139,12 @@ class _ConnectionTile extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _ConnectionTile extends ConsumerWidget {
+  final NetworkConnection connection;
+  final void Function(NetworkConnection) onConnect;
+  const _ConnectionTile({required this.connection, required this.onConnect});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -140,7 +164,7 @@ class _ConnectionTile extends ConsumerWidget {
           title: Text(connection.name),
           subtitle: Text('${connection.protocol.toUpperCase()} · ${connection.host}:${connection.port}'),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => _connect(context, ref),
+          onTap: () => onConnect(connection),
         ),
       ),
     );

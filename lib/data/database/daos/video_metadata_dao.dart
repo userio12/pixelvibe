@@ -31,4 +31,19 @@ class VideoMetadataDao extends DatabaseAccessor<AppDatabase> with _$VideoMetadat
       ..limit(limit))
     .get();
   }
+
+  Future<void> markAsWatched(String path) async {
+    final existing = await findByPath(path);
+    if (existing == null) return;
+    if (existing.watched) return;
+    await upsert(existing.copyWith(watched: true).toCompanion(false));
+  }
+
+  Future<List<VideoMetadataData>> unwatched({int limit = 20}) {
+    return (select(videoMetadata)
+      ..where((t) => t.watched.equals(false))
+      ..orderBy([(t) => OrderingTerm(expression: t.addedAt, mode: OrderingMode.desc)])
+      ..limit(limit))
+    .get();
+  }
 }

@@ -19,6 +19,7 @@ class MediaScanner {
       width: meta.width,
       height: meta.height,
       lastModified: DateTime.fromMillisecondsSinceEpoch(meta.addedAt),
+      watched: meta.watched,
     );
   }
 

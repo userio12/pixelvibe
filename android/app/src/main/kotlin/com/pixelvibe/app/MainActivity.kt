@@ -22,6 +22,7 @@ class MainActivity : FlutterActivity() {
 
     private var pipHelper: PiPHelper? = null
     private var mediaSessionCallback: MediaSessionCallback? = null
+    private var audioFocusHelper: AudioFocusHelper? = null
     private var pipMethodChannel: MethodChannel? = null
     private val noisyReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -60,10 +61,22 @@ class MainActivity : FlutterActivity() {
                     "isPipSupported" -> {
                         result.success(pipHelper?.isPipSupported() ?: false)
                     }
+                    "requestAudioFocus" -> {
+                        audioFocusHelper?.requestFocus { focusChange ->
+                            pipMethodChannel?.invokeMethod("audioFocusChange", focusChange)
+                        }
+                        result.success(true)
+                    }
+                    "abandonAudioFocus" -> {
+                        audioFocusHelper?.abandonFocus()
+                        result.success(true)
+                    }
                     else -> result.notImplemented()
                 }
             }
         }
+
+        audioFocusHelper = AudioFocusHelper(this)
 
         mediaSessionCallback = MediaSessionCallback(this, MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger, backgroundChannel
@@ -85,7 +98,8 @@ class MainActivity : FlutterActivity() {
                     "updateMetadata" -> {
                         val title = (call.argument("title") as? String) ?: ""
                         val duration = (call.argument("duration") as? Long) ?: 0L
-                        mediaSessionCallback?.updateMetadata(title, duration)
+                        val thumbnail = (call.argument("thumbnail") as? String)
+                        mediaSessionCallback?.updateMetadata(title, duration, thumbnail)
                         result.success(true)
                     }
                     "updatePlaybackState" -> {

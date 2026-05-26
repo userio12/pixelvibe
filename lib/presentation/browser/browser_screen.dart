@@ -300,7 +300,62 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> with TickerProvid
         );
       case ViewMode.tree:
         return _buildFolderTree(context);
+      case ViewMode.albums:
+        return _buildAlbumsView(context);
     }
+  }
+
+  Widget _buildAlbumsView(BuildContext context) {
+    final foldersAsync = ref.watch(folderListProvider);
+    final videosAsync = ref.watch(browserProvider);
+    return foldersAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Error', subtitle: e.toString()),
+      data: (folders) {
+        if (folders.isEmpty) {
+          return const EmptyState(icon: Icons.folder_open, title: 'No folders', subtitle: 'Scan your device first');
+        }
+        return videosAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, _) => const SizedBox.shrink(),
+          data: (videos) {
+            return GridView.builder(
+              padding: const EdgeInsets.all(8),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.85,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemCount: folders.length + 1,
+              itemBuilder: (_, i) {
+                if (i == 0) {
+                  return _AlbumCard(
+                    name: 'All Videos',
+                    count: videos.length,
+                    thumbnailPath: videos.isNotEmpty ? videos.first.thumbnailPath : null,
+                    onTap: () => ref.read(viewModeProvider.notifier).update(ViewMode.grid),
+                  );
+                }
+                final dir = folders[i - 1];
+                final count = videos.where((v) => v.directory == dir).length;
+                final firstVideo = videos.firstWhere((v) => v.directory == dir, orElse: () => MediaFile(path: '', name: '', extension: '', sizeBytes: 0, durationMs: 0));
+                return _AlbumCard(
+                  name: dir.split('/').last,
+                  subtitle: dir,
+                  count: count,
+                  thumbnailPath: firstVideo.thumbnailPath,
+                  onTap: () {
+                    ref.read(currentDirectoryProvider.notifier).enter(dir);
+                    ref.read(viewModeProvider.notifier).update(ViewMode.grid);
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildFolderTree(BuildContext context) {
@@ -397,6 +452,68 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> with TickerProvid
         );
       }
     }
+  }
+}
+
+class _AlbumCard extends StatelessWidget {
+  final String name;
+  final String? subtitle;
+  final int count;
+  final String? thumbnailPath;
+  final VoidCallback onTap;
+
+  const _AlbumCard({
+    required this.name,
+    this.subtitle,
+    required this.count,
+    this.thumbnailPath,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Container(
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Center(
+                  child: thumbnailPath != null
+                      ? Image.file(
+                          File(thumbnailPath!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Icon(
+                            Icons.photo_library_outlined,
+                            size: 48,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        )
+                      : Icon(
+                          Icons.photo_library_outlined,
+                          size: 48,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+              child: Text(name, style: theme.textTheme.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: Text('$count videos', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

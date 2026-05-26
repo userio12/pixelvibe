@@ -1,4 +1,4 @@
-enum ViewMode { grid, list, tree }
+enum ViewMode { grid, list, tree, albums }
 
 enum SortMode { name, date, size, type }
 

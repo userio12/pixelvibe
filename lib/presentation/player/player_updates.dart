@@ -60,3 +60,15 @@ class ShowText extends PlayerUpdates {
 
   const ShowText(this.message);
 }
+
+class ABLoopUpdate extends PlayerUpdates {
+  final bool active;
+
+  const ABLoopUpdate(this.active);
+}
+
+class WatchedUpdate extends PlayerUpdates {
+  final String label;
+
+  const WatchedUpdate(this.label);
+}

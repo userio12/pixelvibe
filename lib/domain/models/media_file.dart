@@ -8,6 +8,7 @@ class MediaFile {
   final int? height;
   final String? thumbnailPath;
   final DateTime? lastModified;
+  final bool watched;
 
   const MediaFile({
     required this.path,
@@ -19,6 +20,7 @@ class MediaFile {
     this.height,
     this.thumbnailPath,
     this.lastModified,
+    this.watched = false,
   });
 
   String get directory {

@@ -8,30 +8,90 @@ import 'presentation/player/player_screen.dart';
 import 'presentation/playlist/playlist_list_screen.dart';
 import 'presentation/settings/settings_screen.dart';
 import 'presentation/settings/settings_provider.dart';
+import 'core/di/providers.dart';
 import 'services/app_localizations.dart';
+import 'services/logger.dart';
+import 'services/update_checker.dart';
 
-class PixelvibeApp extends ConsumerWidget {
+class PixelvibeApp extends ConsumerStatefulWidget {
   const PixelvibeApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    final useDynamicColor = ref.watch(dynamicColorProvider);
-    final useAmoled = ref.watch(amoledModeProvider);
-    final contrast = ref.watch(contrastLevelProvider);
-    final router = AppRouter(
+  ConsumerState<PixelvibeApp> createState() => _PixelvibeAppState();
+}
+
+class _PixelvibeAppState extends ConsumerState<PixelvibeApp> {
+  late final AppRouter _appRouter;
+  bool _deepLinkInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _appRouter = AppRouter(
       browseScreen: const BrowserScreen(),
       playlistsScreen: const PlaylistListScreen(),
       settingsScreen: const SettingsScreen(),
       playerScreenBuilder: (filePath) => PlayerScreen(filePath: filePath),
     );
+    _checkUpdate();
+    _initDeepLinks();
+  }
+
+  Future<void> _checkUpdate() async {
+    if (!ref.read(preferencesServiceProvider).getAutoUpdateCheck()) return;
+    final checker = UpdateChecker();
+    final update = await checker.check();
+    if (update == null || !mounted) return;
+    showUpdateDialog(context, update);
+  }
+
+  Future<void> _initDeepLinks() async {
+    if (_deepLinkInitialized) return;
+    _deepLinkInitialized = true;
+    try {
+      final s = ref.read(deepLinkServiceProvider);
+      s.onLink = (uri) {
+        if (!mounted) return;
+        final videoUrl = _extractVideoUrl(uri);
+        if (videoUrl != null) {
+          _appRouter.router.go('/player/${Uri.encodeComponent(videoUrl)}');
+        }
+      };
+      await s.init();
+    } catch (e) {
+      Logger.error('DeepLink init', e);
+    }
+  }
+
+  String? _extractVideoUrl(String uri) {
+    final parsed = Uri.tryParse(uri);
+    if (parsed == null) return null;
+    if (parsed.scheme == 'pixelvibe' && parsed.host == 'play') {
+      return parsed.queryParameters['url'];
+    }
+    if (parsed.scheme == 'http' || parsed.scheme == 'https') {
+      final path = parsed.path;
+      final videoExts = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.flv', '.wmv', '.m4v'];
+      if (videoExts.any((e) => path.endsWith(e))) {
+        return uri;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeModeProvider);
+    final useDynamicColor = ref.watch(dynamicColorProvider);
+    final useAmoled = ref.watch(amoledModeProvider);
+    final contrast = ref.watch(contrastLevelProvider);
     return MaterialApp.router(
       title: 'pixelvibe',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(useDynamicColor: useDynamicColor, useAmoled: useAmoled, contrast: contrast),
       darkTheme: AppTheme.dark(useDynamicColor: useDynamicColor, useAmoled: useAmoled, contrast: contrast),
       themeMode: themeMode,
-      routerConfig: router.router,
+      routerConfig: _appRouter.router,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

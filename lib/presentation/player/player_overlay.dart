@@ -42,6 +42,8 @@ class PlayerOverlayNotifier extends Notifier<PlayerUpdates> {
     RepeatModeChange _ => 1500,
     ShuffleChange _ => 1500,
     FrameInfo _ => 10000,
+    ABLoopUpdate _ => 1500,
+    WatchedUpdate _ => 1500,
     None _ => 0,
   };
 }
@@ -72,6 +74,10 @@ class PlayerOverlay extends ConsumerWidget {
         _TextOverlay(text: 'Frame $frame / $totalFrames', colors: colors),
       ShowText(:final message) =>
         _TextOverlay(text: message, colors: colors),
+      ABLoopUpdate(:final active) =>
+        _TextOverlay(text: active ? 'A-B Loop: On' : 'A-B Loop: Off', colors: colors),
+      WatchedUpdate(:final label) =>
+        _TextOverlay(text: label, colors: colors),
     };
   }
 }

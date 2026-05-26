@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
 import '../../core/di/providers.dart';
 import '../../utils/platform_helper.dart';
 import '../player/playlist_queue_provider.dart';
+import '../player/player_provider.dart';
 
 final themeModeProvider = NotifierProvider.autoDispose<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
 class ThemeModeNotifier extends Notifier<ThemeMode> {
@@ -165,5 +167,79 @@ class ShowTimeRemainingNotifier extends Notifier<bool> {
   void toggle() {
     state = !state;
     ref.read(preferencesServiceProvider).setShowTimeRemaining(state);
+  }
+}
+
+enum SeekbarStyle { standard, wavy, thick }
+
+final seekbarStyleProvider = NotifierProvider.autoDispose<SeekbarStyleNotifier, SeekbarStyle>(
+  SeekbarStyleNotifier.new,
+);
+class SeekbarStyleNotifier extends Notifier<SeekbarStyle> {
+  @override
+  SeekbarStyle build() {
+    final v = ref.watch(preferencesServiceProvider).getSeekbarStyle();
+    return SeekbarStyle.values.firstWhere((e) => e.name == v, orElse: () => SeekbarStyle.standard);
+  }
+
+  Future<void> update(SeekbarStyle style) async {
+    state = style;
+    await ref.read(preferencesServiceProvider).setSeekbarStyle(style.name);
+  }
+}
+
+final audioBackgroundProvider = NotifierProvider.autoDispose<AudioBackgroundNotifier, bool>(
+  AudioBackgroundNotifier.new,
+);
+class AudioBackgroundNotifier extends Notifier<bool> {
+  @override
+  bool build() => ref.watch(preferencesServiceProvider).getAudioBackground();
+  Future<void> toggle() async {
+    state = !state;
+    await ref.read(preferencesServiceProvider).setAudioBackground(state);
+  }
+}
+
+final volumeNormalizationProvider = NotifierProvider.autoDispose<VolumeNormalizationNotifier, bool>(
+  VolumeNormalizationNotifier.new,
+);
+class VolumeNormalizationNotifier extends Notifier<bool> {
+  @override
+  bool build() => ref.watch(preferencesServiceProvider).getVolumeNormalization();
+  Future<void> toggle() async {
+    state = !state;
+    await ref.read(preferencesServiceProvider).setVolumeNormalization(state);
+    _apply();
+  }
+  void _apply() {
+    final player = ref.read(playerProvider);
+    if (player.platform is NativePlayer) {
+      (player.platform as NativePlayer).setProperty(
+        'af',
+        state ? 'dynaudnorm' : '',
+      );
+    }
+  }
+}
+
+final audioChannelsProvider = NotifierProvider.autoDispose<AudioChannelsNotifier, String>(
+  AudioChannelsNotifier.new,
+);
+class AudioChannelsNotifier extends Notifier<String> {
+  @override
+  String build() => ref.watch(preferencesServiceProvider).getAudioChannels();
+  Future<void> update(String v) async {
+    state = v;
+    await ref.read(preferencesServiceProvider).setAudioChannels(v);
+    _apply();
+  }
+  void _apply() {
+    final player = ref.read(playerProvider);
+    if (player.platform is NativePlayer) {
+      (player.platform as NativePlayer).setProperty(
+        'audio-channels',
+        state,
+      );
+    }
   }
 }
