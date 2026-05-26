@@ -12,6 +12,7 @@ import 'filter_sheet.dart';
 import 'filter_presets.dart';
 import 'subtitle_settings_sheet.dart';
 import 'subtitle_search_sheet.dart';
+import '../ambient_glow.dart';
 
 class PlayerMoreSheet extends ConsumerWidget {
   const PlayerMoreSheet({super.key});
@@ -113,6 +114,7 @@ class PlayerMoreSheet extends ConsumerWidget {
                     );
                   },
                 ),
+                _AmbientTile(),
                 const Divider(),
                 _OptionTile(
                   icon: Icons.screenshot,
@@ -153,6 +155,20 @@ class PlayerMoreSheet extends ConsumerWidget {
         );
       }
     }
+  }
+}
+
+class _AmbientTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(ambientModeProvider);
+    return SwitchListTile(
+      secondary: Icon(on ? Icons.blur_on : Icons.blur_on_outlined),
+      title: const Text('Ambient Mode'),
+      subtitle: Text(on ? 'Glow effect around video' : 'Off'),
+      value: on,
+      onChanged: (_) => ref.read(ambientModeProvider.notifier).toggle(),
+    );
   }
 }
 

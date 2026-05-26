@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import '../../core/di/providers.dart';
+import '../../domain/models/mpv_profile.dart';
+import '../../services/preferences_service.dart';
 import 'player_provider.dart';
 
 // ── Hwdec profile ──────────────────────────────────────────────────
@@ -233,6 +236,147 @@ class HrSeekNotifier extends Notifier<bool> {
         'hr-seek',
         state ? 'yes' : 'no',
       );
+    }
+  }
+}
+
+// ── Built-in MPV profiles ───────────────────────────────────────────
+const builtInProfiles = <MpvProfile>[
+  MpvProfile(
+    name: 'Default',
+    isBuiltIn: true,
+    properties: {
+      'hwdec': 'auto',
+      'gpu-api': 'auto',
+      'vf': '',
+      'glsl-shaders': '',
+      'brightness': '0',
+      'contrast': '0',
+      'saturation': '0',
+      'gamma': '0',
+      'hr-seek': 'yes',
+      'subs-with-subs': 'yes',
+    },
+  ),
+  MpvProfile(
+    name: 'High Performance',
+    isBuiltIn: true,
+    properties: {
+      'hwdec': 'mediacodec',
+      'gpu-api': 'opengl',
+      'vf': '',
+      'glsl-shaders': '',
+      'brightness': '0',
+      'contrast': '0',
+      'saturation': '0',
+      'gamma': '0',
+      'hr-seek': 'no',
+      'subs-with-subs': 'yes',
+    },
+  ),
+  MpvProfile(
+    name: 'High Quality',
+    isBuiltIn: true,
+    properties: {
+      'hwdec': 'auto',
+      'gpu-api': 'vulkan',
+      'vf': 'deband',
+      'glsl-shaders': 'Anime4K_Restore_CNN_L.glsl',
+      'brightness': '0',
+      'contrast': '0',
+      'saturation': '0',
+      'gamma': '0',
+      'hr-seek': 'yes',
+      'subs-with-subs': 'yes',
+    },
+  ),
+  MpvProfile(
+    name: 'Software (compat)',
+    isBuiltIn: true,
+    properties: {
+      'hwdec': 'no',
+      'gpu-api': 'auto',
+      'vf': '',
+      'glsl-shaders': '',
+      'brightness': '0',
+      'contrast': '0',
+      'saturation': '0',
+      'gamma': '0',
+      'hr-seek': 'yes',
+      'subs-with-subs': 'yes',
+    },
+  ),
+];
+
+// ── Helper: read all profiles (built-in + custom) ───────────────────
+List<MpvProfile> _loadProfiles(PreferencesService prefs) {
+  final customJson = prefs.getMpvProfiles();
+  final custom = (jsonDecode(customJson) as List)
+      .cast<Map<String, dynamic>>()
+      .map(MpvProfile.fromJson)
+      .toList();
+  return [...builtInProfiles, ...custom];
+}
+
+Future<void> _saveProfiles(PreferencesService prefs, List<MpvProfile> customOnly) async {
+  final json = jsonEncode(customOnly.map((p) => p.toJson()).toList());
+  await prefs.setMpvProfiles(json);
+}
+
+// ── MPV profile selector ────────────────────────────────────────────
+final mpvProfileProvider = NotifierProvider.autoDispose<MpvProfileNotifier, String>(MpvProfileNotifier.new);
+
+class MpvProfileNotifier extends Notifier<String> {
+  @override
+  String build() => ref.watch(preferencesServiceProvider).getMpvActiveProfile();
+
+  List<MpvProfile> get allProfiles => _loadProfiles(ref.read(preferencesServiceProvider));
+
+  Future<void> select(String name) async {
+    final prefs = ref.read(preferencesServiceProvider);
+    final profiles = _loadProfiles(prefs);
+    final profile = profiles.firstWhere((p) => p.name == name);
+    state = name;
+    await prefs.setMpvActiveProfile(name);
+    _apply(profile);
+  }
+
+  void _apply(MpvProfile profile) {
+    final player = ref.read(playerProvider);
+    if (player.platform is! NativePlayer) return;
+    final native = player.platform as NativePlayer;
+    for (final entry in profile.properties.entries) {
+      native.setProperty(entry.key, entry.value);
+    }
+  }
+
+  Future<void> saveCurrentAs(String name) async {
+    final prefs = ref.read(preferencesServiceProvider);
+    final properties = <String, String>{
+      'hwdec': ref.read(hwdecProvider),
+      'gpu-api': ref.read(gpuApiProvider),
+      'vf': filterPresetMap[ref.read(filterPresetProvider)] ?? '',
+      'glsl-shaders': ref.read(shaderPresetProvider),
+      'brightness': ref.read(videoBrightnessProvider).toString(),
+      'contrast': ref.read(videoContrastProvider).toString(),
+      'saturation': ref.read(videoSaturationProvider).toString(),
+      'gamma': ref.read(videoGammaProvider).toString(),
+      'hr-seek': ref.read(hrSeekProvider) ? 'yes' : 'no',
+      'subs-with-subs': ref.read(screenshotSubsProvider) ? 'yes' : 'no',
+    };
+    final custom = [..._loadProfiles(prefs).where((p) => !p.isBuiltIn), MpvProfile(name: name, properties: properties)];
+    await _saveProfiles(prefs, custom.where((p) => !p.isBuiltIn).toList());
+    state = name;
+    await prefs.setMpvActiveProfile(name);
+  }
+
+  Future<void> deleteCustom(String name) async {
+    final prefs = ref.read(preferencesServiceProvider);
+    final custom = _loadProfiles(prefs).where((p) => !p.isBuiltIn && p.name != name).toList();
+    await _saveProfiles(prefs, custom);
+    if (state == name) {
+      state = 'Default';
+      await prefs.setMpvActiveProfile('Default');
     }
   }
 }

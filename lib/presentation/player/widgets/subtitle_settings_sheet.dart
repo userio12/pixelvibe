@@ -138,6 +138,12 @@ class SubtitleSettingsSheet extends ConsumerWidget {
                   value: ref.watch(autoloadSubtitlesProvider),
                   onChanged: (_) => ref.read(autoloadSubtitlesProvider.notifier).toggle(),
                 ),
+                SwitchListTile(
+                  title: const Text('Smart subtitle auto-select'),
+                  subtitle: const Text('Auto-pick English subs for anime (Japanese audio)'),
+                  value: ref.watch(smartSubtitleAutoSelectProvider),
+                  onChanged: (_) => ref.read(smartSubtitleAutoSelectProvider.notifier).toggle(),
+                ),
               ],
             ),
           ),

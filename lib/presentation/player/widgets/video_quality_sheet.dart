@@ -20,6 +20,10 @@ class VideoQualitySheet extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.only(bottom: 16),
             children: [
+              _SectionHeader(title: 'Profile'),
+              _ProfileTile(),
+              const Divider(height: 24),
+
               _SectionHeader(title: 'Decoder'),
               _HwdecTile(),
               _GpuApiTile(),
@@ -80,6 +84,82 @@ class _SectionHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Text(title, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary)),
+    );
+  }
+}
+
+// ── Profile ─────────────────────────────────────────────────────────
+class _ProfileTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.watch(mpvProfileProvider.notifier);
+    final activeName = ref.watch(mpvProfileProvider);
+    final profiles = notifier.allProfiles;
+
+    Future<void> saveAs() async {
+      final ctl = TextEditingController();
+      final name = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Save as profile'),
+          content: TextField(
+            controller: ctl,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Profile name'),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.of(ctx).pop(ctl.text.trim()), child: const Text('Save')),
+          ],
+        ),
+      );
+      if (name != null && name.isNotEmpty) {
+        await ref.read(mpvProfileProvider.notifier).saveCurrentAs(name);
+      }
+    }
+
+    return ListTile(
+      title: const Text('MPV profile'),
+      subtitle: Text(activeName, style: Theme.of(context).textTheme.bodySmall),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (profiles.any((p) => !p.isBuiltIn && p.name == activeName))
+            IconButton(
+              icon: const Icon(Icons.delete_outline, size: 20),
+              onPressed: () => ref.read(mpvProfileProvider.notifier).deleteCustom(activeName),
+              tooltip: 'Delete profile',
+            ),
+          DropdownButton<String>(
+            value: activeName,
+            items: profiles
+                .map((p) => DropdownMenuItem(
+                      value: p.name,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(p.name),
+                          if (p.isBuiltIn)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 6),
+                              child: Icon(Icons.lock_outline, size: 14,
+                                  color: Theme.of(context).colorScheme.outline),
+                            ),
+                        ],
+                      ),
+                    ))
+                .toList(),
+            onChanged: (v) {
+              if (v != null) ref.read(mpvProfileProvider.notifier).select(v);
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.save_outlined, size: 20, color: Theme.of(context).colorScheme.primary),
+            onPressed: saveAs,
+            tooltip: 'Save current settings as new profile',
+          ),
+        ],
+      ),
     );
   }
 }

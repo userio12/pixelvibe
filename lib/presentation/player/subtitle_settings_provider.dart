@@ -221,6 +221,20 @@ class SubtitleAssOverrideNotifier extends Notifier<bool> {
   }
 }
 
+// ── Smart subtitle auto-select ──────────────────────────────────────
+final smartSubtitleAutoSelectProvider = NotifierProvider.autoDispose<SmartSubtitleAutoSelectNotifier, bool>(
+  SmartSubtitleAutoSelectNotifier.new,
+);
+
+class SmartSubtitleAutoSelectNotifier extends Notifier<bool> {
+  @override
+  bool build() => ref.watch(preferencesServiceProvider).getBool('smart_subtitle_auto_select', true);
+  void toggle() {
+    state = !state;
+    ref.read(preferencesServiceProvider).setBool('smart_subtitle_auto_select', state);
+  }
+}
+
 // --- Builder: converts all providers into a SubtitleViewConfiguration ---
 
 final subtitleViewConfigProvider = Provider.autoDispose<SubtitleViewConfiguration>((ref) {

@@ -239,4 +239,13 @@ class PreferencesService {
   static const _hrSeek = 'hr_seek';
   bool getHrSeek() => _prefs.getBool(_hrSeek) ?? true;
   Future<void> setHrSeek(bool v) => _prefs.setBool(_hrSeek, v);
+
+  // MPV profiles
+  static const _mpvActiveProfile = 'mpv_active_profile';
+  String getMpvActiveProfile() => _prefs.getString(_mpvActiveProfile) ?? 'Default';
+  Future<void> setMpvActiveProfile(String v) => _prefs.setString(_mpvActiveProfile, v);
+
+  static const _mpvProfiles = 'mpv_profiles';
+  String getMpvProfiles() => _prefs.getString(_mpvProfiles) ?? '[]';
+  Future<void> setMpvProfiles(String v) => _prefs.setString(_mpvProfiles, v);
 }

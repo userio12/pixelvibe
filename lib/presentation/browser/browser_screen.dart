@@ -17,6 +17,7 @@ import 'widgets/video_grid_tile.dart';
 import 'widgets/video_list_tile.dart';
 import 'widgets/folder_list_tile.dart';
 import 'widgets/empty_state.dart';
+import 'widgets/file_context_menu.dart';
 
 class BrowserScreen extends ConsumerStatefulWidget {
   const BrowserScreen({super.key});
@@ -55,6 +56,14 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> with TickerProvid
         _selectionMode = true;
       }
     });
+  }
+
+  void _onFileLongPress(MediaFile file) {
+    if (_selectionMode) {
+      _toggleSelection(file);
+    } else {
+      FileContextMenu.show(context, ref, file);
+    }
   }
 
   void _exitSelectionMode() {
@@ -284,7 +293,7 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> with TickerProvid
             file: videos[i],
             selected: _selectionMode && _selectedFiles.contains(videos[i]),
             onTap: () => _onFileTap(context, videos[i]),
-            onLongPress: () => _toggleSelection(videos[i]),
+            onLongPress: () => _onFileLongPress(videos[i]),
           ),
         );
       case ViewMode.list:
@@ -295,7 +304,7 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> with TickerProvid
             file: videos[i],
             selected: _selectionMode && _selectedFiles.contains(videos[i]),
             onTap: () => _onFileTap(context, videos[i]),
-            onLongPress: () => _toggleSelection(videos[i]),
+            onLongPress: () => _onFileLongPress(videos[i]),
           ),
         );
       case ViewMode.tree:

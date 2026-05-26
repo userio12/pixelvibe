@@ -1,25 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
+import '../../../core/di/providers.dart';
+import '../../../services/logger.dart';
+import '../../../services/subtitle_api_service.dart';
+import '../player_provider.dart';
 
 final subtitleSearchResultsProvider = FutureProvider.autoDispose.family<List<OnlineSubtitle>, String>((ref, query) async {
-  return [];
+  final apiKey = ref.watch(preferencesServiceProvider).getString('opensubtitles_api_key', '');
+  if (apiKey.isEmpty) return [];
+  final service = SubtitleApiService(apiKey);
+  return service.search(query);
 });
-
-class OnlineSubtitle {
-  final String name;
-  final String url;
-  final String language;
-  final String format;
-  final String? downloads;
-
-  const OnlineSubtitle({
-    required this.name,
-    required this.url,
-    required this.language,
-    required this.format,
-    this.downloads,
-  });
-}
 
 class SubtitleSearchSheet extends ConsumerStatefulWidget {
   const SubtitleSearchSheet({super.key});
@@ -31,11 +23,44 @@ class SubtitleSearchSheet extends ConsumerStatefulWidget {
 class _SubtitleSearchSheetState extends ConsumerState<SubtitleSearchSheet> {
   final _queryController = TextEditingController();
   String _query = '';
+  bool _isDownloading = false;
 
   @override
   void dispose() {
     _queryController.dispose();
     super.dispose();
+  }
+
+  Future<void> _downloadAndLoad(OnlineSubtitle sub) async {
+    setState(() => _isDownloading = true);
+    try {
+      final apiKey = ref.read(preferencesServiceProvider).getString('opensubtitles_api_key', '');
+      final service = SubtitleApiService(apiKey);
+      final path = await service.download(sub.fileId);
+      if (path == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to download subtitle')),
+        );
+        return;
+      }
+      if (!mounted) return;
+      final player = ref.read(playerProvider);
+      await player.setSubtitleTrack(SubtitleTrack.uri(path));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Loaded: ${sub.fileName}')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      Logger.error('Subtitle download error', e);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error downloading subtitle')),
+      );
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
   }
 
   @override
@@ -80,7 +105,7 @@ class _SubtitleSearchSheetState extends ConsumerState<SubtitleSearchSheet> {
                         const SizedBox(height: 16),
                         Text('Enter a filename to search', style: theme.textTheme.bodyMedium),
                         const SizedBox(height: 8),
-                        Text('Powered by subdl.com + opensubtitles', style: theme.textTheme.bodySmall),
+                        Text('Powered by OpenSubtitles', style: theme.textTheme.bodySmall),
                       ],
                     ),
                   )
@@ -89,26 +114,36 @@ class _SubtitleSearchSheetState extends ConsumerState<SubtitleSearchSheet> {
                     error: (e, _) => Center(child: Text('Search failed: $e')),
                     data: (list) {
                       if (list.isEmpty) {
-                        return Center(child: Text('No subtitles found for "$_query"', style: theme.textTheme.bodyMedium));
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('No subtitles found for "$_query"', style: theme.textTheme.bodyMedium),
+                              const SizedBox(height: 8),
+                              Text('Try a shorter filename', style: theme.textTheme.bodySmall),
+                            ],
+                          ),
+                        );
                       }
-                      return ListView.builder(
-                        controller: scrollCtrl,
-                        itemCount: list.length,
-                        itemBuilder: (_, i) {
-                          final sub = list[i];
-                          return ListTile(
-                            leading: const Icon(Icons.subtitles),
-                            title: Text(sub.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                            subtitle: Text('${sub.language} · ${sub.format}'),
-                            trailing: const Icon(Icons.download_outlined),
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Downloaded: ${sub.name}')),
+                      return Stack(
+                        children: [
+                          ListView.builder(
+                            controller: scrollCtrl,
+                            itemCount: list.length,
+                            itemBuilder: (_, i) {
+                              final sub = list[i];
+                              return ListTile(
+                                leading: const Icon(Icons.subtitles),
+                                title: Text(sub.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                subtitle: Text('${sub.language} · ${sub.format} · ${sub.downloads} downloads'),
+                                trailing: _isDownloading
+                                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                                    : const Icon(Icons.download_outlined),
+                                onTap: _isDownloading ? null : () => _downloadAndLoad(sub),
                               );
-                              Navigator.of(context).pop();
                             },
-                          );
-                        },
+                          ),
+                        ],
                       );
                     },
                   ),

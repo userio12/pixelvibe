@@ -19,6 +19,7 @@ import 'ab_loop_provider.dart';
 import 'control_layout_provider.dart';
 import 'player_button.dart';
 import 'player_provider.dart';
+import 'subtitle_settings_provider.dart';
 import 'video_quality_provider.dart';
 import 'player_overlay.dart';
 import 'player_updates.dart';
@@ -32,6 +33,7 @@ import 'widgets/resume_dialog.dart';
 import 'widgets/sleep_timer_sheet.dart';
 import 'widgets/video_quality_sheet.dart';
 import 'widgets/player_more_sheet.dart';
+import 'widgets/audio_track_sheet.dart';
 import 'widgets/volume_slider.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
@@ -50,6 +52,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   StreamSubscription? _playingSub;
   StreamSubscription? _noisySub;
   StreamSubscription? _audioFocusSub;
+  StreamSubscription? _tracksSub;
   bool _controlsVisible = true;
   bool _seekBarVisible = true;
   bool _wasPlayingBeforePip = false;
@@ -79,6 +82,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _playingSub?.cancel();
     _noisySub?.cancel();
     _audioFocusSub?.cancel();
+    _tracksSub?.cancel();
     PlayerOrientation.reset();
     ref.read(backgroundServiceProvider).stopService();
     super.dispose();
@@ -90,6 +94,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     player.open(Media(widget.filePath, httpHeaders: headers), play: true);
     _applyPlayerConfig(player);
     _autoloadSubtitle(player);
+    _setupSmartSubtitle(player);
   }
 
   Map<String, String>? _parseHttpHeaders() {
@@ -122,6 +127,31 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         player.setSubtitleTrack(SubtitleTrack.uri(subPath));
         break;
       } catch (_) {}
+    }
+  }
+
+  void _setupSmartSubtitle(Player player) {
+    if (!ref.read(smartSubtitleAutoSelectProvider)) return;
+    _tracksSub?.cancel();
+    _tracksSub = player.stream.tracks.listen((tracks) {
+      if (!mounted || tracks.audio.isEmpty) return;
+      _tracksSub?.cancel();
+      _autoSelectSubtitle(player, tracks);
+    });
+  }
+
+  void _autoSelectSubtitle(Player player, Tracks tracks) {
+    final audioLang = tracks.audio.firstOrNull?.language ?? '';
+    final isAnime = audioLang == 'ja' || audioLang == 'jpn' || audioLang == 'jap';
+    if (!isAnime) return;
+    if (player.platform is! NativePlayer) return;
+    final native = player.platform as NativePlayer;
+    for (final sub in tracks.subtitle) {
+      final lang = (sub.language ?? '').toLowerCase();
+      if (lang.startsWith('en')) {
+        native.setProperty('sid', sub.id.toString());
+        return;
+      }
     }
   }
 
@@ -798,7 +828,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     );
   }
 
-  void _showAudioTrackSheet() {}
+  void _showAudioTrackSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => AudioTrackSheet(filePath: widget.filePath),
+    );
+  }
   void _showChapterSheet() {}
   void _showAspectRatioSheet() {}
   void _showZoomSheet() {}
