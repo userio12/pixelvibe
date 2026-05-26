@@ -1,7 +1,3 @@
-plugins {
-    id("org.jlleitschuh.gradle.ktlint") version "12.2.0" apply false
-}
-
 allprojects {
     repositories {
         google()
