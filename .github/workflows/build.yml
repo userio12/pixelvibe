@@ -19,8 +19,19 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
 
-  test:
+  kotlin-check:
     needs: analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41'
+          channel: 'stable'
+      - run: ./gradlew ktlintCheck lint
+
+  test:
+    needs: kotlin-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,8 +42,19 @@ jobs:
       - run: flutter pub get
       - run: flutter test
 
-  build-apks:
+  kotlin-test:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41'
+          channel: 'stable'
+      - run: ./gradlew test
+
+  build-apks:
+    needs: kotlin-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,3 +81,26 @@ jobs:
         with:
           name: pixelvibe-armeabi-v7a-${{ github.sha }}
           path: build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk
+
+  reports:
+    if: always()
+    needs: build-apks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41'
+          channel: 'stable'
+      - name: Upload lint reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: |
+            android/app/build/reports/lint-results-*.xml
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            android/app/build/reports/tests/
