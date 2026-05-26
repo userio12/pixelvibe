@@ -1,20 +1,20 @@
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 import '../../core/di/platform_providers.dart';
 import '../../core/di/providers.dart';
 import '../../presentation/playlist/widgets/add_to_playlist_sheet.dart';
+import '../../services/logger.dart';
 import '../../utils/permissions/permission_handler.dart';
 import '../settings/settings_provider.dart';
 import 'player_provider.dart';
-import 'widgets/frame_navigation_controls.dart';
 import 'widgets/media_info_sheet.dart';
-import 'widgets/player_controls.dart';
+import 'widgets/player_controls_bar.dart';
+import 'widgets/player_video_area.dart';
 import 'widgets/resume_dialog.dart';
-import 'widgets/seek_bar.dart';
 import 'widgets/volume_slider.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
@@ -86,7 +86,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
           );
         }
       } catch (e) {
-        debugPrint('Save position error: $e');
+        Logger.error('Save position error', e);
       }
     });
   }
@@ -99,12 +99,15 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         null,
       );
     } catch (e) {
-      debugPrint('Record recently played error: $e');
+      Logger.error('Record recently played error', e);
     }
   }
 
   void _toggleControls() {
-    setState(() => _controlsVisible = !_controlsVisible);
+    setState(() {
+      _controlsVisible = !_controlsVisible;
+      if (_controlsVisible) HapticFeedback.lightImpact();
+    });
     if (_controlsVisible) _startHideTimer();
   }
 
@@ -166,7 +169,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         await player.seek(Duration(milliseconds: state.positionMs));
       }
     } catch (e) {
-      debugPrint('Resume check error: $e');
+      Logger.error('Resume check error', e);
     }
   }
 
@@ -219,12 +222,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final player = ref.watch(playerProvider);
-    final position = ref.watch(playerPositionProvider).asData?.value ?? Duration.zero;
-    final duration = ref.watch(playerDurationProvider).asData?.value ?? Duration.zero;
     final isPlaying = ref.watch(playerIsPlayingProvider).asData?.value ?? false;
-    final volume = ref.watch(playerVolumeProvider).asData?.value ?? 1.0;
-    final buffer = ref.watch(playerBufferProvider).asData?.value ?? Duration.zero;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -241,23 +239,33 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         },
         child: Stack(
           children: [
-            Positioned.fill(
-              child: Video(controller: VideoController(player)),
+            const Positioned.fill(child: PlayerVideoArea()),
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 4,
+              left: 0,
+              right: 0,
+              child: AnimatedOpacity(
+                opacity: _controlsVisible ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: IgnorePointer(
+                  ignoring: !_controlsVisible,
+                  child: _buildTopBar(context),
+                ),
+              ),
             ),
-            if (_controlsVisible) ...[
-              Positioned(
-                top: MediaQuery.of(context).padding.top + 4,
-                left: 0,
-                right: 0,
-                child: _buildTopBar(context),
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+              left: 0,
+              right: 0,
+              child: AnimatedOpacity(
+                opacity: _controlsVisible ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: IgnorePointer(
+                  ignoring: !_controlsVisible,
+                  child: PlayerControlsBar(isPlaying: isPlaying),
+                ),
               ),
-              Positioned(
-                bottom: MediaQuery.of(context).padding.bottom + 16,
-                left: 0,
-                right: 0,
-                child: _buildBottomBar(context, position, duration, isPlaying, volume, buffer),
-              ),
-            ],
+            ),
           ],
         ),
       ),
@@ -271,15 +279,18 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
+            tooltip: 'Close player',
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           const Spacer(),
           IconButton(
             icon: const Icon(Icons.info_outline, color: Colors.white),
+            tooltip: 'Media info',
             onPressed: _showMediaInfo,
           ),
           IconButton(
             icon: const Icon(Icons.playlist_add, color: Colors.white),
+            tooltip: 'Add to playlist',
             onPressed: _showAddToPlaylist,
           ),
           IconButton(
@@ -289,71 +300,23 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.picture_in_picture_alt, color: Colors.white),
+            tooltip: 'Picture-in-picture',
             onPressed: _enterPip,
           ),
           const SizedBox(width: 8),
-          VolumeSlider(
-            volume: ref.watch(playerVolumeProvider).asData?.value ?? 1.0,
-            onChanged: (v) => ref.read(playerProvider).setVolume(v),
+          Consumer(
+            builder: (_, ref, child) => VolumeSlider(
+              volume: ref.watch(playerVolumeProvider).asData?.value ?? 1.0,
+              onChanged: (v) => ref.read(playerProvider).setVolume(v),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBottomBar(
-    BuildContext context,
-    Duration position,
-    Duration duration,
-    bool isPlaying,
-    double volume,
-    Duration buffer,
-  ) {
-    final player = ref.read(playerProvider);
-    final bufferProgress = duration.inMilliseconds > 0
-        ? buffer.inMilliseconds / duration.inMilliseconds
-        : 0.0;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SeekBar(
-          position: position,
-          duration: duration,
-          bufferProgress: bufferProgress,
-          onSeek: (pos) => player.seek(pos),
-        ),
-        const SizedBox(height: 8),
-        PlayerControls(
-          isPlaying: isPlaying,
-          onPlayPause: () {
-            if (isPlaying) {
-              player.pause();
-            } else {
-              player.play();
-            }
-          },
-          onSkipBack: () {
-            final interval = ref.read(skipIntervalProvider);
-            _skip(-interval);
-          },
-          onSkipForward: () {
-            final interval = ref.read(skipIntervalProvider);
-            _skip(interval);
-          },
-        ),
-        if (!isPlaying) ...[
-          const SizedBox(height: 8),
-          FrameNavigationControls(
-            onStepBack: () => ref.read(frameStepProvider).stepBackward(),
-            onStepForward: () => ref.read(frameStepProvider).stepForward(),
-          ),
-        ],
-      ],
-    );
-  }
-
   void _skip(int seconds) {
+    HapticFeedback.mediumImpact();
     final player = ref.read(playerProvider);
     final current = ref.read(playerPositionProvider).asData?.value ?? Duration.zero;
     final dur = ref.read(playerDurationProvider).asData?.value ?? Duration.zero;

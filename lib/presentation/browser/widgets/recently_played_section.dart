@@ -4,7 +4,7 @@ import '../../../core/di/providers.dart';
 import '../../../data/database/app_database.dart';
 import 'package:go_router/go_router.dart';
 
-final recentItemsProvider = FutureProvider<List<RecentlyPlayedData>>((ref) {
+final recentItemsProvider = FutureProvider.autoDispose<List<RecentlyPlayedData>>((ref) {
   return ref.watch(recentlyPlayedDaoProvider).recentItems(20);
 });
 

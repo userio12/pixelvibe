@@ -13,7 +13,7 @@ class ViewModeNotifier extends Notifier<ViewMode> {
   void update(ViewMode v) => state = v;
 }
 
-final browserProvider = FutureProvider<List<MediaFile>>((ref) async {
+final browserProvider = FutureProvider.autoDispose<List<MediaFile>>((ref) async {
   final granted = await requestStoragePermission();
   if (!granted) return [];
 
@@ -21,7 +21,7 @@ final browserProvider = FutureProvider<List<MediaFile>>((ref) async {
   return repo.scanDevice();
 });
 
-final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(SearchQueryNotifier.new);
+final searchQueryProvider = NotifierProvider.autoDispose<SearchQueryNotifier, String>(SearchQueryNotifier.new);
 
 class SearchQueryNotifier extends Notifier<String> {
   Timer? _debounce;
@@ -40,7 +40,7 @@ class SearchQueryNotifier extends Notifier<String> {
   }
 }
 
-final filteredVideosProvider = FutureProvider<List<MediaFile>>((ref) async {
+final filteredVideosProvider = FutureProvider.autoDispose<List<MediaFile>>((ref) async {
   final videos = await ref.watch(browserProvider.future);
   final query = ref.watch(searchQueryProvider).toLowerCase();
   if (query.isEmpty) return videos;

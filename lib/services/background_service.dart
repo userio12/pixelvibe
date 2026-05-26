@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'logger.dart';
 
 class BackgroundService {
   static const _channel = MethodChannel('com.pixelvibe/background');
@@ -11,7 +11,7 @@ class BackgroundService {
         'content': content,
       });
     } catch (e) {
-      debugPrint('BackgroundService.startService error: $e');
+      Logger.error('BackgroundService.startService failed', e);
     }
   }
 
@@ -19,7 +19,7 @@ class BackgroundService {
     try {
       await _channel.invokeMethod('stopService');
     } catch (e) {
-      debugPrint('BackgroundService.stopService error: $e');
+      Logger.error('BackgroundService.stopService failed', e);
     }
   }
 
@@ -30,7 +30,7 @@ class BackgroundService {
         'duration': durationMs,
       });
     } catch (e) {
-      debugPrint('BackgroundService.updateMetadata error: $e');
+      Logger.error('BackgroundService.updateMetadata failed', e);
     }
   }
 
@@ -41,7 +41,7 @@ class BackgroundService {
         'position': positionMs,
       });
     } catch (e) {
-      debugPrint('BackgroundService.updatePlaybackState error: $e');
+      Logger.error('BackgroundService.updatePlaybackState failed', e);
     }
   }
 }

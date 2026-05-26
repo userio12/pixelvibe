@@ -5,7 +5,7 @@ import '../../data/database/app_database.dart';
 import 'widgets/playlist_form_dialog.dart';
 import 'package:go_router/go_router.dart';
 
-final playlistListProvider = FutureProvider<List<Playlist>>((ref) {
+final playlistListProvider = FutureProvider.autoDispose<List<Playlist>>((ref) {
   return ref.watch(playlistDaoProvider).getAllPlaylists();
 });
 
@@ -23,6 +23,7 @@ class PlaylistListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
+            tooltip: 'Create playlist',
             onPressed: () => _createPlaylist(context, ref),
           ),
         ],
@@ -80,12 +81,15 @@ class _PlaylistTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: const Icon(Icons.playlist_play),
-        title: Text(playlist.name),
-        subtitle: Text('Created ${DateTime.fromMillisecondsSinceEpoch(playlist.createdAt).toLocal().toString().split(' ')[0]}'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => context.push('/playlist-detail/${playlist.id}'),
+      child: Semantics(
+        label: playlist.name,
+        child: ListTile(
+          leading: const Icon(Icons.playlist_play),
+          title: Text(playlist.name),
+          subtitle: Text('Created ${DateTime.fromMillisecondsSinceEpoch(playlist.createdAt).toLocal().toString().split(' ')[0]}'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/playlist-detail/${playlist.id}'),
+        ),
       ),
     );
   }

@@ -38,9 +38,12 @@ class SeekBar extends StatelessWidget {
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
           ),
-          child: Slider(
-            value: progress,
-            onChanged: (v) => onSeek(Duration(milliseconds: (v * totalMs).round())),
+          child: Semantics(
+            label: 'Seek position',
+            child: Slider(
+              value: progress,
+              onChanged: (v) => onSeek(Duration(milliseconds: (v * totalMs).round())),
+            ),
           ),
         ),
         Padding(

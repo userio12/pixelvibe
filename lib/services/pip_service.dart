@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'logger.dart';
 
 class PiPService {
   static const _channel = MethodChannel('com.pixelvibe/pip');
@@ -15,7 +15,7 @@ class PiPService {
       final result = await _channel.invokeMethod<bool>('isPipSupported');
       return result ?? false;
     } catch (e) {
-      debugPrint('PiPService.isPipSupported error: $e');
+      Logger.error('PiPService.isPipSupported error', e);
       return false;
     }
   }
@@ -28,7 +28,7 @@ class PiPService {
         'playing': playing,
       });
     } catch (e) {
-      debugPrint('PiPService.enterPip error: $e');
+      Logger.error('PiPService.enterPip error', e);
     }
   }
 

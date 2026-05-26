@@ -5,11 +5,11 @@ import '../../data/database/app_database.dart';
 import '../../services/network_service.dart';
 import 'package:go_router/go_router.dart';
 
-final connectionListProvider = FutureProvider<List<NetworkConnection>>((ref) {
+final connectionListProvider = FutureProvider.autoDispose<List<NetworkConnection>>((ref) {
   return ref.watch(networkConnectionDaoProvider).getAll();
 });
 
-final networkServiceProvider = Provider<NetworkService>((ref) => NetworkService());
+final networkServiceProvider = Provider.autoDispose<NetworkService>((ref) => NetworkService());
 
 class NetworkBrowserScreen extends ConsumerWidget {
   const NetworkBrowserScreen({super.key});
@@ -25,6 +25,7 @@ class NetworkBrowserScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
+            tooltip: 'Add connection',
             onPressed: () => context.push('/network-connection-form'),
           ),
         ],
@@ -132,12 +133,15 @@ class _ConnectionTile extends ConsumerWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(connection.name),
-        subtitle: Text('${connection.protocol.toUpperCase()} · ${connection.host}:${connection.port}'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => _connect(context, ref),
+      child: Semantics(
+        label: connection.name,
+        child: ListTile(
+          leading: Icon(icon),
+          title: Text(connection.name),
+          subtitle: Text('${connection.protocol.toUpperCase()} · ${connection.host}:${connection.port}'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _connect(context, ref),
+        ),
       ),
     );
   }

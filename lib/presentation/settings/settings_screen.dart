@@ -35,48 +35,63 @@ class SettingsScreen extends ConsumerWidget {
         children: [
           _SectionHeader(title: 'Appearance'),
           _ThemeTile(themeMode: themeMode),
-          SwitchListTile(
-            title: const Text('Dynamic color'),
-            subtitle: const Text('Use Material You dynamic color'),
-            value: dynamicColor,
-            onChanged: (_) => ref.read(dynamicColorProvider.notifier).toggle(),
+          Semantics(
+            label: 'Dynamic color',
+            child: SwitchListTile(
+              title: const Text('Dynamic color'),
+              subtitle: const Text('Use Material You dynamic color'),
+              value: dynamicColor,
+              onChanged: (_) => ref.read(dynamicColorProvider.notifier).toggle(),
+            ),
           ),
           const Divider(height: 32),
 
           _SectionHeader(title: 'Playback'),
           _SpeedTile(defaultSpeed: defaultSpeed),
-          SwitchListTile(
-            title: const Text('Resume playback'),
-            subtitle: const Text('Save and resume position'),
-            value: resume,
-            onChanged: (_) => ref.read(resumePlaybackProvider.notifier).toggle(),
+          Semantics(
+            label: 'Resume playback',
+            child: SwitchListTile(
+              title: const Text('Resume playback'),
+              subtitle: const Text('Save and resume position'),
+              value: resume,
+              onChanged: (_) => ref.read(resumePlaybackProvider.notifier).toggle(),
+            ),
           ),
-          SwitchListTile(
-            title: const Text('Auto PiP'),
-            subtitle: const Text('Enter PiP when leaving the app'),
-            value: autoPip,
-            onChanged: (_) => ref.read(autoPipProvider.notifier).toggle(),
+          Semantics(
+            label: 'Auto PiP',
+            child: SwitchListTile(
+              title: const Text('Auto PiP'),
+              subtitle: const Text('Enter PiP when leaving the app'),
+              value: autoPip,
+              onChanged: (_) => ref.read(autoPipProvider.notifier).toggle(),
+            ),
           ),
-          ListTile(
-            title: const Text('Skip interval'),
-            trailing: SegmentedButton<int>(
-              segments: const [
-                ButtonSegment(value: 5, label: Text('5s')),
-                ButtonSegment(value: 10, label: Text('10s')),
-                ButtonSegment(value: 30, label: Text('30s')),
-              ],
-              selected: {skipInterval},
-              onSelectionChanged: (s) => ref.read(skipIntervalProvider.notifier).update(s.first),
-              showSelectedIcon: false,
+          Semantics(
+            label: 'Skip interval',
+            child: ListTile(
+              title: const Text('Skip interval'),
+              trailing: SegmentedButton<int>(
+                segments: const [
+                  ButtonSegment(value: 5, label: Text('5s')),
+                  ButtonSegment(value: 10, label: Text('10s')),
+                  ButtonSegment(value: 30, label: Text('30s')),
+                ],
+                selected: {skipInterval},
+                onSelectionChanged: (s) => ref.read(skipIntervalProvider.notifier).update(s.first),
+                showSelectedIcon: false,
+              ),
             ),
           ),
           const Divider(height: 32),
 
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('About pixelvibe'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/about'),
+          Semantics(
+            label: 'About pixelvibe',
+            child: ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('About pixelvibe'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/about'),
+            ),
           ),
         ],
       ),
@@ -105,17 +120,20 @@ class _ThemeTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ListTile(
-      title: const Text('Theme mode'),
-      trailing: SegmentedButton<ThemeMode>(
-        segments: const [
-          ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto)),
-          ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode)),
-          ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode)),
-        ],
-        selected: {themeMode},
-        onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).update(s.first),
-        showSelectedIcon: false,
+    return Semantics(
+      label: 'Theme mode',
+      child: ListTile(
+        title: const Text('Theme mode'),
+        trailing: SegmentedButton<ThemeMode>(
+          segments: const [
+            ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto)),
+            ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode)),
+            ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode)),
+          ],
+          selected: {themeMode},
+          onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).update(s.first),
+          showSelectedIcon: false,
+        ),
       ),
     );
   }
@@ -128,16 +146,19 @@ class _SpeedTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0];
-    return ListTile(
-      title: const Text('Default speed'),
-      subtitle: Text('${defaultSpeed}x'),
-      trailing: SizedBox(
-        width: 200,
-        child: DropdownButton<double>(
-          value: defaultSpeed,
-          isExpanded: true,
-          items: speeds.map((s) => DropdownMenuItem(value: s, child: Text('${s}x'))).toList(),
-          onChanged: (v) => ref.read(defaultSpeedProvider.notifier).update(v ?? 1.0),
+    return Semantics(
+      label: 'Default speed',
+      child: ListTile(
+        title: const Text('Default speed'),
+        subtitle: Text('${defaultSpeed}x'),
+        trailing: SizedBox(
+          width: 200,
+          child: DropdownButton<double>(
+            value: defaultSpeed,
+            isExpanded: true,
+            items: speeds.map((s) => DropdownMenuItem(value: s, child: Text('${s}x'))).toList(),
+            onChanged: (v) => ref.read(defaultSpeedProvider.notifier).update(v ?? 1.0),
+          ),
         ),
       ),
     );

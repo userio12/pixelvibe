@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'logger.dart';
 
 class ScanService {
   static const _channel = MethodChannel('com.pixelvibe/scan');
@@ -11,7 +11,7 @@ class ScanService {
       if (result == null) return [];
       return (json.decode(result) as List).cast<Map<String, dynamic>>();
     } catch (e) {
-      debugPrint('ScanService.scanVideos error: $e');
+      Logger.error('ScanService.scanVideos failed', e);
       return [];
     }
   }

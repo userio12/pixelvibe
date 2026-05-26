@@ -4,10 +4,10 @@ import '../../core/di/providers.dart';
 import '../../data/database/app_database.dart';
 import 'package:go_router/go_router.dart';
 
-final playlistDetailProvider = FutureProvider.family<PlaylistWithItems, int>((ref, id) async {
+final playlistDetailProvider = FutureProvider.autoDispose.family<PlaylistWithItems, int>((ref, id) async {
   final dao = ref.watch(playlistDaoProvider);
   final playlists = await dao.getAllPlaylists();
-  final playlist = playlists.firstWhere((p) => p.id == id);
+  final playlist = playlists.firstWhere((p) => p.id == id, orElse: () => throw Exception('Playlist not found: $id'));
   final items = await dao.getItems(id);
   return PlaylistWithItems(playlist: playlist, items: items);
 });
@@ -61,39 +61,49 @@ class PlaylistDetailScreen extends ConsumerWidget {
               return Card(
                 key: ValueKey(item.id),
                 margin: const EdgeInsets.symmetric(vertical: 4),
-                child: ListTile(
-                  leading: const Icon(Icons.movie_outlined),
-                  title: Text(item.title ?? item.filePath.split('/').last),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Remove video?'),
-                          content: Text('Remove "${item.title ?? item.filePath.split('/').last}" from this playlist?'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-                            TextButton(
-                              onPressed: () => Navigator.of(ctx).pop(true),
-                              child: const Text('Remove', style: TextStyle(color: Colors.red)),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirm != true || !context.mounted) return;
-                      await ref.read(playlistDaoProvider).deleteItem(item.id);
-                      if (!context.mounted) return;
-                      ref.invalidate(playlistDetailProvider(playlistId));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Removed from playlist')),
-                      );
+                child: Semantics(
+                  label: item.title ?? item.filePath.split('/').last,
+                  child: ListTile(
+                    leading: const Icon(Icons.movie_outlined),
+                    title: Text(item.title ?? item.filePath.split('/').last),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                      tooltip: 'Remove',
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Remove video?'),
+                            content: Text('Remove "${item.title ?? item.filePath.split('/').last}" from this playlist?'),
+                            actions: [
+                              Tooltip(
+                                message: 'Cancel',
+                                child: TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                              ),
+                              Tooltip(
+                                message: 'Remove',
+                                child: TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  child: const Text('Remove', style: TextStyle(color: Colors.red)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm != true || !context.mounted) return;
+                        await ref.read(playlistDaoProvider).deleteItem(item.id);
+                        if (!context.mounted) return;
+                        ref.invalidate(playlistDetailProvider(playlistId));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Removed from playlist')),
+                        );
+                      },
+                    ),
+                    onTap: () {
+                      final encoded = Uri.encodeComponent(item.filePath);
+                      context.push('/player/$encoded');
                     },
                   ),
-                  onTap: () {
-                    final encoded = Uri.encodeComponent(item.filePath);
-                    context.push('/player/$encoded');
-                  },
                 ),
               );
             },

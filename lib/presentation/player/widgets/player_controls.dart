@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class PlayerControls extends StatelessWidget {
   final VoidCallback onPlayPause;
@@ -23,7 +24,10 @@ class PlayerControls extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.replay_10),
           iconSize: 32,
-          onPressed: onSkipBack,
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            onSkipBack();
+          },
         ),
         const SizedBox(width: 16),
         Container(
@@ -34,14 +38,20 @@ class PlayerControls extends StatelessWidget {
           child: IconButton(
             icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, fill: 1),
             iconSize: 40,
-            onPressed: onPlayPause,
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              onPlayPause();
+            },
           ),
         ),
         const SizedBox(width: 16),
         IconButton(
           icon: const Icon(Icons.forward_10),
           iconSize: 32,
-          onPressed: onSkipForward,
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            onSkipForward();
+          },
         ),
       ],
     );

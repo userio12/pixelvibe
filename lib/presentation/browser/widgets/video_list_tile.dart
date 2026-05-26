@@ -11,28 +11,31 @@ class VideoListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
-      leading: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(8),
+    return Semantics(
+      label: file.name,
+      child: ListTile(
+        leading: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.movie_outlined),
         ),
-        child: const Icon(Icons.movie_outlined),
-      ),
-      title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Row(
-        children: [
-          Text(formatDuration(file.durationMs)),
-          if (file.width != null && file.height != null) ...[
-            const Text(' · '),
-            Text('${file.width}x${file.height}'),
+        title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Row(
+          children: [
+            Text(formatDuration(file.durationMs)),
+            if (file.width != null && file.height != null) ...[
+              const Text(' · '),
+              Text('${file.width}x${file.height}'),
+            ],
           ],
-        ],
+        ),
+        trailing: const Icon(Icons.play_circle_outline),
+        onTap: onTap,
       ),
-      trailing: const Icon(Icons.play_circle_outline),
-      onTap: onTap,
     );
   }
 }

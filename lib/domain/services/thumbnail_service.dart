@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../../services/logger.dart';
 
 class ThumbnailService {
   static const _channel = MethodChannel('com.pixelvibe/thumbnails');
@@ -11,7 +11,7 @@ class ThumbnailService {
         'width': width,
       });
     } catch (e) {
-      debugPrint('ThumbnailService.getThumbnailPath error: $e');
+      Logger.error('ThumbnailService.getThumbnailPath failed', e);
       return null;
     }
   }

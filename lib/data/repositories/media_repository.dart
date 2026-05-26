@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/media_file.dart';
@@ -6,6 +5,7 @@ import '../../domain/services/media_scanner.dart';
 import '../database/app_database.dart';
 import '../database/daos/video_metadata_dao.dart';
 import '../../core/di/providers.dart';
+import '../../services/logger.dart';
 import '../../services/scan_service.dart';
 
 class MediaRepository {
@@ -56,7 +56,7 @@ class MediaRepository {
           addedAt: Value(DateTime.now().millisecondsSinceEpoch),
         ));
       } catch (e) {
-        debugPrint('MediaRepository.scanDevice item error: $e');
+        Logger.error('MediaRepository.scanDevice item error', e);
       }
     }
 
@@ -72,7 +72,7 @@ class MediaRepository {
   }
 }
 
-final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
+final mediaRepositoryProvider = Provider.autoDispose<MediaRepository>((ref) {
   final dao = ref.watch(videoMetadataDaoProvider);
   final scanner = MediaScanner();
   final scanService = ScanService();

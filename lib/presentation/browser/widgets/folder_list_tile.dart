@@ -14,12 +14,15 @@ class FolderListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.folder_outlined),
-      title: Text(name),
-      subtitle: Text('$itemCount videos'),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
+    return Semantics(
+      label: name,
+      child: ListTile(
+        leading: const Icon(Icons.folder_outlined),
+        title: Text(name),
+        subtitle: Text('$itemCount videos'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
     );
   }
 }

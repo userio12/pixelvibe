@@ -27,48 +27,84 @@ class AppRouter {
           routes: [
             GoRoute(
               path: Routes.browse,
-              builder: (_, _) => browseScreen,
+              pageBuilder: (_, _) => NoTransitionPage(child: browseScreen),
             ),
             GoRoute(
               path: Routes.playlists,
-              builder: (_, _) => playlistsScreen,
+              pageBuilder: (_, _) => NoTransitionPage(child: playlistsScreen),
             ),
             GoRoute(
               path: Routes.settings,
-              builder: (_, _) => settingsScreen,
+              pageBuilder: (_, _) => NoTransitionPage(child: settingsScreen),
             ),
           ],
         ),
         GoRoute(
           path: '${Routes.player}/:filePath',
           parentNavigatorKey: _rootNavigatorKey,
-          builder: (_, state) {
+          pageBuilder: (_, state) {
             final filePath = Uri.decodeComponent(state.pathParameters['filePath'] ?? '');
-            return playerScreenBuilder(filePath);
+            return CustomTransitionPage(
+              key: state.pageKey,
+              child: playerScreenBuilder(filePath),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return SlideTransition(
+                  position: animation.drive(Tween<Offset>(
+                    begin: const Offset(0, 0.15),
+                    end: Offset.zero,
+                  ).chain(CurveTween(curve: Curves.easeOut))),
+                  child: FadeTransition(opacity: animation, child: child),
+                );
+              },
+            );
           },
         ),
         GoRoute(
           path: Routes.networkBrowser,
           parentNavigatorKey: _rootNavigatorKey,
-          builder: (_, _) => const NetworkBrowserScreen(),
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.networkBrowser),
+            child: const NetworkBrowserScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
         ),
         GoRoute(
           path: Routes.networkConnectionForm,
           parentNavigatorKey: _rootNavigatorKey,
-          builder: (_, _) => const ConnectionFormScreen(),
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.networkConnectionForm),
+            child: const ConnectionFormScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
         ),
         GoRoute(
           path: '${Routes.playlistDetail}/:playlistId',
           parentNavigatorKey: _rootNavigatorKey,
-          builder: (_, state) {
+          pageBuilder: (_, state) {
             final id = int.tryParse(state.pathParameters['playlistId'] ?? '') ?? 0;
-            return PlaylistDetailScreen(playlistId: id);
+            return CustomTransitionPage(
+              key: state.pageKey,
+              child: PlaylistDetailScreen(playlistId: id),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+            );
           },
         ),
         GoRoute(
           path: Routes.about,
           parentNavigatorKey: _rootNavigatorKey,
-          builder: (_, _) => const AboutScreen(),
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.about),
+            child: const AboutScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
         ),
       ],
     );
@@ -90,7 +126,10 @@ class ScaffoldWithNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     return Scaffold(
-      body: child,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: KeyedSubtree(key: ValueKey(location), child: child),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex(location),
         onDestinationSelected: (i) {
