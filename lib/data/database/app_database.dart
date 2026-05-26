@@ -41,7 +41,7 @@ class AppDatabase extends _$AppDatabase {
     return MigrationStrategy(
       onCreate: (m) async => await m.createAll(),
       onUpgrade: (m, from, to) async {
-        // Add schema migrations here when schemaVersion is incremented
+        // TODO: implement migrations when schemaVersion is incremented
       },
     );
   }

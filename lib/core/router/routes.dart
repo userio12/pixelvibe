@@ -6,6 +6,5 @@ abstract class Routes {
   static const networkBrowser = '/network-browser';
   static const networkConnectionForm = '/network-connection-form';
   static const playlistDetail = '/playlist-detail';
-  static const search = '/search';
   static const about = '/about';
 }

@@ -5,6 +5,7 @@ import java.net.URL
 import java.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.util.Log
 
 class WebDAVClient(
     private val host: String,
@@ -85,6 +86,7 @@ class WebDAVClient(
         conn.inputStream
     }
 
-    override suspend fun disconnect() {
+    override suspend fun disconnect() = withContext(Dispatchers.IO) {
+        // No persistent connections to close — each request creates a new HttpURLConnection
     }
 }

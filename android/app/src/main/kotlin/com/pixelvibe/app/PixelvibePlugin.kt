@@ -27,8 +27,6 @@ class PixelvibePlugin(private val channel: MethodChannel) {
             "listFiles" -> listFiles(call, result)
             "streamFile" -> streamFile(call, result)
             "disconnect" -> disconnect(call, result)
-            "startProxy" -> startProxy(result)
-            "stopProxy" -> stopProxy(result)
             else -> result.notImplemented()
         }
     }
@@ -114,17 +112,4 @@ class PixelvibePlugin(private val channel: MethodChannel) {
         }
     }
 
-    private fun startProxy(result: MethodChannel.Result) {
-        val started = proxy.startProxy()
-        result.success(started)
-    }
-
-    private fun stopProxy(result: MethodChannel.Result) {
-        proxy.stopProxy()
-        activeClients.values.forEach { client ->
-            scope.launch { client.disconnect() }
-        }
-        activeClients.clear()
-        result.success(true)
-    }
 }

@@ -28,6 +28,7 @@ class PlayerScreen extends ConsumerStatefulWidget {
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   Timer? _hideTimer;
   Timer? _saveTimer;
+  StreamSubscription? _pipToggleSub;
   bool _controlsVisible = true;
   bool _wasPlayingBeforePip = false;
 
@@ -46,6 +47,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   void dispose() {
     _hideTimer?.cancel();
     _saveTimer?.cancel();
+    _pipToggleSub?.cancel();
     ref.read(backgroundServiceProvider).stopService();
     super.dispose();
   }
@@ -120,7 +122,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         }
       }
     });
-    pip.onTogglePlayback.listen((_) {
+    _pipToggleSub = pip.onTogglePlayback.listen((_) {
       if (!mounted) return;
       final player = ref.read(playerProvider);
       if (ref.read(playerIsPlayingProvider).asData?.value ?? false) {
@@ -166,7 +168,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     }
   }
 
-  void _enterPip() async {
+  Future<void> _enterPip() async {
     if (!ref.read(autoPipProvider)) return;
     final pip = ref.read(pipServiceProvider);
     final supported = await pip.isPipSupported();
@@ -221,14 +223,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     final isPlaying = ref.watch(playerIsPlayingProvider).asData?.value ?? false;
     final volume = ref.watch(playerVolumeProvider).asData?.value ?? 1.0;
     final buffer = ref.watch(playerBufferProvider).asData?.value ?? Duration.zero;
-    ref.watch(playerConfigWatcherProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
         onTap: _toggleControls,
         onDoubleTapDown: (details) {
-          final half = context.size!.width / 2;
+          final half = (context.size?.width ?? MediaQuery.of(context).size.width) / 2;
           final interval = ref.read(skipIntervalProvider);
           if (details.localPosition.dx < half) {
             _skip(-interval);

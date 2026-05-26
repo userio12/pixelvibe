@@ -8,11 +8,11 @@ import '../../data/database/daos/network_connection_dao.dart';
 import '../../data/database/daos/playlist_dao.dart';
 import '../../services/preferences_service.dart';
 
-final databaseProvider = Provider<AppDatabase>((ref) => database);
-final playbackStateDaoProvider = Provider<PlaybackStateDao>((ref) => ref.watch(databaseProvider).playbackStateDao);
-final recentlyPlayedDaoProvider = Provider<RecentlyPlayedDao>((ref) => ref.watch(databaseProvider).recentlyPlayedDao);
-final videoMetadataDaoProvider = Provider<VideoMetadataDao>((ref) => ref.watch(databaseProvider).videoMetadataDao);
-final networkConnectionDaoProvider = Provider<NetworkConnectionDao>((ref) => ref.watch(databaseProvider).networkConnectionDao);
-final playlistDaoProvider = Provider<PlaylistDao>((ref) => ref.watch(databaseProvider).playlistDao);
+final databaseProvider = Provider.autoDispose<AppDatabase>((ref) => database);
+final playbackStateDaoProvider = Provider.autoDispose<PlaybackStateDao>((ref) => ref.watch(databaseProvider).playbackStateDao);
+final recentlyPlayedDaoProvider = Provider.autoDispose<RecentlyPlayedDao>((ref) => ref.watch(databaseProvider).recentlyPlayedDao);
+final videoMetadataDaoProvider = Provider.autoDispose<VideoMetadataDao>((ref) => ref.watch(databaseProvider).videoMetadataDao);
+final networkConnectionDaoProvider = Provider.autoDispose<NetworkConnectionDao>((ref) => ref.watch(databaseProvider).networkConnectionDao);
+final playlistDaoProvider = Provider.autoDispose<PlaylistDao>((ref) => ref.watch(databaseProvider).playlistDao);
 
-final preferencesServiceProvider = Provider<PreferencesService>((ref) => preferencesService);
+final preferencesServiceProvider = Provider.autoDispose<PreferencesService>((ref) => preferencesService);

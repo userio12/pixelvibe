@@ -28,7 +28,12 @@ class RecentlyPlayedSection extends ConsumerWidget {
         ),
       ),
       data: (items) {
-        if (items.isEmpty) return const SizedBox.shrink();
+        if (items.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: Text('No recently played videos')),
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -16,6 +16,7 @@ class MediaSessionCallback(
 
     private val mediaSession: MediaSessionCompat
     private var isPlaying = false
+    private val receiver: BroadcastReceiver
 
     init {
         mediaSession = MediaSessionCompat(context, "pixelvibe").apply {
@@ -23,7 +24,7 @@ class MediaSessionCallback(
             isActive = true
         }
 
-        val receiver = object : BroadcastReceiver() {
+        receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
                 when (intent.action) {
                     "com.pixelvibe.action.TOGGLE_PLAYBACK" -> {
@@ -36,7 +37,7 @@ class MediaSessionCallback(
         context.registerReceiver(receiver, IntentFilter().apply {
             addAction("com.pixelvibe.action.TOGGLE_PLAYBACK")
             addAction("com.pixelvibe.action.STOP")
-        }, Context.RECEIVER_EXPORTED)
+        }, Context.RECEIVER_NOT_EXPORTED)
     }
 
     fun updateMetadata(title: String, durationMs: Long) {
@@ -91,5 +92,6 @@ class MediaSessionCallback(
     fun release() {
         mediaSession.isActive = false
         mediaSession.release()
+        context.unregisterReceiver(receiver)
     }
 }

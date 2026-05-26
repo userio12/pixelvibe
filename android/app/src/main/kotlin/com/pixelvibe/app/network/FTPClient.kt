@@ -15,14 +15,16 @@ class FTPClient(
     private var client: ApacheFTPClient? = null
 
     private fun getClient(): ApacheFTPClient {
-        if (client == null || !client!!.isConnected) {
-            client = ApacheFTPClient().apply {
-                connect(host, port)
-                login(username, password)
-                enterLocalPassiveMode()
-            }
+        val existing = client
+        if (existing == null || !existing.isConnected) {
+            val newClient = ApacheFTPClient()
+            newClient.connect(host, port)
+            newClient.login(username, password)
+            newClient.enterLocalPassiveMode()
+            client = newClient
+            return newClient
         }
-        return client!!
+        return existing
     }
 
     override suspend fun listFiles(path: String): List<NetworkFile> = withContext(Dispatchers.IO) {

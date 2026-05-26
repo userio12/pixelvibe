@@ -1,21 +1,44 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import '../../../utils/format_utils.dart';
 
-class MediaInfoSheet extends StatelessWidget {
+class MediaInfoSheet extends StatefulWidget {
   final Player player;
 
   const MediaInfoSheet({super.key, required this.player});
 
   @override
+  State<MediaInfoSheet> createState() => _MediaInfoSheetState();
+}
+
+class _MediaInfoSheetState extends State<MediaInfoSheet> {
+  StreamSubscription<Duration>? _posSub;
+  Duration _position = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _posSub = widget.player.stream.position.listen((p) {
+      if (mounted) setState(() => _position = p);
+    });
+  }
+
+  @override
+  void dispose() {
+    _posSub?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final state = player.state;
+    final state = widget.player.state;
     final tracks = state.tracks;
 
     final infoItems = <MapEntry<String, String>>[
       MapEntry('Duration', formatDuration(state.duration.inMilliseconds)),
-      MapEntry('Position', formatDuration(state.position.inMilliseconds)),
+      MapEntry('Position', formatDuration(_position.inMilliseconds)),
       MapEntry('Volume', '${(state.volume * 100).round()}%'),
       MapEntry('Speed', '${state.rate}x'),
       if (state.width != null && state.height != null)

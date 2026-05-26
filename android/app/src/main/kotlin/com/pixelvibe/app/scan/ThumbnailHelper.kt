@@ -9,8 +9,8 @@ import java.io.FileOutputStream
 class ThumbnailHelper(private val context: Context) {
 
     fun getThumbnail(path: String, width: Int = 320): String? {
+        val retriever = MediaMetadataRetriever()
         return try {
-            val retriever = MediaMetadataRetriever()
             retriever.setDataSource(path)
             val bitmap = retriever.frameAtTime ?: return null
             val scaled = Bitmap.createScaledBitmap(bitmap, width, (bitmap.height * width / bitmap.width).coerceAtLeast(1), true)
@@ -20,10 +20,11 @@ class ThumbnailHelper(private val context: Context) {
             FileOutputStream(file).use { out ->
                 scaled.compress(Bitmap.CompressFormat.JPEG, 80, out)
             }
-            retriever.release()
             file.absolutePath
         } catch (e: Exception) {
             null
+        } finally {
+            retriever.release()
         }
     }
 }

@@ -8,6 +8,7 @@ class PiPService {
   final _toggleController = StreamController<void>.broadcast();
   Stream<void> get onTogglePlayback => _toggleController.stream;
   bool _handlerSet = false;
+  bool _disposed = false;
 
   Future<bool> isPipSupported() async {
     try {
@@ -35,16 +36,22 @@ class PiPService {
     if (_handlerSet) return;
     _handlerSet = true;
     _channel.setMethodCallHandler((call) async {
+      if (_disposed) return null;
       if (call.method == 'onPictureInPictureModeChanged') {
-        final args = call.arguments as Map<dynamic, dynamic>;
-        callback(args['isInPip'] as bool);
+        final args = call.arguments;
+        if (args is Map<dynamic, dynamic>) {
+          callback(args['isInPip'] as bool? ?? false);
+        }
       } else if (call.method == 'togglePlayback') {
         _toggleController.add(null);
       }
+      return null;
     });
   }
 
   void dispose() {
+    _disposed = true;
+    _channel.setMethodCallHandler(null);
     _toggleController.close();
   }
 }

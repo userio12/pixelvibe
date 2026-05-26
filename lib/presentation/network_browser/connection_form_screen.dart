@@ -108,7 +108,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
               DropdownMenuItem(value: 'webdav', child: Text('WebDAV')),
             ],
             onChanged: (v) {
-              setState(() => _protocol = v!);
+              setState(() => _protocol = v ?? _protocol);
               if (_portCtrl.text.isEmpty) {
                 _portCtrl.text = _defaultPort.toString();
               }

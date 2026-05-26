@@ -37,7 +37,7 @@ class MainActivity : FlutterActivity() {
 
         pipHelper = PiPHelper(this)
 
-        registerReceiver(pipActionReceiver, IntentFilter(PlaybackService.ACTION_TOGGLE), Context.RECEIVER_EXPORTED)
+        registerReceiver(pipActionReceiver, IntentFilter(PlaybackService.ACTION_TOGGLE), Context.RECEIVER_NOT_EXPORTED)
 
         pipMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, pipChannel).apply {
             setMethodCallHandler { call, result ->
