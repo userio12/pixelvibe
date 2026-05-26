@@ -10,4 +10,5 @@ class VideoMetadata extends Table {
   TextColumn get codec => text().nullable()();
   TextColumn get bitrate => text().nullable()();
   IntColumn get addedAt => integer()();
+  IntColumn get playCount => integer().withDefault(const Constant(0))();
 }

@@ -6,7 +6,9 @@ class PiPService {
   static const _channel = MethodChannel('com.pixelvibe/pip');
 
   final _toggleController = StreamController<void>.broadcast();
+  final _noisyController = StreamController<void>.broadcast();
   Stream<void> get onTogglePlayback => _toggleController.stream;
+  Stream<void> get onNoisy => _noisyController.stream;
   bool _handlerSet = false;
   bool _disposed = false;
 
@@ -44,6 +46,8 @@ class PiPService {
         }
       } else if (call.method == 'togglePlayback') {
         _toggleController.add(null);
+      } else if (call.method == 'audioNoisy') {
+        _noisyController.add(null);
       }
       return null;
     });
@@ -53,5 +57,6 @@ class PiPService {
     _disposed = true;
     _channel.setMethodCallHandler(null);
     _toggleController.close();
+    _noisyController.close();
   }
 }

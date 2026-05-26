@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/update_checker.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -25,7 +26,15 @@ class AboutScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+          Center(
+            child: FilledButton.tonalIcon(
+              icon: const Icon(Icons.system_update_outlined),
+              label: const Text('Check for updates'),
+              onPressed: () => _checkUpdate(context),
+            ),
+          ),
+          const SizedBox(height: 24),
           Text('Libraries', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           ..._libraries.map((lib) => Padding(
@@ -55,6 +64,19 @@ class AboutScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _checkUpdate(BuildContext context) async {
+    final checker = UpdateChecker();
+    final update = await checker.check();
+    if (!context.mounted) return;
+    if (update == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No updates found or unable to check')),
+      );
+      return;
+    }
+    showUpdateDialog(context, update);
   }
 }
 

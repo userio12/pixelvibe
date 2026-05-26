@@ -67,4 +67,20 @@ class PlaylistDao extends DatabaseAccessor<AppDatabase> with _$PlaylistDaoMixin 
           ..orderBy([(t) => OrderingTerm(expression: t.sortOrder)]))
         .get();
   }
+
+  Future<List<PlaylistItem>> getItemsPaged(int playlistId, {int limit = 100, int offset = 0}) {
+    return (select(playlistItems)
+          ..where((t) => t.playlistId.equals(playlistId))
+          ..orderBy([(t) => OrderingTerm(expression: t.sortOrder)])
+          ..limit(limit, offset: offset))
+        .get();
+  }
+
+  Future<int> getItemCount(int playlistId) {
+    return (select(playlistItems)
+          ..where((t) => t.playlistId.equals(playlistId)))
+        .map((row) => row.id)
+        .get()
+        .then((rows) => rows.length);
+  }
 }

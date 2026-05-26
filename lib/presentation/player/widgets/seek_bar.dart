@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../settings/settings_provider.dart';
 
-class SeekBar extends StatelessWidget {
+class SeekBar extends ConsumerWidget {
   final Duration position;
   final Duration duration;
   final double bufferProgress;
@@ -23,11 +25,16 @@ class SeekBar extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final showRemaining = ref.watch(showTimeRemainingProvider);
     final totalMs = duration.inMilliseconds.toDouble();
     final posMs = position.inMilliseconds.toDouble().clamp(0, totalMs);
     final progress = totalMs > 0 ? posMs / totalMs : 0.0;
+
+    final rightText = showRemaining
+        ? '-${_format(duration - position)}'
+        : _format(duration);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -52,7 +59,7 @@ class SeekBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(_format(position), style: theme.textTheme.labelSmall),
-              Text(_format(duration), style: theme.textTheme.labelSmall),
+              Text(rightText, style: theme.textTheme.labelSmall),
             ],
           ),
         ),

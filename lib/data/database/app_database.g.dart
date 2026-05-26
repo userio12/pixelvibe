@@ -827,6 +827,18 @@ class $VideoMetadataTable extends VideoMetadata
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _playCountMeta = const VerificationMeta(
+    'playCount',
+  );
+  @override
+  late final GeneratedColumn<int> playCount = GeneratedColumn<int>(
+    'play_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -838,6 +850,7 @@ class $VideoMetadataTable extends VideoMetadata
     codec,
     bitrate,
     addedAt,
+    playCount,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -906,6 +919,12 @@ class $VideoMetadataTable extends VideoMetadata
     } else if (isInserting) {
       context.missing(_addedAtMeta);
     }
+    if (data.containsKey('play_count')) {
+      context.handle(
+        _playCountMeta,
+        playCount.isAcceptableOrUnknown(data['play_count']!, _playCountMeta),
+      );
+    }
     return context;
   }
 
@@ -951,6 +970,10 @@ class $VideoMetadataTable extends VideoMetadata
         DriftSqlType.int,
         data['${effectivePrefix}added_at'],
       )!,
+      playCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}play_count'],
+      )!,
     );
   }
 
@@ -971,6 +994,7 @@ class VideoMetadataData extends DataClass
   final String? codec;
   final String? bitrate;
   final int addedAt;
+  final int playCount;
   const VideoMetadataData({
     required this.id,
     required this.filePath,
@@ -981,6 +1005,7 @@ class VideoMetadataData extends DataClass
     this.codec,
     this.bitrate,
     required this.addedAt,
+    required this.playCount,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1006,6 +1031,7 @@ class VideoMetadataData extends DataClass
       map['bitrate'] = Variable<String>(bitrate);
     }
     map['added_at'] = Variable<int>(addedAt);
+    map['play_count'] = Variable<int>(playCount);
     return map;
   }
 
@@ -1032,6 +1058,7 @@ class VideoMetadataData extends DataClass
           ? const Value.absent()
           : Value(bitrate),
       addedAt: Value(addedAt),
+      playCount: Value(playCount),
     );
   }
 
@@ -1050,6 +1077,7 @@ class VideoMetadataData extends DataClass
       codec: serializer.fromJson<String?>(json['codec']),
       bitrate: serializer.fromJson<String?>(json['bitrate']),
       addedAt: serializer.fromJson<int>(json['addedAt']),
+      playCount: serializer.fromJson<int>(json['playCount']),
     );
   }
   @override
@@ -1065,6 +1093,7 @@ class VideoMetadataData extends DataClass
       'codec': serializer.toJson<String?>(codec),
       'bitrate': serializer.toJson<String?>(bitrate),
       'addedAt': serializer.toJson<int>(addedAt),
+      'playCount': serializer.toJson<int>(playCount),
     };
   }
 
@@ -1078,6 +1107,7 @@ class VideoMetadataData extends DataClass
     Value<String?> codec = const Value.absent(),
     Value<String?> bitrate = const Value.absent(),
     int? addedAt,
+    int? playCount,
   }) => VideoMetadataData(
     id: id ?? this.id,
     filePath: filePath ?? this.filePath,
@@ -1088,6 +1118,7 @@ class VideoMetadataData extends DataClass
     codec: codec.present ? codec.value : this.codec,
     bitrate: bitrate.present ? bitrate.value : this.bitrate,
     addedAt: addedAt ?? this.addedAt,
+    playCount: playCount ?? this.playCount,
   );
   VideoMetadataData copyWithCompanion(VideoMetadataCompanion data) {
     return VideoMetadataData(
@@ -1102,6 +1133,7 @@ class VideoMetadataData extends DataClass
       codec: data.codec.present ? data.codec.value : this.codec,
       bitrate: data.bitrate.present ? data.bitrate.value : this.bitrate,
       addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      playCount: data.playCount.present ? data.playCount.value : this.playCount,
     );
   }
 
@@ -1116,7 +1148,8 @@ class VideoMetadataData extends DataClass
           ..write('height: $height, ')
           ..write('codec: $codec, ')
           ..write('bitrate: $bitrate, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('playCount: $playCount')
           ..write(')'))
         .toString();
   }
@@ -1132,6 +1165,7 @@ class VideoMetadataData extends DataClass
     codec,
     bitrate,
     addedAt,
+    playCount,
   );
   @override
   bool operator ==(Object other) =>
@@ -1145,7 +1179,8 @@ class VideoMetadataData extends DataClass
           other.height == this.height &&
           other.codec == this.codec &&
           other.bitrate == this.bitrate &&
-          other.addedAt == this.addedAt);
+          other.addedAt == this.addedAt &&
+          other.playCount == this.playCount);
 }
 
 class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
@@ -1158,6 +1193,7 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
   final Value<String?> codec;
   final Value<String?> bitrate;
   final Value<int> addedAt;
+  final Value<int> playCount;
   const VideoMetadataCompanion({
     this.id = const Value.absent(),
     this.filePath = const Value.absent(),
@@ -1168,6 +1204,7 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     this.codec = const Value.absent(),
     this.bitrate = const Value.absent(),
     this.addedAt = const Value.absent(),
+    this.playCount = const Value.absent(),
   });
   VideoMetadataCompanion.insert({
     this.id = const Value.absent(),
@@ -1179,6 +1216,7 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     this.codec = const Value.absent(),
     this.bitrate = const Value.absent(),
     required int addedAt,
+    this.playCount = const Value.absent(),
   }) : filePath = Value(filePath),
        addedAt = Value(addedAt);
   static Insertable<VideoMetadataData> custom({
@@ -1191,6 +1229,7 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     Expression<String>? codec,
     Expression<String>? bitrate,
     Expression<int>? addedAt,
+    Expression<int>? playCount,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1202,6 +1241,7 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
       if (codec != null) 'codec': codec,
       if (bitrate != null) 'bitrate': bitrate,
       if (addedAt != null) 'added_at': addedAt,
+      if (playCount != null) 'play_count': playCount,
     });
   }
 
@@ -1215,6 +1255,7 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     Value<String?>? codec,
     Value<String?>? bitrate,
     Value<int>? addedAt,
+    Value<int>? playCount,
   }) {
     return VideoMetadataCompanion(
       id: id ?? this.id,
@@ -1226,6 +1267,7 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
       codec: codec ?? this.codec,
       bitrate: bitrate ?? this.bitrate,
       addedAt: addedAt ?? this.addedAt,
+      playCount: playCount ?? this.playCount,
     );
   }
 
@@ -1259,6 +1301,9 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     if (addedAt.present) {
       map['added_at'] = Variable<int>(addedAt.value);
     }
+    if (playCount.present) {
+      map['play_count'] = Variable<int>(playCount.value);
+    }
     return map;
   }
 
@@ -1273,7 +1318,8 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
           ..write('height: $height, ')
           ..write('codec: $codec, ')
           ..write('bitrate: $bitrate, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('playCount: $playCount')
           ..write(')'))
         .toString();
   }
@@ -3088,6 +3134,7 @@ typedef $$VideoMetadataTableCreateCompanionBuilder =
       Value<String?> codec,
       Value<String?> bitrate,
       required int addedAt,
+      Value<int> playCount,
     });
 typedef $$VideoMetadataTableUpdateCompanionBuilder =
     VideoMetadataCompanion Function({
@@ -3100,6 +3147,7 @@ typedef $$VideoMetadataTableUpdateCompanionBuilder =
       Value<String?> codec,
       Value<String?> bitrate,
       Value<int> addedAt,
+      Value<int> playCount,
     });
 
 class $$VideoMetadataTableFilterComposer
@@ -3153,6 +3201,11 @@ class $$VideoMetadataTableFilterComposer
 
   ColumnFilters<int> get addedAt => $composableBuilder(
     column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get playCount => $composableBuilder(
+    column: $table.playCount,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3210,6 +3263,11 @@ class $$VideoMetadataTableOrderingComposer
     column: $table.addedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get playCount => $composableBuilder(
+    column: $table.playCount,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$VideoMetadataTableAnnotationComposer
@@ -3249,6 +3307,9 @@ class $$VideoMetadataTableAnnotationComposer
 
   GeneratedColumn<int> get addedAt =>
       $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get playCount =>
+      $composableBuilder(column: $table.playCount, builder: (column) => column);
 }
 
 class $$VideoMetadataTableTableManager
@@ -3295,6 +3356,7 @@ class $$VideoMetadataTableTableManager
                 Value<String?> codec = const Value.absent(),
                 Value<String?> bitrate = const Value.absent(),
                 Value<int> addedAt = const Value.absent(),
+                Value<int> playCount = const Value.absent(),
               }) => VideoMetadataCompanion(
                 id: id,
                 filePath: filePath,
@@ -3305,6 +3367,7 @@ class $$VideoMetadataTableTableManager
                 codec: codec,
                 bitrate: bitrate,
                 addedAt: addedAt,
+                playCount: playCount,
               ),
           createCompanionCallback:
               ({
@@ -3317,6 +3380,7 @@ class $$VideoMetadataTableTableManager
                 Value<String?> codec = const Value.absent(),
                 Value<String?> bitrate = const Value.absent(),
                 required int addedAt,
+                Value<int> playCount = const Value.absent(),
               }) => VideoMetadataCompanion.insert(
                 id: id,
                 filePath: filePath,
@@ -3327,6 +3391,7 @@ class $$VideoMetadataTableTableManager
                 codec: codec,
                 bitrate: bitrate,
                 addedAt: addedAt,
+                playCount: playCount,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

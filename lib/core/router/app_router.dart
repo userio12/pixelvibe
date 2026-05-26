@@ -34,6 +34,10 @@ class AppRouter {
               pageBuilder: (_, _) => NoTransitionPage(child: playlistsScreen),
             ),
             GoRoute(
+              path: Routes.networkBrowser,
+              pageBuilder: (_, _) => NoTransitionPage(child: const NetworkBrowserScreen()),
+            ),
+            GoRoute(
               path: Routes.settings,
               pageBuilder: (_, _) => NoTransitionPage(child: settingsScreen),
             ),
@@ -58,17 +62,6 @@ class AppRouter {
               },
             );
           },
-        ),
-        GoRoute(
-          path: Routes.networkBrowser,
-          parentNavigatorKey: _rootNavigatorKey,
-          pageBuilder: (_, _) => CustomTransitionPage(
-            key: ValueKey(Routes.networkBrowser),
-            child: const NetworkBrowserScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-          ),
         ),
         GoRoute(
           path: Routes.networkConnectionForm,
@@ -118,7 +111,8 @@ class ScaffoldWithNav extends StatelessWidget {
   int _currentIndex(String location) {
     if (location.startsWith(Routes.browse)) return 0;
     if (location.startsWith(Routes.playlists)) return 1;
-    if (location.startsWith(Routes.settings)) return 2;
+    if (location.startsWith(Routes.networkBrowser)) return 2;
+    if (location.startsWith(Routes.settings)) return 3;
     return 0;
   }
 
@@ -127,20 +121,42 @@ class ScaffoldWithNav extends StatelessWidget {
     final location = GoRouterState.of(context).uri.toString();
     return Scaffold(
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 250),
+        switchInCurve: Curves.fastOutSlowIn,
+        switchOutCurve: Curves.fastOutSlowIn,
+        transitionBuilder: (child, animation) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.05, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: FadeTransition(opacity: animation, child: child),
+          );
+        },
         child: KeyedSubtree(key: ValueKey(location), child: child),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex(location),
-        onDestinationSelected: (i) {
-          final paths = [Routes.browse, Routes.playlists, Routes.settings];
-          context.go(paths[i]);
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.video_library_outlined), label: 'Browse'),
-          NavigationDestination(icon: Icon(Icons.playlist_play_outlined), label: 'Playlists'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
-        ],
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: NavigationBar(
+          selectedIndex: _currentIndex(location),
+          onDestinationSelected: (i) {
+            final paths = [
+              Routes.browse,
+              Routes.playlists,
+              Routes.networkBrowser,
+              Routes.settings,
+            ];
+            context.go(paths[i]);
+          },
+          height: 72,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.video_library_outlined), label: 'Browse'),
+            NavigationDestination(icon: Icon(Icons.playlist_play_outlined), label: 'Playlists'),
+            NavigationDestination(icon: Icon(Icons.cloud_outlined), label: 'Network'),
+            NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
+          ],
+        ),
       ),
     );
   }

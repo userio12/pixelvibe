@@ -23,6 +23,11 @@ class MainActivity : FlutterActivity() {
     private var pipHelper: PiPHelper? = null
     private var mediaSessionCallback: MediaSessionCallback? = null
     private var pipMethodChannel: MethodChannel? = null
+    private val noisyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            pipMethodChannel?.invokeMethod("audioNoisy", null)
+        }
+    }
     private val pipActionReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == PlaybackService.ACTION_TOGGLE) {
@@ -35,7 +40,11 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
 
         pipHelper = PiPHelper(this)
-
+        registerReceiver(
+            noisyReceiver,
+            IntentFilter(android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY),
+            Context.RECEIVER_NOT_EXPORTED,
+        )
         registerReceiver(pipActionReceiver, IntentFilter(PlaybackService.ACTION_TOGGLE), Context.RECEIVER_NOT_EXPORTED)
 
         pipMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, pipChannel).apply {
@@ -141,6 +150,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         mediaSessionCallback?.release()
+        unregisterReceiver(noisyReceiver)
         unregisterReceiver(pipActionReceiver)
         super.onDestroy()
     }

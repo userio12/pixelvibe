@@ -16,3 +16,7 @@ final networkConnectionDaoProvider = Provider.autoDispose<NetworkConnectionDao>(
 final playlistDaoProvider = Provider.autoDispose<PlaylistDao>((ref) => ref.watch(databaseProvider).playlistDao);
 
 final preferencesServiceProvider = Provider.autoDispose<PreferencesService>((ref) => preferencesService);
+
+final videoMetadataByPathProvider = FutureProvider.autoDispose.family<VideoMetadataData?, String>(
+  (ref, path) => ref.watch(videoMetadataDaoProvider).findByPath(path),
+);
