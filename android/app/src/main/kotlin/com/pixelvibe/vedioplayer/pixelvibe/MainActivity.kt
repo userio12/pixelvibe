@@ -114,7 +114,11 @@ class MainActivity : FlutterActivity() {
             setMethodCallHandler { call, result ->
                 when (call.method) {
                     "getThumbnail" -> {
-                        val path = call.argument<String>("path") ?: return@apply result.error("NO_PATH", "Path required", null)
+                        val path = call.argument<String>("path")
+                        if (path == null) {
+                            result.error("NO_PATH", "Path required", null)
+                            return@setMethodCallHandler
+                        }
                         val width = call.argument<Int>("width") ?: 320
                         val thumbnailPath = thumbnailHelper.getThumbnail(path, width)
                         result.success(thumbnailPath)
