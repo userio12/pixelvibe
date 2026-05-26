@@ -85,9 +85,7 @@ class _NetworkBrowserScreenState extends ConsumerState<NetworkBrowserScreen> {
     final service = ref.read(networkServiceProvider);
     final id = 'conn_${conn.id}';
 
-    final scaffold = ScaffoldMessenger.of(context);
-
-    scaffold.showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Connecting to ${conn.name}...'), duration: const Duration(seconds: 1)),
     );
 
@@ -101,19 +99,22 @@ class _NetworkBrowserScreenState extends ConsumerState<NetworkBrowserScreen> {
     );
 
     if (!ok) {
-      scaffold.showSnackBar(const SnackBar(content: Text('Connection failed')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Connection failed')));
       return;
     }
 
     final files = await service.listFiles(id: id);
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
-    scaffold.showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Connected — ${files.length} items'), duration: const Duration(seconds: 2)),
     );
 
     if (files.isEmpty) return;
+
+    if (!mounted) return;
 
     showDialog(
       context: context,
@@ -127,7 +128,7 @@ class _NetworkBrowserScreenState extends ConsumerState<NetworkBrowserScreen> {
                 subtitle: Text(f.isDirectory ? 'Directory' : '${f.size}B'),
                 onTap: () {
                   Navigator.of(ctx).pop();
-                  scaffold.showSnackBar(SnackBar(content: Text('Browsed: ${f.path}')));
+                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Browsed: ${f.path}')));
                 },
               )),
           if (files.length > 20)
