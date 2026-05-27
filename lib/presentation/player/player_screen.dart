@@ -34,6 +34,9 @@ import 'widgets/sleep_timer_sheet.dart';
 import 'widgets/video_quality_sheet.dart';
 import 'widgets/player_more_sheet.dart';
 import 'widgets/audio_track_sheet.dart';
+import 'widgets/chapter_sheet.dart';
+import 'widgets/aspect_ratio_sheet.dart';
+import 'widgets/subtitle_settings_sheet.dart';
 import 'widgets/volume_slider.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
@@ -112,7 +115,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         }
       }
       return map;
-    } catch (_) {
+    } catch (e) {
+      Logger.warning('Failed to parse HTTP headers', e);
       return null;
     }
   }
@@ -126,7 +130,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       try {
         player.setSubtitleTrack(SubtitleTrack.uri(subPath));
         break;
-      } catch (_) {}
+      } catch (_) {
+        Logger.warning('Subtitle not found: $subPath');
+      }
     }
   }
 
@@ -389,7 +395,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         return null;
       }
       return await ThumbnailService().getThumbnailPath(path);
-    } catch (_) {
+    } catch (e) {
+      Logger.warning('Failed to get thumbnail path', e);
       return null;
     }
   }
@@ -654,7 +661,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       case PlayerButton.subtitles:
         return _buildIconButton(Icons.subtitles, Colors.white, btn.tooltip, () => showModalBottomSheet(
           context: context,
-          builder: (_) => const SizedBox(),
+          builder: (_) => const SubtitleSettingsSheet(),
         ));
       case PlayerButton.chapters:
         return _buildIconButton(Icons.chat_bubble_outline, Colors.white, btn.tooltip, _showChapterSheet);
@@ -834,9 +841,40 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       builder: (_) => AudioTrackSheet(filePath: widget.filePath),
     );
   }
-  void _showChapterSheet() {}
-  void _showAspectRatioSheet() {}
-  void _showZoomSheet() {}
+  void _showChapterSheet() {
+    final player = ref.read(playerProvider);
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => ChapterSheet(player: player, chapters: const []),
+    );
+  }
+  void _showAspectRatioSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => AspectRatioSheet(
+        current: VideoAspectRatio.fit,
+        onSelect: (ar) {
+          Navigator.of(context).pop();
+          final native = ref.read(playerProvider).platform as NativePlayer;
+          switch (ar) {
+            case VideoAspectRatio.fit:
+              native.setProperty('video-aspect-override', '-1');
+            case VideoAspectRatio.crop:
+              native.setProperty('video-aspect-override', '-1');
+              native.setProperty('panscan', '1.0');
+            case VideoAspectRatio.stretch:
+              native.setProperty('video-aspect-override', '0');
+          }
+        },
+      ),
+    );
+  }
+  void _showZoomSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => _ZoomSheet(),
+    );
+  }
   void _showDecoderSheet() {
     showModalBottomSheet(
       context: context,
@@ -1022,6 +1060,52 @@ class _HrSeekTile extends ConsumerWidget {
       subtitle: const Text('hr-seek (frame-accurate jumps)'),
       value: v,
       onChanged: (_) => ref.read(hrSeekProvider.notifier).toggle(),
+    );
+  }
+}
+
+class _ZoomSheet extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final zoomLevels = [
+      ('Default', 0.0),
+      ('Zoom 2x', 1.0),
+      ('Zoom 3x', 1.5),
+      ('Zoom 4x', 2.0),
+    ];
+    return DraggableScrollableSheet(
+      initialChildSize: 0.35,
+      minChildSize: 0.25,
+      maxChildSize: 0.5,
+      expand: false,
+      builder: (_, scrollCtrl) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Text('Zoom', style: theme.textTheme.titleLarge),
+          ),
+          const Divider(),
+          Expanded(
+            child: ListView(
+              controller: scrollCtrl,
+              children: zoomLevels.map((entry) {
+                final label = entry.$1;
+                final value = entry.$2;
+                return ListTile(
+                  leading: const Icon(Icons.zoom_in),
+                  title: Text(label),
+                  onTap: () {
+                    final native = ref.read(playerProvider).platform as NativePlayer;
+                    native.setProperty('video-zoom', value.toString());
+                    Navigator.of(context).pop();
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

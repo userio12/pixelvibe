@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'bootstrap.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/browser/browser_screen.dart';
@@ -9,9 +10,11 @@ import 'presentation/playlist/playlist_list_screen.dart';
 import 'presentation/settings/settings_screen.dart';
 import 'presentation/settings/settings_provider.dart';
 import 'core/di/providers.dart';
+import 'data/repositories/media_repository.dart';
 import 'services/app_localizations.dart';
 import 'services/logger.dart';
 import 'services/update_checker.dart';
+import 'utils/permissions/permission_handler.dart';
 
 class PixelvibeApp extends ConsumerStatefulWidget {
   const PixelvibeApp({super.key});
@@ -28,6 +31,7 @@ class _PixelvibeAppState extends ConsumerState<PixelvibeApp> {
   void initState() {
     super.initState();
     _appRouter = AppRouter(
+      preferencesService: preferencesService,
       browseScreen: const BrowserScreen(),
       playlistsScreen: const PlaylistListScreen(),
       settingsScreen: const SettingsScreen(),
@@ -35,6 +39,20 @@ class _PixelvibeAppState extends ConsumerState<PixelvibeApp> {
     );
     _checkUpdate();
     _initDeepLinks();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _triggerAutoScan());
+  }
+
+  Future<void> _triggerAutoScan() async {
+    try {
+      final granted = await requestStoragePermission();
+      if (!granted) return;
+      if (!mounted) return;
+      final repo = ref.read(mediaRepositoryProvider);
+      await repo.scanDevice();
+      Logger.info('Auto-scan completed');
+    } catch (e) {
+      Logger.error('Auto-scan failed', e);
+    }
   }
 
   Future<void> _checkUpdate() async {

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../services/logger.dart';
 import '../filters_provider.dart';
 import '../player_provider.dart';
@@ -138,9 +139,10 @@ class PlayerMoreSheet extends ConsumerWidget {
       final player = ref.read(playerProvider);
       final data = await player.screenshot();
       if (data == null) throw Exception('No screenshot data');
-      final dir = Directory('/storage/emulated/0/Pictures/pixelvibe');
-      if (!await dir.exists()) await dir.create(recursive: true);
-      final file = File('${dir.path}/screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
+      final baseDir = await getApplicationDocumentsDirectory();
+      final ssDir = Directory('${baseDir.path}/pixelvibe_screenshots');
+      if (!await ssDir.exists()) await ssDir.create(recursive: true);
+      final file = File('${ssDir.path}/screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
       await file.writeAsBytes(data);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

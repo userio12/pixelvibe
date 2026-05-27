@@ -20,6 +20,8 @@ class MediaScanner(private val context: Context) {
             MediaStore.Video.Media.HEIGHT,
             MediaStore.Video.Media.SIZE,
             MediaStore.Video.Media.DATE_MODIFIED,
+            MediaStore.Video.Media.DATA,
+            MediaStore.Video.Media.DISPLAY_NAME,
         )
         val cursor = context.contentResolver.query(baseUri, projection, null, null, null)
         cursor?.use {
@@ -30,14 +32,20 @@ class MediaScanner(private val context: Context) {
             val heightIdx = it.getColumnIndex(MediaStore.Video.Media.HEIGHT)
             val sizeIdx = it.getColumnIndex(MediaStore.Video.Media.SIZE)
             val dateIdx = it.getColumnIndex(MediaStore.Video.Media.DATE_MODIFIED)
+            val dataIdx = it.getColumnIndex(MediaStore.Video.Media.DATA)
+            val displayNameIdx = it.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME)
             if (idIdx < 0) return videos.toString()
 
             while (it.moveToNext()) {
                 try {
                     val id = it.getLong(idIdx)
                     val contentUri = Uri.withAppendedPath(baseUri, id.toString())
+                    val filePath = if (dataIdx >= 0) it.getString(dataIdx) ?: "" else ""
+                    val displayName = if (displayNameIdx >= 0) it.getString(displayNameIdx) ?: "" else ""
                     val video = JSONObject().apply {
                         put("path", contentUri.toString())
+                        put("filePath", filePath)
+                        put("displayName", displayName)
                         put("title", if (titleIdx >= 0) it.getString(titleIdx) ?: "" else "")
                         put("durationMs", if (durIdx >= 0) it.getInt(durIdx) else 0)
                         put("width", if (widthIdx >= 0) it.getInt(widthIdx) else 0)

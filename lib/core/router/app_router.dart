@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../presentation/network_browser/network_browser_screen.dart';
 import '../../presentation/network_browser/connection_form_screen.dart';
+import '../../presentation/onboarding/onboarding_screen.dart';
 import '../../presentation/playlist/playlist_detail_screen.dart';
 import '../../presentation/about/about_screen.dart';
+import '../../services/preferences_service.dart';
 import 'routes.dart';
 
 class AppRouter {
@@ -12,15 +14,35 @@ class AppRouter {
   final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
   AppRouter({
+    required PreferencesService preferencesService,
     required Widget browseScreen,
     required Widget playlistsScreen,
     required Widget settingsScreen,
     required Widget Function(String filePath) playerScreenBuilder,
   }) {
+    final onboardingComplete = preferencesService.isOnboardingComplete();
     router = GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: Routes.browse,
+      initialLocation: onboardingComplete ? Routes.browse : Routes.onboarding,
+      redirect: (context, state) {
+        final onOnboarding = state.matchedLocation == Routes.onboarding;
+        final done = preferencesService.isOnboardingComplete();
+        if (!done && !onOnboarding) return Routes.onboarding;
+        if (done && onOnboarding) return Routes.browse;
+        return null;
+      },
       routes: [
+        GoRoute(
+          path: Routes.onboarding,
+          parentNavigatorKey: _rootNavigatorKey,
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.onboarding),
+            child: const OnboardingScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        ),
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
           builder: (context, state, child) => ScaffoldWithNav(child: child),

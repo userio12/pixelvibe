@@ -1,4 +1,5 @@
 abstract class Routes {
+  static const onboarding = '/onboarding';
   static const browse = '/browse';
   static const playlists = '/playlists';
   static const settings = '/settings';

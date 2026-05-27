@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 class VideoMetadata extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get filePath => text().unique()();
+  TextColumn get contentUri => text().nullable()();
   TextColumn get title => text().nullable()();
   IntColumn get durationMs => integer().nullable()();
   IntColumn get width => integer().nullable()();

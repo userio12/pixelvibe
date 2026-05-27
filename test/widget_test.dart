@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   testWidgets('App loads without crashing', (WidgetTester tester) async {
     await tester.runAsync(() async {
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'onboarding_complete': true});
       await bootstrap();
     });
     await tester.pumpWidget(const ProviderScope(child: PixelvibeApp()));

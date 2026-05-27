@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/di/providers.dart';
+import '../../services/logger.dart';
 import 'player_button.dart';
 
 final controlLayoutProvider =
@@ -35,7 +36,8 @@ class ControlLayoutNotifier extends Notifier<ControlLayoutState> {
     return csv.split(',').map((s) {
       try {
         return PlayerButton.values.firstWhere((b) => b.name == s.trim());
-      } catch (_) {
+      } catch (e) {
+        Logger.warning('Unknown player button: ${s.trim()}', e);
         return PlayerButton.backArrow;
       }
     }).toList();

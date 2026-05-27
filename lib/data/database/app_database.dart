@@ -34,15 +34,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       onCreate: (m) async => await m.createAll(),
       onUpgrade: (m, from, to) async {
-        // Add per-version migrations here when schemaVersion is incremented
-        // e.g. if (from == 1) { await m.addColumn(...); }
+        if (from == 1) {
+          await m.addColumn(videoMetadata, videoMetadata.contentUri);
+        }
       },
     );
   }

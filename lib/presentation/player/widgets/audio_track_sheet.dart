@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import '../player_provider.dart';
+import '../../../services/logger.dart';
 
 const _audioExtensions = {'aac', 'mka', 'mp3', 'flac', 'ogg', 'opus', 'wav', 'ac3', 'eac3', 'dts', 'm4a', 'wma'};
 
@@ -39,7 +40,8 @@ class _AudioTrackSheetState extends ConsumerState<AudioTrackSheet> {
             .toList();
         _loadingExternal = false;
       });
-    } catch (_) {
+    } catch (e) {
+      Logger.warning('Failed to list audio files', e);
       if (mounted) setState(() => _loadingExternal = false);
     }
   }

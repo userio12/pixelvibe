@@ -240,6 +240,11 @@ class PreferencesService {
   bool getHrSeek() => _prefs.getBool(_hrSeek) ?? true;
   Future<void> setHrSeek(bool v) => _prefs.setBool(_hrSeek, v);
 
+  // Onboarding
+  static const _onboardingComplete = 'onboarding_complete';
+  bool isOnboardingComplete() => _prefs.getBool(_onboardingComplete) ?? false;
+  Future<void> setOnboardingComplete() => _prefs.setBool(_onboardingComplete, true);
+
   // MPV profiles
   static const _mpvActiveProfile = 'mpv_active_profile';
   String getMpvActiveProfile() => _prefs.getString(_mpvActiveProfile) ?? 'Default';

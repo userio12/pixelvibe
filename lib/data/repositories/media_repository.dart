@@ -19,24 +19,34 @@ class MediaRepository {
 
   bool get isScanned => _scanned;
 
-  Future<List<MediaFile>> scanDevice() async {
+  Future<List<MediaFile>> scanDevice({bool force = false}) async {
+    if (_scanned && !force) return _videos;
     final rawVideos = await _scanService.scanVideos();
 
     final files = <MediaFile>[];
     for (final v in rawVideos) {
       try {
-        final path = v['path'] as String? ?? '';
-        if (path.isEmpty) continue;
-        final title = v['title'] as String? ?? '';
-        final dot = title.lastIndexOf('.');
-        final name = dot > 0 ? title.substring(0, dot) : title;
-        final ext = path.split('.').last.toLowerCase();
+        final filePath = v['filePath'] as String? ?? '';
+        final contentUri = v['path'] as String? ?? '';
+        final displayName = v['displayName'] as String? ?? '';
+        if (filePath.isEmpty) continue;
+
+        final dot = filePath.lastIndexOf('.');
+        final ext = dot > 0 ? filePath.substring(dot + 1).toLowerCase() : '';
         if (!_scanner.videoExtensions.contains(ext)) continue;
 
+        final fileName = dot > 0 ? filePath.substring(0, dot) : filePath;
+        final name = displayName.isNotEmpty
+            ? (displayName.lastIndexOf('.') > 0
+                ? displayName.substring(0, displayName.lastIndexOf('.'))
+                : displayName)
+            : fileName.split('/').last.split('\\').last;
+
         final file = MediaFile(
-          path: path,
+          path: filePath,
           name: name,
           extension: ext,
+          contentUri: contentUri.isNotEmpty ? contentUri : null,
           sizeBytes: v['size'] as int? ?? 0,
           durationMs: v['durationMs'] as int? ?? 0,
           width: v['width'] as int?,
@@ -48,7 +58,8 @@ class MediaRepository {
         files.add(file);
 
         await _dao.upsert(VideoMetadataCompanion(
-          filePath: Value(path),
+          filePath: Value(filePath),
+          contentUri: Value(contentUri.isNotEmpty ? contentUri : null),
           title: Value(name),
           durationMs: Value(file.durationMs),
           width: Value(file.width),
