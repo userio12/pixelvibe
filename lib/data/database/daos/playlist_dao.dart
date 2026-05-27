@@ -83,4 +83,22 @@ class PlaylistDao extends DatabaseAccessor<AppDatabase> with _$PlaylistDaoMixin 
         .get()
         .then((rows) => rows.length);
   }
+
+  Future<({int count, int totalDuration})> getPlaylistStats(int playlistId) async {
+    final rows = await customSelect(
+      'SELECT COUNT(*) AS cnt, COALESCE(SUM(duration_ms), 0) AS total '
+      'FROM playlist_items WHERE playlist_id = ?',
+      variables: [Variable(playlistId)],
+    ).get();
+    final row = rows.first;
+    return (
+      count: row.read<int>('cnt'),
+      totalDuration: row.read<int>('total'),
+    );
+  }
+
+  Future<void> renamePlaylist(int id, String newName) {
+    return (update(playlists)..where((t) => t.id.equals(id)))
+        .write(PlaylistsCompanion(name: Value(newName)));
+  }
 }
