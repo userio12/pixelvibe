@@ -193,6 +193,19 @@ class PreferencesService {
   bool getDynamicSpeedOverlay() => _prefs.getBool(_dynamicSpeedOverlay) ?? true;
   Future<void> setDynamicSpeedOverlay(bool v) => _prefs.setBool(_dynamicSpeedOverlay, v);
 
+  // Subtitle settings
+  static const _autoLoadSubtitles = 'auto_load_subtitles';
+  bool getAutoLoadSubtitles() => _prefs.getBool(_autoLoadSubtitles) ?? true;
+  Future<void> setAutoLoadSubtitles(bool v) => _prefs.setBool(_autoLoadSubtitles, v);
+
+  static const _overrideAssSsa = 'override_ass_ssa';
+  bool getOverrideAssSsa() => _prefs.getBool(_overrideAssSsa) ?? false;
+  Future<void> setOverrideAssSsa(bool v) => _prefs.setBool(_overrideAssSsa, v);
+
+  static const _scaleByWindow = 'scale_by_window';
+  bool getScaleByWindow() => _prefs.getBool(_scaleByWindow) ?? true;
+  Future<void> setScaleByWindow(bool v) => _prefs.setBool(_scaleByWindow, v);
+
   // Audio pitch correction
   static const _audioPitchCorrection = 'audio_pitch_correction';
   bool getAudioPitchCorrection() => _prefs.getBool(_audioPitchCorrection) ?? true;
