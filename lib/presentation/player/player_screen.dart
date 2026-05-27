@@ -879,6 +879,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     );
   }
   Future<void> _showChapterSheet() async {
+    final ctx = context;
     final player = ref.read(playerProvider);
     final platform = player.platform;
     List<Chapter> chapters = const [];
@@ -899,9 +900,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         Logger.error('Failed to load chapters', e);
       }
     }
-    if (!context.mounted) return;
+    if (!ctx.mounted) return;
     showModalBottomSheet(
-      context: context,
+      context: ctx,
       builder: (_) => ChapterSheet(player: player, chapters: chapters),
     );
   }
