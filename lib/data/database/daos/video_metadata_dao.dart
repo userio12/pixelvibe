@@ -20,9 +20,12 @@ class VideoMetadataDao extends DatabaseAccessor<AppDatabase> with _$VideoMetadat
   }
 
   Future<void> incrementPlayCount(String path) async {
-    final existing = await findByPath(path);
-    if (existing == null) return;
-    await upsert(existing.copyWith(playCount: existing.playCount + 1).toCompanion(false));
+    await transaction(() async {
+      final existing = await findByPath(path);
+      if (existing != null) {
+        await upsert(existing.copyWith(playCount: existing.playCount + 1).toCompanion(false));
+      }
+    });
   }
 
   Future<List<VideoMetadataData>> mostPlayed(int limit) {
@@ -33,10 +36,12 @@ class VideoMetadataDao extends DatabaseAccessor<AppDatabase> with _$VideoMetadat
   }
 
   Future<void> markAsWatched(String path) async {
-    final existing = await findByPath(path);
-    if (existing == null) return;
-    if (existing.watched) return;
-    await upsert(existing.copyWith(watched: true).toCompanion(false));
+    await transaction(() async {
+      final existing = await findByPath(path);
+      if (existing != null && !existing.watched) {
+        await upsert(existing.copyWith(watched: true).toCompanion(false));
+      }
+    });
   }
 
   Future<List<VideoMetadataData>> unwatched({int limit = 20}) {

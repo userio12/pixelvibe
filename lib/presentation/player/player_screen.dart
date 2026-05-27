@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/di/platform_providers.dart';
@@ -75,6 +77,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _setupNoisyReceiver();
     ref.read(playerOrientationProvider).apply();
     _setupAudioFocus();
+    _setupBackgroundHandler();
   }
 
   @override
@@ -92,12 +95,21 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   }
 
   void _openMedia() {
-    final player = ref.read(playerProvider);
-    final headers = _parseHttpHeaders();
-    player.open(Media(widget.filePath, httpHeaders: headers), play: true);
-    _applyPlayerConfig(player);
-    _autoloadSubtitle(player);
-    _setupSmartSubtitle(player);
+    try {
+      final player = ref.read(playerProvider);
+      final headers = _parseHttpHeaders();
+      player.open(Media(widget.filePath, httpHeaders: headers), play: true);
+      _applyPlayerConfig(player);
+      _autoloadSubtitle(player);
+      _setupSmartSubtitle(player);
+    } catch (e) {
+      Logger.error('Failed to open media', e);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open file: $e')),
+        );
+      }
+    }
   }
 
   Map<String, String>? _parseHttpHeaders() {
@@ -194,7 +206,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         final pos = player.state.position;
         final dur = player.state.duration;
         if (pos.inMilliseconds > 0) {
-          await ref.read(playbackStateDaoProvider).upsetPosition(
+          await ref.read(playbackStateDaoProvider).upsertPosition(
             widget.filePath,
             pos.inMilliseconds,
             dur.inMilliseconds,
@@ -286,7 +298,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   void _handleEndOfVideo() {
     final closeAfterEnd = ref.read(preferencesServiceProvider).getCloseAfterEnd();
     if (closeAfterEnd && mounted) {
-      Navigator.of(context).maybePop();
+      context.pop();
       return;
     }
     final sleepTimer = ref.read(sleepTimerProvider);
@@ -344,6 +356,31 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         player.pause();
       }
     });
+  }
+
+  void _setupBackgroundHandler() {
+    ref.read(backgroundServiceProvider).onEvent = (method, args) {
+      if (!mounted) return;
+      final player = ref.read(playerProvider);
+      switch (method) {
+        case 'onPlay':
+          player.play();
+          break;
+        case 'onPause':
+          player.pause();
+          break;
+        case 'onStop':
+          player.pause();
+          ref.read(backgroundServiceProvider).stopService();
+          break;
+        case 'onSeekTo':
+          final pos = (args as Map)['position'] as int?;
+          if (pos != null) {
+            player.seek(Duration(milliseconds: pos));
+          }
+          break;
+      }
+    };
   }
 
   void _setupPipCallback() {
@@ -578,7 +615,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         return IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           tooltip: btn.tooltip,
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => context.pop(),
         );
       case PlayerButton.videoTitle:
         return Expanded(
@@ -841,11 +878,31 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       builder: (_) => AudioTrackSheet(filePath: widget.filePath),
     );
   }
-  void _showChapterSheet() {
+  Future<void> _showChapterSheet() async {
     final player = ref.read(playerProvider);
+    final platform = player.platform;
+    List<Chapter> chapters = const [];
+    if (platform is NativePlayer) {
+      try {
+        final raw = await platform.getProperty('chapter-list');
+        final list = jsonDecode(raw) as List;
+        chapters = list.map((c) {
+          final map = c as Map<String, dynamic>;
+          final title = map['title'] as String? ?? '';
+          final time = (map['time'] as num?)?.toDouble() ?? 0.0;
+          return Chapter(title: title, start: Duration(milliseconds: (time * 1000).round()), end: Duration.zero);
+        }).toList();
+        for (var i = 0; i < chapters.length - 1; i++) {
+          chapters[i] = Chapter(title: chapters[i].title, start: chapters[i].start, end: chapters[i + 1].start);
+        }
+      } catch (e) {
+        Logger.error('Failed to load chapters', e);
+      }
+    }
+    if (!context.mounted) return;
     showModalBottomSheet(
       context: context,
-      builder: (_) => ChapterSheet(player: player, chapters: const []),
+      builder: (_) => ChapterSheet(player: player, chapters: chapters),
     );
   }
   void _showAspectRatioSheet() {
@@ -855,7 +912,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         current: VideoAspectRatio.fit,
         onSelect: (ar) {
           Navigator.of(context).pop();
-          final native = ref.read(playerProvider).platform as NativePlayer;
+          final platform = ref.read(playerProvider).platform;
+          if (platform is! NativePlayer) return;
+          final native = platform;
           switch (ar) {
             case VideoAspectRatio.fit:
               native.setProperty('video-aspect-override', '-1');
@@ -1096,7 +1155,9 @@ class _ZoomSheet extends ConsumerWidget {
                   leading: const Icon(Icons.zoom_in),
                   title: Text(label),
                   onTap: () {
-                    final native = ref.read(playerProvider).platform as NativePlayer;
+                    final platform = ref.read(playerProvider).platform;
+                    if (platform is! NativePlayer) return;
+                    final native = platform;
                     native.setProperty('video-zoom', value.toString());
                     Navigator.of(context).pop();
                   },

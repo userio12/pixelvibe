@@ -24,6 +24,24 @@ class AppRouter {
     router = GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: onboardingComplete ? Routes.browse : Routes.onboarding,
+      errorBuilder: (context, state) => Scaffold(
+        appBar: AppBar(title: const Text('Page not found')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.link_off, size: 64),
+              const SizedBox(height: 16),
+              Text('Could not find: ${state.uri}', style: Theme.of(context).textTheme.bodyLarge),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => context.go(Routes.browse),
+                child: const Text('Go to Browse'),
+              ),
+            ],
+          ),
+        ),
+      ),
       redirect: (context, state) {
         final onOnboarding = state.matchedLocation == Routes.onboarding;
         final done = preferencesService.isOnboardingComplete();
@@ -69,7 +87,7 @@ class AppRouter {
           path: '${Routes.player}/:filePath',
           parentNavigatorKey: _rootNavigatorKey,
           pageBuilder: (_, state) {
-            final filePath = Uri.decodeComponent(state.pathParameters['filePath'] ?? '');
+            final filePath = state.pathParameters['filePath'] ?? '';
             return CustomTransitionPage(
               key: state.pageKey,
               child: playerScreenBuilder(filePath),
@@ -142,20 +160,10 @@ class ScaffoldWithNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     return Scaffold(
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 250),
-        switchInCurve: Curves.fastOutSlowIn,
-        switchOutCurve: Curves.fastOutSlowIn,
-        transitionBuilder: (child, animation) {
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0.05, 0),
-              end: Offset.zero,
-            ).animate(animation),
-            child: FadeTransition(opacity: animation, child: child),
-          );
-        },
-        child: KeyedSubtree(key: ValueKey(location), child: child),
+      body: IndexedStack(
+        key: ValueKey(location),
+        index: _currentIndex(location),
+        children: [child],
       ),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),

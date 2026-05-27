@@ -1,6 +1,7 @@
 package com.pixelvibe.app
 
 import android.content.Context
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 
 class AudioFocusHelper(private val context: Context) {
@@ -12,16 +13,24 @@ class AudioFocusHelper(private val context: Context) {
         onFocusChange?.invoke(focusChange)
     }
 
+    private var audioFocusRequest: AudioFocusRequest? = null
+
     fun requestFocus(callback: (Int) -> Unit) {
         onFocusChange = callback
-        audioManager.requestAudioFocus(
-            afChangeListener,
-            AudioManager.STREAM_MUSIC,
-            AudioManager.AUDIOFOCUS_GAIN,
-        )
+        audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setOnAudioFocusChangeListener(afChangeListener)
+            .setAudioAttributes(
+                android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            .build()
+        audioFocusRequest?.let { audioManager.requestAudioFocus(it) }
     }
 
     fun abandonFocus() {
-        audioManager.abandonAudioFocus(afChangeListener)
+        audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+        audioFocusRequest = null
     }
 }

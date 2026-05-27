@@ -16,7 +16,17 @@ jobs:
           flutter-version: '3.41'
           channel: 'stable'
 
+      - uses: actions/cache@v5
+        with:
+          path: /home/runner/.pub-cache
+          key: pub-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-
+
       - run: flutter pub get
+
+      - run: flutter analyze
+
+      - run: flutter test
 
       - name: Build debug APKs (split by ABI)
         run: flutter build apk --debug --split-per-abi
@@ -33,4 +43,11 @@ jobs:
         with:
           name: pixelvibe-armeabi-v7a-debug-${{ github.sha }}
           path: build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk
+          compression-level: 0
+
+      - name: Upload x86_64 debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixelvibe-x86_64-debug-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-x86_64-debug.apk
           compression-level: 0

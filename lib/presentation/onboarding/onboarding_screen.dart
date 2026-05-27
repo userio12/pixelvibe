@@ -9,6 +9,7 @@ import '../../services/logger.dart';
 import '../../services/scan_service.dart';
 import '../../utils/permissions/permission_handler.dart';
 import '../settings/settings_provider.dart';
+import '../../core/router/routes.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -62,7 +63,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
     }
 
-    if (mounted) context.go('/browse');
+    if (mounted) context.go(Routes.browse);
   }
 
   @override

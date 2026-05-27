@@ -21,6 +21,7 @@ class ThumbnailHelper(private val context: Context) {
             val scaled = Bitmap.createScaledBitmap(bitmap, width, (bitmap.height * width / bitmap.width).coerceAtLeast(1), true)
             val cacheDir = File(context.cacheDir, "thumbnails")
             cacheDir.mkdirs()
+            evictIfNeeded(cacheDir, 500)
             val file = File(cacheDir, "${path.hashCode()}.jpg")
             FileOutputStream(file).use { out ->
                 scaled.compress(Bitmap.CompressFormat.JPEG, 80, out)
@@ -31,5 +32,13 @@ class ThumbnailHelper(private val context: Context) {
         } finally {
             retriever.release()
         }
+    }
+
+    private fun evictIfNeeded(dir: File, maxFiles: Int) {
+        val files = dir.listFiles()?.toMutableList() ?: return
+        if (files.size <= maxFiles) return
+        files.sortBy { it.lastModified() }
+        val toDelete = files.size - maxFiles
+        files.take(toDelete).forEach { it.delete() }
     }
 }

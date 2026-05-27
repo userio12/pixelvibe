@@ -10,6 +10,11 @@ import android.util.Rational
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.pixelvibe.app.background.PlaybackService
 import com.pixelvibe.app.mediasession.MediaSessionCallback
 import com.pixelvibe.app.pip.PiPHelper
@@ -24,6 +29,8 @@ class MainActivity : FlutterActivity() {
     private var mediaSessionCallback: MediaSessionCallback? = null
     private var audioFocusHelper: AudioFocusHelper? = null
     private var pipMethodChannel: MethodChannel? = null
+    private var networkPlugin: PixelvibePlugin? = null
+    private val scanScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val noisyReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             pipMethodChannel?.invokeMethod("audioNoisy", null)
@@ -78,12 +85,10 @@ class MainActivity : FlutterActivity() {
 
         audioFocusHelper = AudioFocusHelper(this)
 
-        mediaSessionCallback = MediaSessionCallback(this, MethodChannel(
-            flutterEngine.dartExecutor.binaryMessenger, backgroundChannel
-        ))
+        val bgChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, backgroundChannel)
+        mediaSessionCallback = MediaSessionCallback(this, bgChannel)
 
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, backgroundChannel).apply {
-            setMethodCallHandler { call, result ->
+        bgChannel.setMethodCallHandler { call, result ->
                 when (call.method) {
                     "startService" -> {
                         val title = (call.argument("title") as? String) ?: "pixelvibe"
@@ -111,12 +116,11 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
-        }
 
         val networkChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.pixelvibe/network")
-        val networkPlugin = PixelvibePlugin(networkChannel)
+        networkPlugin = PixelvibePlugin(networkChannel)
         networkChannel.setMethodCallHandler { call, result ->
-            networkPlugin.handle(call, result)
+            networkPlugin!!.handle(call, result)
         }
 
         val mediaScanner = MediaScanner(this)
@@ -124,7 +128,14 @@ class MainActivity : FlutterActivity() {
             setMethodCallHandler { call, result ->
                 when (call.method) {
                     "scanVideos" -> {
-                        result.success(mediaScanner.scanVideos())
+                        scanScope.launch {
+                            try {
+                                val scanResult = withContext(Dispatchers.IO) { mediaScanner.scanVideos() }
+                                result.success(scanResult)
+                            } catch (e: Exception) {
+                                result.error("SCAN_ERROR", e.message, null)
+                            }
+                        }
                     }
                     else -> result.notImplemented()
                 }
@@ -163,6 +174,9 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        scanScope.cancel()
+        networkPlugin?.disconnectAll()
+        networkPlugin?.cancel()
         mediaSessionCallback?.release()
         unregisterReceiver(noisyReceiver)
         unregisterReceiver(pipActionReceiver)

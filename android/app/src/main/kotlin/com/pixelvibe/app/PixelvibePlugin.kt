@@ -7,6 +7,8 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -17,7 +19,7 @@ class PixelvibePlugin(private val channel: MethodChannel) {
         const val TAG = "PixelvibePlugin"
     }
 
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val proxy = StreamingProxy()
     private val activeClients = mutableMapOf<String, com.pixelvibe.app.network.NetworkClient>()
 
@@ -104,12 +106,26 @@ class PixelvibePlugin(private val channel: MethodChannel) {
         scope.launch {
             try {
                 client.disconnect()
+                if (activeClients.isEmpty()) proxy.stopProxy()
                 result.success(true)
             } catch (e: Exception) {
                 Log.e(TAG, "Disconnect failed", e)
                 result.error("DISCONNECT_FAILED", e.message ?: "Disconnect failed", null)
             }
         }
+    }
+
+    fun disconnectAll() {
+        scope.launch {
+            activeClients.values.forEach { it.disconnect() }
+            activeClients.clear()
+            proxy.stopProxy()
+        }
+    }
+
+    fun cancel() {
+        scope.cancel()
+        proxy.stopProxy()
     }
 
 }

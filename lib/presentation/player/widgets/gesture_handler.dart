@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
 import '../../settings/settings_provider.dart';
 import '../gesture_config_provider.dart';
 import '../player_overlay.dart';
@@ -29,6 +30,8 @@ class _GestureHandlerState extends ConsumerState<GestureHandler> {
   double _startY = 0;
   double _currentBrightness = 1.0;
   double _currentVolume = 1.0;
+  double _currentZoom = 0.0;
+  double _baseZoom = 0.0;
 
   @override
   void initState() {
@@ -97,15 +100,20 @@ class _GestureHandlerState extends ConsumerState<GestureHandler> {
   void _onScaleStart(ScaleStartDetails details) {
     if (widget.locked) return;
     if (!ref.read(pinchToZoomGestureProvider)) return;
+    _baseZoom = _currentZoom;
   }
 
   void _onScaleUpdate(ScaleUpdateDetails details) {
     if (!ref.read(pinchToZoomGestureProvider)) return;
-    if (details.scale != 1.0) {
-      ref.read(playerOverlayProvider.notifier).show(
-        ZoomChange(details.scale),
-      );
+    final newZoom = _baseZoom + (details.scale - 1.0);
+    _currentZoom = newZoom.clamp(-1.0, 2.0);
+    final platform = ref.read(playerProvider).platform;
+    if (platform is NativePlayer) {
+      platform.setProperty('video-zoom', _currentZoom.toStringAsFixed(2));
     }
+    ref.read(playerOverlayProvider.notifier).show(
+      ZoomChange(_currentZoom),
+    );
   }
 
   @override

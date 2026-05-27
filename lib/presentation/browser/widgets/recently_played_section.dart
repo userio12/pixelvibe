@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/di/providers.dart';
+import '../../../core/router/routes.dart';
 import '../../../data/database/app_database.dart';
 import 'package:go_router/go_router.dart';
 
@@ -54,7 +55,7 @@ class RecentlyPlayedSection extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                     onTap: () {
                       final encoded = Uri.encodeComponent(item.filePath);
-                      context.push('/player/$encoded');
+                      context.push('${Routes.player}/$encoded');
                     },
                     child: Container(
                       width: 160,

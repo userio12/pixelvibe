@@ -8,7 +8,7 @@ Flutter Android video player built on `media_kit` (libmpv via Dart FFI). Materia
 flutter pub get              # install dependencies
 flutter analyze              # static analysis
 flutter test                 # run tests
-dart run build_runner build  # code generation (drift, freezed, riverpod)
+dart run build_runner build  # code generation (drift)
 ```
 
 ## Architecture

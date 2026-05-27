@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/di/providers.dart';
 import '../../data/database/app_database.dart';
 
@@ -79,7 +80,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Connection saved')),
       );
-      Navigator.of(context).maybePop();
+      context.pop();
     }
   }
 

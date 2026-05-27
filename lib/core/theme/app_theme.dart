@@ -10,7 +10,7 @@ class AppTheme {
         : ColorScheme.fromSwatch(primarySwatch: Colors.deepPurple, brightness: Brightness.light);
     final custom = useAmoled ? PixelvibeColors.amoled : PixelvibeColors.light;
     return ThemeData(
-      useMaterial3: useDynamicColor,
+      useMaterial3: true,
       colorScheme: colorScheme,
       appBarTheme: AppBarTheme(
         centerTitle: true,
@@ -33,7 +33,7 @@ class AppTheme {
     final custom = useAmoled ? PixelvibeColors.amoled : PixelvibeColors.dark;
     final surfaceColor = useAmoled ? Colors.black : colorScheme.surface;
     return ThemeData(
-      useMaterial3: useDynamicColor,
+      useMaterial3: true,
       colorScheme: colorScheme.copyWith(surface: surfaceColor),
       scaffoldBackgroundColor: useAmoled ? Colors.black : null,
       appBarTheme: AppBarTheme(

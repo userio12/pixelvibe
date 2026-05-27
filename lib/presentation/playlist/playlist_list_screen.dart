@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/di/providers.dart';
+import '../../core/router/routes.dart';
 import '../../data/database/app_database.dart';
 import 'widgets/playlist_form_dialog.dart';
 import 'package:go_router/go_router.dart';
@@ -88,7 +89,7 @@ class _PlaylistTile extends StatelessWidget {
           title: Text(playlist.name),
           subtitle: Text('Created ${DateTime.fromMillisecondsSinceEpoch(playlist.createdAt).toLocal().toString().split(' ')[0]}'),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push('/playlist-detail/${playlist.id}'),
+          onTap: () => context.push('${Routes.playlistDetail}/${playlist.id}'),
         ),
       ),
     );

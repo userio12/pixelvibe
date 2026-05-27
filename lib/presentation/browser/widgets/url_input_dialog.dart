@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/routes.dart';
 
 class UrlInputDialog extends StatefulWidget {
   const UrlInputDialog({super.key});
@@ -45,6 +46,6 @@ class _UrlInputDialogState extends State<UrlInputDialog> {
     if (url.isEmpty) return;
     Navigator.pop(context);
     final encoded = Uri.encodeComponent(url);
-    context.push('/player/$encoded');
+    context.push('${Routes.player}/$encoded');
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/di/providers.dart';
+import '../../core/router/routes.dart';
 import '../../data/database/app_database.dart';
 import '../../services/network_service.dart';
 
@@ -38,7 +39,7 @@ class _NetworkBrowserScreenState extends ConsumerState<NetworkBrowserScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             tooltip: 'Add connection',
-            onPressed: () => context.push('/network-connection-form'),
+            onPressed: () => context.push(Routes.networkConnectionForm),
           ),
         ],
       ),

@@ -11,10 +11,11 @@ class WebDAVClient(
     private val host: String,
     private val port: Int,
     private val username: String,
-    private val password: String
+    private val password: String,
+    private val useTls: Boolean = false
 ) : NetworkClient {
 
-    private val baseUrl: String = "http://$host:$port"
+    private val baseUrl: String = "${if (useTls) "https" else "http"}://$host:$port"
 
     private fun createConnection(path: String): HttpURLConnection {
         val url = URL("$baseUrl${path.removePrefix("/")}")

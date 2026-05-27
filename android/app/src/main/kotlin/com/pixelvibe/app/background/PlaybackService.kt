@@ -34,7 +34,9 @@ class PlaybackService : Service() {
                 stopSelf()
             }
             else -> {
-                startForeground(NOTIFICATION_ID, buildNotification("pixelvibe", "Playing"))
+                val title = intent?.getStringExtra("title") ?: "pixelvibe"
+                val content = intent?.getStringExtra("content") ?: "Playing"
+                startForeground(NOTIFICATION_ID, buildNotification(title, content))
             }
         }
         return START_STICKY

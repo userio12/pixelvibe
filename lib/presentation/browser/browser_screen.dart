@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../domain/models/media_file.dart';
 import '../../utils/m3u_parser.dart';
 import '../../services/logger.dart';
+import '../../core/router/routes.dart';
 import '../player/playlist_queue_provider.dart';
 import 'browser_provider.dart';
 import 'enums/view_mode.dart';
@@ -110,7 +111,7 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> with TickerProvid
     _exitSelectionMode();
     if (context.mounted) {
       final encoded = Uri.encodeComponent(files.first.path);
-      context.push('/player/$encoded');
+      context.push('${Routes.player}/$encoded');
     }
   }
 

@@ -29,7 +29,15 @@ class SmbClient(
 
     private fun getSession(): com.hierynomus.smbj.session.Session {
         val s = session
-        if (s != null) return s
+        if (s != null) {
+            return try {
+                s.isConnected
+                s
+            } catch (_: Exception) {
+                session = null
+                client = null
+            }
+        }
         val c = SMBClient()
         val connection = c.connect(host, port.takeIf { it > 0 } ?: 445)
         val auth = AuthenticationContext(username, password.toCharArray(), null)
@@ -48,16 +56,19 @@ class SmbClient(
         val shareName = parts[0]
         val subPath = if (parts.size > 1) parts[1] else ""
         val share = sess.connectShare(shareName) as DiskShare
-        val files = share.list(subPath, "*")
-        files.map { f ->
-            val attrs = f.fileAttributes
-            NetworkFile(
-                name = f.fileName,
-                path = "/$shareName/${f.fileName}",
-                isDirectory = (attrs and FILE_ATTRIBUTE_DIRECTORY) != 0L,
-                size = f.endOfFile,
-                lastModified = f.lastWriteTime?.toInstant()?.toEpochMilli() ?: 0,
-            )
+        try {
+            val files = share.list(subPath, "*")
+            files.map { f ->
+                NetworkFile(
+                    name = f.fileName,
+                    path = "/$shareName/${f.fileName}",
+                    isDirectory = (f.fileAttributes and FILE_ATTRIBUTE_DIRECTORY) != 0L,
+                    size = f.endOfFile,
+                    lastModified = f.lastWriteTime?.toInstant()?.toEpochMilli() ?: 0,
+                )
+            }
+        } finally {
+            try { share.close() } catch (_: Exception) { }
         }
     }
 

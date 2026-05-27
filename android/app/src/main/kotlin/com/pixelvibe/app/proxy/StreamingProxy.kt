@@ -9,10 +9,12 @@ class StreamingProxy(private val port: Int = 8765) : NanoHTTPD(port) {
 
     companion object {
         const val TAG = "StreamingProxy"
-        // Single-instance proxy: shared mutable state is OK because there is only one proxy
-        private var currentClient: NetworkClient? = null
-        private var currentPath: String? = null
     }
+
+    @Volatile
+    private var currentClient: NetworkClient? = null
+    @Volatile
+    private var currentPath: String? = null
 
     fun setStreamSource(client: NetworkClient, path: String) {
         currentClient?.let { runBlocking { it.disconnect() } }

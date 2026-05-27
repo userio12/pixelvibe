@@ -1,8 +1,19 @@
 import 'package:flutter/services.dart';
 import 'logger.dart';
 
+typedef BackgroundEventHandler = void Function(String method, dynamic arguments);
+
 class BackgroundService {
   static const _channel = MethodChannel('com.pixelvibe/background');
+  BackgroundEventHandler? onEvent;
+
+  BackgroundService() {
+    _channel.setMethodCallHandler(_handleMethodCall);
+  }
+
+  Future<void> _handleMethodCall(MethodCall call) async {
+    onEvent?.call(call.method, call.arguments);
+  }
 
   Future<void> startService({String title = 'pixelvibe', String content = 'Playing'}) async {
     try {

@@ -23,7 +23,7 @@ class ViewModeNotifier extends Notifier<ViewMode> {
 
 final browserProvider = FutureProvider.autoDispose<List<MediaFile>>((ref) async {
   final granted = await requestStoragePermission();
-  if (!granted) return [];
+  if (!granted) throw Exception('Storage permission denied. Please grant video access in your device settings.');
 
   final repo = ref.watch(mediaRepositoryProvider);
   return repo.scanDevice();

@@ -8,10 +8,6 @@ class FilterPresetNotifier extends Notifier<FilterPreset> {
   void update(FilterPreset v) => state = v;
 }
 
-final videoBrightnessProvider = NotifierProvider<SimpleDoubleNotifier, double>(SimpleDoubleNotifier.new);
-final videoSaturationProvider = NotifierProvider<SimpleDoubleNotifier, double>(SimpleDoubleNotifier.new);
-final videoContrastProvider = NotifierProvider<SimpleDoubleNotifier, double>(SimpleDoubleNotifier.new);
-final videoGammaProvider = NotifierProvider<SimpleDoubleNotifier, double>(SimpleDoubleNotifier.new);
 final videoHueProvider = NotifierProvider<SimpleDoubleNotifier, double>(SimpleDoubleNotifier.new);
 final videoSharpnessProvider = NotifierProvider<SimpleDoubleNotifier, double>(SimpleDoubleNotifier.new);
 

@@ -22,6 +22,10 @@ void main() async {
     Logger.error('Platform error', error, stack);
     return true;
   };
-  await bootstrap();
+  try {
+    await bootstrap();
+  } catch (e, s) {
+    Logger.error('Bootstrap failed', e, s);
+  }
   runApp(const ProviderScope(child: PixelvibeApp()));
 }

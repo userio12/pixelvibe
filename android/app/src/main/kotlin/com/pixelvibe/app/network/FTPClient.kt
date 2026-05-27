@@ -43,7 +43,12 @@ class FTPClient(
 
     override suspend fun getInputStream(path: String): java.io.InputStream = withContext(Dispatchers.IO) {
         val ftp = getClient()
-        ftp.retrieveFileStream(path) ?: throw Exception("Failed to retrieve file: $path")
+        val stream = ftp.retrieveFileStream(path) ?: throw Exception("Failed to retrieve file: $path")
+        object : java.io.FilterInputStream(stream) {
+            override fun close() {
+                try { super.close() } finally { ftp.completePendingCommand() }
+            }
+        }
     }
 
     override suspend fun disconnect() = withContext(Dispatchers.IO) {

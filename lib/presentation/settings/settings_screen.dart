@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/di/providers.dart';
 import '../../services/logger.dart';
+import '../../core/router/routes.dart';
 import '../../utils/platform_helper.dart';
 import '../player/gesture_config_provider.dart';
 import '../player/video_quality_provider.dart';
@@ -166,7 +167,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       leading: const Icon(Icons.info_outline),
                       title: const Text('About pixelvibe'),
                       trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.push('/about'),
+                      onTap: () => context.push(Routes.about),
                     ),
                   ),
                 if (_matches(['Audio', 'Normalize', 'Channels']))
