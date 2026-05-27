@@ -12,13 +12,13 @@ import 'enums/view_mode.dart';
 import 'widgets/recently_played_section.dart';
 import 'widgets/most_played_section.dart';
 import 'widgets/url_input_dialog.dart';
-import 'widgets/view_mode_toggle.dart';
 import 'widgets/home_search_bar.dart';
 import 'widgets/video_grid_tile.dart';
 import 'widgets/video_list_tile.dart';
 import 'widgets/folder_list_tile.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/file_context_menu.dart';
+import 'widgets/display_options_sheet.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -115,42 +115,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     }
   }
 
-  void _showSortMenu() {
-    final sortMode = ref.read(sortModeProvider);
-    final ascending = ref.read(sortAscendingProvider);
+  void _showDisplayOptionsSheet() {
     showModalBottomSheet(
       context: context,
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            title: const Text('Sort by name'),
-            trailing: sortMode == SortMode.name ? const Icon(Icons.check) : null,
-            onTap: () { ref.read(sortModeProvider.notifier).update(SortMode.name); Navigator.pop(ctx); },
-          ),
-          ListTile(
-            title: const Text('Sort by date'),
-            trailing: sortMode == SortMode.date ? const Icon(Icons.check) : null,
-            onTap: () { ref.read(sortModeProvider.notifier).update(SortMode.date); Navigator.pop(ctx); },
-          ),
-          ListTile(
-            title: const Text('Sort by size'),
-            trailing: sortMode == SortMode.size ? const Icon(Icons.check) : null,
-            onTap: () { ref.read(sortModeProvider.notifier).update(SortMode.size); Navigator.pop(ctx); },
-          ),
-          ListTile(
-            title: const Text('Sort by type'),
-            trailing: sortMode == SortMode.type ? const Icon(Icons.check) : null,
-            onTap: () { ref.read(sortModeProvider.notifier).update(SortMode.type); Navigator.pop(ctx); },
-          ),
-          const Divider(),
-          SwitchListTile(
-            title: const Text('Ascending'),
-            value: ascending,
-            onChanged: (_) { ref.read(sortAscendingProvider.notifier).toggle(); Navigator.pop(ctx); },
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const DisplayOptionsSheet(),
     );
   }
 
@@ -192,26 +162,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               onPressed: () => showDialog(context: context, builder: (_) => const UrlInputDialog()),
             ),
             IconButton(
-              icon: const Icon(Icons.sort),
-              tooltip: 'Sort',
-              onPressed: _showSortMenu,
-            ),
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              tooltip: 'Filter',
-              onPressed: _showFilterSheet,
-            ),
-            IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: 'Rescan device',
               onPressed: () => ref.invalidate(homeProvider),
             ),
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ViewModeToggle(
-                current: viewMode,
-                onChanged: (v) => ref.read(viewModeProvider.notifier).update(v),
-              ),
+            IconButton(
+              icon: const Icon(Icons.tune),
+              tooltip: 'Display options',
+              onPressed: _showDisplayOptionsSheet,
             ),
           ],
         ],
@@ -279,35 +237,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 
   Widget _buildView(BuildContext context, List<MediaFile> videos, ViewMode viewMode) {
+    final layout = ref.watch(layoutProvider);
     switch (viewMode) {
-      case ViewMode.grid:
-        return GridView.builder(
-          padding: const EdgeInsets.all(8),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.75,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: videos.length,
-          itemBuilder: (_, i) => VideoGridTile(
-            file: videos[i],
-            selected: _selectionMode && _selectedFiles.contains(videos[i]),
-            onTap: () => _onFileTap(context, videos[i]),
-            onLongPress: () => _onFileLongPress(videos[i]),
-          ),
-        );
-      case ViewMode.list:
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          itemCount: videos.length,
-          itemBuilder: (_, i) => VideoListTile(
-            file: videos[i],
-            selected: _selectionMode && _selectedFiles.contains(videos[i]),
-            onTap: () => _onFileTap(context, videos[i]),
-            onLongPress: () => _onFileLongPress(videos[i]),
-          ),
-        );
+      case ViewMode.folder:
+        return layout == LayoutMode.grid
+            ? GridView.builder(
+                padding: const EdgeInsets.all(8),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.75,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                itemCount: videos.length,
+                itemBuilder: (_, i) => VideoGridTile(
+                  file: videos[i],
+                  selected: _selectionMode && _selectedFiles.contains(videos[i]),
+                  onTap: () => _onFileTap(context, videos[i]),
+                  onLongPress: () => _onFileLongPress(videos[i]),
+                ),
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                itemCount: videos.length,
+                itemBuilder: (_, i) => VideoListTile(
+                  file: videos[i],
+                  selected: _selectionMode && _selectedFiles.contains(videos[i]),
+                  onTap: () => _onFileTap(context, videos[i]),
+                  onLongPress: () => _onFileLongPress(videos[i]),
+                ),
+              );
       case ViewMode.tree:
         return _buildFolderTree(context);
       case ViewMode.albums:
@@ -344,7 +303,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     name: 'All Videos',
                     count: videos.length,
                     thumbnailPath: videos.isNotEmpty ? videos.first.thumbnailPath : null,
-                    onTap: () => ref.read(viewModeProvider.notifier).update(ViewMode.grid),
+                    onTap: () => ref.read(viewModeProvider.notifier).update(ViewMode.folder),
                   );
                 }
                 final dir = folders[i - 1];
@@ -357,7 +316,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   thumbnailPath: firstVideo.thumbnailPath,
                   onTap: () {
                     ref.read(currentDirectoryProvider.notifier).enter(dir);
-                    ref.read(viewModeProvider.notifier).update(ViewMode.grid);
+                    ref.read(viewModeProvider.notifier).update(ViewMode.folder);
                   },
                 );
               },
@@ -383,7 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             FolderListTile(
               name: 'All Videos',
               itemCount: folders.length,
-              onTap: () => ref.read(viewModeProvider.notifier).update(ViewMode.grid),
+              onTap: () => ref.read(viewModeProvider.notifier).update(ViewMode.folder),
             ),
             ...folders.map((dir) => FolderListTile(
               name: dir.split('/').last,
@@ -396,32 +355,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     );
   }
 
-  void _showFilterSheet() {
-    final currentFilter = ref.read(mediaTypeFilterProvider);
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            title: const Text('All types'),
-            trailing: currentFilter == MediaTypeFilter.all ? const Icon(Icons.check) : null,
-            onTap: () { ref.read(mediaTypeFilterProvider.notifier).update(MediaTypeFilter.all); Navigator.pop(ctx); },
-          ),
-          ListTile(
-            title: const Text('Videos only'),
-            trailing: currentFilter == MediaTypeFilter.video ? const Icon(Icons.check) : null,
-            onTap: () { ref.read(mediaTypeFilterProvider.notifier).update(MediaTypeFilter.video); Navigator.pop(ctx); },
-          ),
-          ListTile(
-            title: const Text('Playlists only'),
-            trailing: currentFilter == MediaTypeFilter.playlist ? const Icon(Icons.check) : null,
-            onTap: () { ref.read(mediaTypeFilterProvider.notifier).update(MediaTypeFilter.playlist); Navigator.pop(ctx); },
-          ),
-        ],
-      ),
-    );
-  }
+
 
   void _onFileTap(BuildContext context, MediaFile file) {
     if (_selectionMode) {

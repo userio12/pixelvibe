@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../bootstrap.dart';
 import '../../data/repositories/media_repository.dart';
 import '../../domain/models/media_file.dart';
 import '../../utils/permissions/permission_handler.dart';
@@ -17,8 +19,48 @@ final viewModeProvider = NotifierProvider<ViewModeNotifier, ViewMode>(ViewModeNo
 
 class ViewModeNotifier extends Notifier<ViewMode> {
   @override
-  ViewMode build() => ViewMode.grid;
+  ViewMode build() => ViewMode.folder;
   void update(ViewMode v) => state = v;
+}
+
+final layoutProvider = NotifierProvider.autoDispose<LayoutNotifier, LayoutMode>(LayoutNotifier.new);
+class LayoutNotifier extends Notifier<LayoutMode> {
+  @override
+  LayoutMode build() => LayoutMode.list;
+  void update(LayoutMode v) => state = v;
+}
+
+final displayFieldsProvider = NotifierProvider.autoDispose<DisplayFieldsNotifier, Set<DisplayField>>(DisplayFieldsNotifier.new);
+class DisplayFieldsNotifier extends Notifier<Set<DisplayField>> {
+  static const _key = 'display_fields';
+
+  @override
+  Set<DisplayField> build() {
+    final raw = preferencesService.getString(_key);
+    if (raw.isEmpty) return {DisplayField.path, DisplayField.totalVideos, DisplayField.folderSize};
+    try {
+      final list = (jsonDecode(raw) as List).cast<String>();
+      return list.map((e) => DisplayField.values.firstWhere((f) => f.name == e)).toSet();
+    } catch (_) {
+      return {DisplayField.path, DisplayField.totalVideos, DisplayField.folderSize};
+    }
+  }
+
+  void toggle(DisplayField field) {
+    final updated = Set<DisplayField>.from(state);
+    if (updated.contains(field)) {
+      updated.remove(field);
+    } else {
+      updated.add(field);
+    }
+    state = updated;
+    _persist(updated);
+  }
+
+  Future<void> _persist(Set<DisplayField> fields) async {
+    final encoded = jsonEncode(fields.map((f) => f.name).toList());
+    await preferencesService.setString(_key, encoded);
+  }
 }
 
 final homeProvider = FutureProvider.autoDispose<List<MediaFile>>((ref) async {

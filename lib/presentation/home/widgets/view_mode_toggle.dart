@@ -22,9 +22,8 @@ class ViewModeToggle extends StatelessWidget {
   }
 
   IconData _icon(ViewMode mode) => switch (mode) {
-    ViewMode.grid => Icons.grid_view_outlined,
-    ViewMode.list => Icons.list_outlined,
-    ViewMode.tree => Icons.folder_outlined,
+    ViewMode.folder => Icons.folder_outlined,
+    ViewMode.tree => Icons.account_tree_outlined,
     ViewMode.albums => Icons.photo_library_outlined,
   };
 }
