@@ -22,10 +22,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _pageController = PageController();
   var _currentPage = 0;
   var _permissionGranted = false;
+  var _allFilesGranted = false;
   var _storagePath = '';
   var _scanning = false;
 
-  static const _pages = ['Welcome', 'Permission', 'Finish Setup'];
+  static const _pages = ['Welcome', 'Permission', 'All Files', 'Finish Setup'];
 
   @override
   void dispose() {
@@ -36,6 +37,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _requestPermission() async {
     final granted = await requestStoragePermission();
     if (mounted) setState(() => _permissionGranted = granted);
+  }
+
+  Future<void> _requestAllFilesPermission() async {
+    final granted = await requestAllFilesPermission();
+    if (mounted) setState(() => _allFilesGranted = granted);
   }
 
   Future<void> _pickStorage() async {
@@ -82,6 +88,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 children: [
                   _buildWelcomePage(theme, colorScheme),
                   _buildPermissionPage(theme, colorScheme),
+                  _buildAllFilesPage(theme, colorScheme),
                   _buildFinishPage(theme, colorScheme),
                 ],
               ),
@@ -185,6 +192,78 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               padding: const EdgeInsets.only(top: 12),
               child: Text(
                 'Video access granted!',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.primary,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAllFilesPage(ThemeData theme, ColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: _allFilesGranted
+                  ? colorScheme.primaryContainer
+                  : colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(32),
+            ),
+            child: Icon(
+              _allFilesGranted
+                  ? Icons.folder_special_rounded
+                  : Icons.folder_special_outlined,
+              size: 64,
+              color: _allFilesGranted
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.onErrorContainer,
+            ),
+          ),
+          const SizedBox(height: 40),
+          Text(
+            'All Files Access',
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'pixelvibe can access videos in custom folders, network downloads, and external SD cards. This step is optional — you can skip and grant it later from Settings.',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          FilledButton.icon(
+            onPressed: _requestAllFilesPermission,
+            icon: Icon(
+              _allFilesGranted ? Icons.check : Icons.folder_special_rounded,
+            ),
+            label: Text(_allFilesGranted ? 'Access Granted' : 'Grant All Files Access'),
+          ),
+          if (!_allFilesGranted)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: TextButton(
+                onPressed: () => setState(() {}),
+                child: const Text('Skip for now'),
+              ),
+            ),
+          if (_allFilesGranted)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                'Full storage access granted!',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.primary,
                 ),

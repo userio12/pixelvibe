@@ -52,9 +52,11 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '• READ_MEDIA_VIDEO — Browse local videos\n'
+            '• MANAGE_EXTERNAL_STORAGE — Access files in custom folders\n'
             '• POST_NOTIFICATIONS — Playback notification\n'
             '• FOREGROUND_SERVICE — Background playback\n'
-            '• FOREGROUND_SERVICE_MEDIA_PLAYBACK — Media playback in background',
+            '• FOREGROUND_SERVICE_MEDIA_PLAYBACK — Media playback in background\n'
+            '• INTERNET — Network streaming and browsing',
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 24),

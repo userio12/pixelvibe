@@ -11,3 +11,10 @@ Future<bool> requestNotificationPermission() async {
   if (status.isGranted) return true;
   return await Permission.notification.request().isGranted;
 }
+
+Future<bool> requestAllFilesPermission() async {
+  final status = await Permission.manageExternalStorage.status;
+  if (status.isGranted) return true;
+  final result = await Permission.manageExternalStorage.request();
+  return result.isGranted;
+}

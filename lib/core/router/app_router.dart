@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../presentation/network_browser/network_browser_screen.dart';
-import '../../presentation/network_browser/connection_form_screen.dart';
+import '../../presentation/network/network_screen.dart';
+import '../../presentation/network/connection_form_screen.dart';
 import '../../presentation/onboarding/onboarding_screen.dart';
 import '../../presentation/playlist/playlist_detail_screen.dart';
 import '../../presentation/about/about_screen.dart';
@@ -15,7 +15,7 @@ class AppRouter {
 
   AppRouter({
     required PreferencesService preferencesService,
-    required Widget browseScreen,
+    required Widget homeScreen,
     required Widget playlistsScreen,
     required Widget settingsScreen,
     required Widget Function(String filePath) playerScreenBuilder,
@@ -23,7 +23,7 @@ class AppRouter {
     final onboardingComplete = preferencesService.isOnboardingComplete();
     router = GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: onboardingComplete ? Routes.browse : Routes.onboarding,
+      initialLocation: onboardingComplete ? Routes.home : Routes.onboarding,
       errorBuilder: (context, state) => Scaffold(
         appBar: AppBar(title: const Text('Page not found')),
         body: Center(
@@ -35,8 +35,8 @@ class AppRouter {
               Text('Could not find: ${state.uri}', style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: () => context.go(Routes.browse),
-                child: const Text('Go to Browse'),
+                onPressed: () => context.go(Routes.home),
+                child: const Text('Go to Home'),
               ),
             ],
           ),
@@ -46,7 +46,7 @@ class AppRouter {
         final onOnboarding = state.matchedLocation == Routes.onboarding;
         final done = preferencesService.isOnboardingComplete();
         if (!done && !onOnboarding) return Routes.onboarding;
-        if (done && onOnboarding) return Routes.browse;
+        if (done && onOnboarding) return Routes.home;
         return null;
       },
       routes: [
@@ -66,16 +66,16 @@ class AppRouter {
           builder: (context, state, child) => ScaffoldWithNav(child: child),
           routes: [
             GoRoute(
-              path: Routes.browse,
-              pageBuilder: (_, _) => NoTransitionPage(child: browseScreen),
+              path: Routes.home,
+              pageBuilder: (_, _) => NoTransitionPage(child: homeScreen),
             ),
             GoRoute(
               path: Routes.playlists,
               pageBuilder: (_, _) => NoTransitionPage(child: playlistsScreen),
             ),
             GoRoute(
-              path: Routes.networkBrowser,
-              pageBuilder: (_, _) => NoTransitionPage(child: const NetworkBrowserScreen()),
+              path: Routes.network,
+              pageBuilder: (_, _) => NoTransitionPage(child: const NetworkScreen()),
             ),
             GoRoute(
               path: Routes.settings,
@@ -149,9 +149,9 @@ class ScaffoldWithNav extends StatelessWidget {
   const ScaffoldWithNav({super.key, required this.child});
 
   int _currentIndex(String location) {
-    if (location.startsWith(Routes.browse)) return 0;
+    if (location.startsWith(Routes.home)) return 0;
     if (location.startsWith(Routes.playlists)) return 1;
-    if (location.startsWith(Routes.networkBrowser)) return 2;
+    if (location.startsWith(Routes.network)) return 2;
     if (location.startsWith(Routes.settings)) return 3;
     return 0;
   }
@@ -171,9 +171,9 @@ class ScaffoldWithNav extends StatelessWidget {
           selectedIndex: _currentIndex(location),
           onDestinationSelected: (i) {
             final paths = [
-              Routes.browse,
+              Routes.home,
               Routes.playlists,
-              Routes.networkBrowser,
+              Routes.network,
               Routes.settings,
             ];
             context.go(paths[i]);
@@ -181,7 +181,7 @@ class ScaffoldWithNav extends StatelessWidget {
           height: 72,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: const [
-            NavigationDestination(icon: Icon(Icons.video_library_outlined), label: 'Browse'),
+            NavigationDestination(icon: Icon(Icons.video_library_outlined), label: 'Home'),
             NavigationDestination(icon: Icon(Icons.playlist_play_outlined), label: 'Playlists'),
             NavigationDestination(icon: Icon(Icons.cloud_outlined), label: 'Network'),
             NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
