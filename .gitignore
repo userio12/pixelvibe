@@ -46,3 +46,7 @@ app.*.map.json
 
 # graphify knowledge graph output
 /graphify-out/
+
+# Keystore files (sensitive)
+*.keystore
+*.b64

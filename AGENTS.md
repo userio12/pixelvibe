@@ -21,6 +21,11 @@ dart run build_runner build  # code generation (drift, freezed, riverpod)
 | Domain | `lib/domain/` | Pure Dart models |
 | Platform | `android/.../kotlin/` | PiP, background playback, network proxy |
 
+## Default Tools
+
+- **grep**: Use `rg` (ripgrep) via bash for all code searches, not the built-in Grep tool. Prefer `rg -n` with file-type flags (e.g. `-tdart`).
+- **graphify**: Always load the graphify-windows skill before answering questions about the codebase to leverage the persistent knowledge graph in `graphify-out/`.
+
 ## Key Constraints
 
 - **minSdk 26**, compileSdk/targetSdk 36
