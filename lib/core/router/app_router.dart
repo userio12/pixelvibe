@@ -7,6 +7,7 @@ import '../../presentation/playlist/playlist_detail_screen.dart';
 import '../../presentation/about/about_screen.dart';
 import '../../presentation/settings/sections/folders_screen.dart';
 import '../../presentation/settings/sections/audio_screen.dart';
+import '../../presentation/settings/sections/player_settings_screen.dart';
 import '../../services/preferences_service.dart';
 import 'routes.dart';
 
@@ -169,7 +170,7 @@ class AppRouter {
           parentNavigatorKey: _rootNavigatorKey,
           pageBuilder: (_, _) => CustomTransitionPage(
             key: ValueKey(Routes.settingsPlayer),
-            child: const _PlaceholderScreen(title: 'Player'),
+            child: const PlayerSettingsScreen(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },

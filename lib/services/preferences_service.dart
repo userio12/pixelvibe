@@ -148,6 +148,51 @@ class PreferencesService {
 
   // A-B loop
   // Volume normalization
+  // Player settings
+  static const _enableNextPrevNavigation = 'enable_next_prev_navigation';
+  bool getEnableNextPrevNavigation() => _prefs.getBool(_enableNextPrevNavigation) ?? true;
+  Future<void> setEnableNextPrevNavigation(bool v) => _prefs.setBool(_enableNextPrevNavigation, v);
+
+  static const _rememberBrightness = 'remember_brightness';
+  bool getRememberBrightness() => _prefs.getBool(_rememberBrightness) ?? false;
+  Future<void> setRememberBrightness(bool v) => _prefs.setBool(_rememberBrightness, v);
+
+  static const _keepScreenOnWhenPaused = 'keep_screen_on_when_paused';
+  bool getKeepScreenOnWhenPaused() => _prefs.getBool(_keepScreenOnWhenPaused) ?? false;
+  Future<void> setKeepScreenOnWhenPaused(bool v) => _prefs.setBool(_keepScreenOnWhenPaused, v);
+
+  static const _showRippleWhenSeeking = 'show_ripple_when_seeking';
+  bool getShowRippleWhenSeeking() => _prefs.getBool(_showRippleWhenSeeking) ?? true;
+  Future<void> setShowRippleWhenSeeking(bool v) => _prefs.setBool(_showRippleWhenSeeking, v);
+
+  static const _showSeekTime = 'show_seek_time';
+  bool getShowSeekTime() => _prefs.getBool(_showSeekTime) ?? true;
+  Future<void> setShowSeekTime(bool v) => _prefs.setBool(_showSeekTime, v);
+
+  static const _allowGesturesInPanels = 'allow_gestures_in_panels';
+  bool getAllowGesturesInPanels() => _prefs.getBool(_allowGesturesInPanels) ?? false;
+  Future<void> setAllowGesturesInPanels(bool v) => _prefs.setBool(_allowGesturesInPanels, v);
+
+  static const _swapVolumeBrightness = 'swap_volume_brightness';
+  bool getSwapVolumeBrightness() => _prefs.getBool(_swapVolumeBrightness) ?? false;
+  Future<void> setSwapVolumeBrightness(bool v) => _prefs.setBool(_swapVolumeBrightness, v);
+
+  static const _showLoadingCircle = 'show_loading_circle';
+  bool getShowLoadingCircle() => _prefs.getBool(_showLoadingCircle) ?? true;
+  Future<void> setShowLoadingCircle(bool v) => _prefs.setBool(_showLoadingCircle, v);
+
+  static const _showStatusBarWithControls = 'show_status_bar_with_controls';
+  bool getShowStatusBarWithControls() => _prefs.getBool(_showStatusBarWithControls) ?? false;
+  Future<void> setShowStatusBarWithControls(bool v) => _prefs.setBool(_showStatusBarWithControls, v);
+
+  static const _showNavBarWithControls = 'show_nav_bar_with_controls';
+  bool getShowNavBarWithControls() => _prefs.getBool(_showNavBarWithControls) ?? false;
+  Future<void> setShowNavBarWithControls(bool v) => _prefs.setBool(_showNavBarWithControls, v);
+
+  static const _dynamicSpeedOverlay = 'dynamic_speed_overlay';
+  bool getDynamicSpeedOverlay() => _prefs.getBool(_dynamicSpeedOverlay) ?? true;
+  Future<void> setDynamicSpeedOverlay(bool v) => _prefs.setBool(_dynamicSpeedOverlay, v);
+
   // Audio pitch correction
   static const _audioPitchCorrection = 'audio_pitch_correction';
   bool getAudioPitchCorrection() => _prefs.getBool(_audioPitchCorrection) ?? true;
