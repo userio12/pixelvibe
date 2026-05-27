@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/di/providers.dart';
 import '../../core/router/routes.dart';
@@ -20,12 +21,27 @@ class NetworkScreen extends ConsumerStatefulWidget {
 }
 
 class _NetworkScreenState extends ConsumerState<NetworkScreen> {
-  bool _autoConnected = false;
+  final _urlController = TextEditingController();
+  var _hasUrl = false;
+  var _autoConnected = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _urlController.addListener(() {
+      setState(() => _hasUrl = _urlController.text.trim().isNotEmpty);
+    });
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final connections = ref.watch(connectionListProvider);
-    final theme = Theme.of(context);
 
     if (!_autoConnected) {
       _autoConnected = true;
@@ -33,45 +49,226 @@ class _NetworkScreenState extends ConsumerState<NetworkScreen> {
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFF121518),
       appBar: AppBar(
-        title: const Text('Network'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Add connection',
-            onPressed: () => context.push(Routes.networkConnectionForm),
+        backgroundColor: const Color(0xFF121518),
+        title: const Text(
+          'Network',
+          style: TextStyle(
+            color: Color(0xFF4DB6AC),
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildStreamLinkSection(),
+            const SizedBox(height: 24),
+            _buildLocalNetworkSection(connections),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: const Color(0xFF056580),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Add Connection'),
+        onPressed: () => context.push(Routes.networkConnectionForm),
+      ),
+    );
+  }
+
+  Widget _buildStreamLinkSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 16, bottom: 12),
+          child: Text(
+            'Stream Link',
+            style: TextStyle(
+              color: Color(0xFF4DB6AC),
+              fontSize: 18,
+            ),
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFF22262B),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              TextField(
+                controller: _urlController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.link, color: Color(0xFFA0A5AA)),
+                  hintText: 'Video URL',
+                  hintStyle: const TextStyle(color: Color(0xFFA0A5AA)),
+                  filled: true,
+                  fillColor: const Color(0xFF121518),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF4A5158)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF4A5158)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF4DB6AC)),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _ActionButton(
+                    icon: Icons.paste,
+                    label: 'Paste',
+                    backgroundColor: const Color(0xFF354854),
+                    foregroundColor: Colors.white,
+                    onPressed: _pasteUrl,
+                  ),
+                  const SizedBox(width: 10),
+                  _ActionButton(
+                    icon: Icons.play_arrow,
+                    label: 'Play',
+                    backgroundColor: _hasUrl ? const Color(0xFF056580) : const Color(0xFF2C3136),
+                    foregroundColor: _hasUrl ? Colors.white : const Color(0xFF5A6066),
+                    onPressed: _hasUrl ? _playStream : null,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocalNetworkSection(AsyncValue<List<NetworkConnection>> connections) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: Text(
+            'Local Network',
+            style: TextStyle(
+              color: Color(0xFF4DB6AC),
+              fontSize: 18,
+            ),
+          ),
+        ),
+        connections.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: Color(0xFFA0A5AA)))),
+          data: (list) {
+            if (list.isEmpty) return _buildEmptyState();
+            return _buildConnectionList(list);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 220),
+      decoration: BoxDecoration(
+        color: const Color(0xFF22262B),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.wifi_off, size: 56, color: Color(0xFF4A5158)),
+          const SizedBox(height: 16),
+          const Text(
+            'No network connections',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Add SMB, FTP, or WebDAV connections\nto browse network files',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Color(0xFFA0A5AA),
+              fontSize: 14,
+            ),
           ),
         ],
       ),
-      body: connections.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (list) {
-          if (list.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.cloud_outlined, size: 72, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
-                  const SizedBox(height: 16),
-                  Text('No network connections', style: theme.textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  Text('Add an SMB, FTP, or WebDAV connection', style: theme.textTheme.bodyMedium),
-                ],
-              ),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            itemCount: list.length,
-            itemBuilder: (_, i) => _ConnectionTile(
-              connection: list[i],
-              onConnect: _connect,
-            ),
-          );
-        },
+    );
+  }
+
+  Widget _buildConnectionList(List<NetworkConnection> list) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF22262B),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        children: list.map((conn) => _buildConnectionCard(conn)).toList(),
       ),
     );
+  }
+
+  Widget _buildConnectionCard(NetworkConnection conn) {
+    final icon = switch (conn.protocol) {
+      'smb' => Icons.computer,
+      'ftp' => Icons.cloud,
+      'webdav' => Icons.web,
+      _ => Icons.link,
+    };
+    return Card(
+      color: const Color(0xFF2C3136),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFF4DB6AC)),
+        title: Text(conn.name, style: const TextStyle(color: Colors.white)),
+        subtitle: Text(
+          '${conn.protocol.toUpperCase()} \u00b7 ${conn.host}:${conn.port}',
+          style: const TextStyle(color: Color(0xFFA0A5AA)),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Color(0xFFA0A5AA)),
+        onTap: () => _connect(conn),
+      ),
+    );
+  }
+
+  Future<void> _pasteUrl() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data?.text != null && mounted) {
+      _urlController.text = data!.text!;
+    }
+  }
+
+  Future<void> _playStream() async {
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return;
+    final encoded = Uri.encodeComponent(url);
+    if (mounted) context.push('${Routes.player}/$encoded');
   }
 
   Future<void> _autoConnect() async {
@@ -110,17 +307,16 @@ class _NetworkScreenState extends ConsumerState<NetworkScreen> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Connected — ${files.length} items'), duration: const Duration(seconds: 2)),
+      SnackBar(content: Text('Connected \u2014 ${files.length} items'), duration: const Duration(seconds: 2)),
     );
 
     if (files.isEmpty) return;
-
     if (!mounted) return;
 
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text('${conn.name} — /'),
+        title: Text('${conn.name} \u2014 /'),
         children: [
           ...files.take(20).map((f) => ListTile(
                 dense: true,
@@ -133,9 +329,9 @@ class _NetworkScreenState extends ConsumerState<NetworkScreen> {
                 },
               )),
           if (files.length > 20)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('+ ${files.length - 20} more items'),
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('+ more items'),
             ),
         ],
       ),
@@ -143,30 +339,44 @@ class _NetworkScreenState extends ConsumerState<NetworkScreen> {
   }
 }
 
-class _ConnectionTile extends ConsumerWidget {
-  final NetworkConnection connection;
-  final void Function(NetworkConnection) onConnect;
-  const _ConnectionTile({required this.connection, required this.onConnect});
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final VoidCallback? onPressed;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    this.onPressed,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final icon = switch (connection.protocol) {
-      'smb' => Icons.computer,
-      'ftp' => Icons.cloud,
-      'webdav' => Icons.web,
-      _ => Icons.link,
-    };
-
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: Semantics(
-        label: connection.name,
-        child: ListTile(
-          leading: Icon(icon),
-          title: Text(connection.name),
-          subtitle: Text('${connection.protocol.toUpperCase()} · ${connection.host}:${connection.port}'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => onConnect(connection),
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: foregroundColor),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: foregroundColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );
