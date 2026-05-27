@@ -12,14 +12,14 @@ final connectionListProvider = FutureProvider.autoDispose<List<NetworkConnection
 
 final networkServiceProvider = Provider.autoDispose<NetworkService>((ref) => NetworkService());
 
-class NetworkBrowserScreen extends ConsumerStatefulWidget {
-  const NetworkBrowserScreen({super.key});
+class NetworkScreen extends ConsumerStatefulWidget {
+  const NetworkScreen({super.key});
 
   @override
-  ConsumerState<NetworkBrowserScreen> createState() => _NetworkBrowserScreenState();
+  ConsumerState<NetworkScreen> createState() => _NetworkScreenState();
 }
 
-class _NetworkBrowserScreenState extends ConsumerState<NetworkBrowserScreen> {
+class _NetworkScreenState extends ConsumerState<NetworkScreen> {
   bool _autoConnected = false;
 
   @override

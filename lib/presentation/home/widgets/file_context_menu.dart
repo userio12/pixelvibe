@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/media_file.dart';
 import '../../../services/logger.dart';
 import '../../playlist/widgets/add_to_playlist_sheet.dart';
-import '../browser_provider.dart';
+import '../home_provider.dart';
 
 class FileContextMenu {
   static void show(BuildContext context, WidgetRef ref, MediaFile file) {
@@ -43,7 +43,7 @@ class _FileContextSheet extends StatelessWidget {
       try {
         final newPath = '${file.directory}/$newName';
         await File(file.path).rename(newPath);
-        ref.invalidate(browserProvider);
+        ref.invalidate(homeProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Renamed to "$newName"')),
@@ -67,7 +67,7 @@ class _FileContextSheet extends StatelessWidget {
     if (dest == null) return;
     try {
       await File(file.path).copy('$dest/${file.name}');
-      ref.invalidate(browserProvider);
+      ref.invalidate(homeProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Copied to $dest')),
@@ -90,7 +90,7 @@ class _FileContextSheet extends StatelessWidget {
     if (dest == null) return;
     try {
       await File(file.path).rename('$dest/${file.name}');
-      ref.invalidate(browserProvider);
+      ref.invalidate(homeProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Moved to $dest')),
@@ -121,7 +121,7 @@ class _FileContextSheet extends StatelessWidget {
     if (confirm != true) return;
     try {
       await File(file.path).delete();
-      ref.invalidate(browserProvider);
+      ref.invalidate(homeProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Deleted "${file.name}"')),

@@ -21,7 +21,7 @@ class ViewModeNotifier extends Notifier<ViewMode> {
   void update(ViewMode v) => state = v;
 }
 
-final browserProvider = FutureProvider.autoDispose<List<MediaFile>>((ref) async {
+final homeProvider = FutureProvider.autoDispose<List<MediaFile>>((ref) async {
   final granted = await requestStoragePermission();
   if (!granted) throw Exception('Storage permission denied. Please grant video access in your device settings.');
 
@@ -70,7 +70,7 @@ class MediaTypeFilterNotifier extends Notifier<MediaTypeFilter> {
 }
 
 final filteredVideosProvider = FutureProvider.autoDispose<List<MediaFile>>((ref) async {
-  final videos = await ref.watch(browserProvider.future);
+  final videos = await ref.watch(homeProvider.future);
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final sortMode = ref.watch(sortModeProvider);
   final ascending = ref.watch(sortAscendingProvider);
@@ -117,7 +117,7 @@ final filteredVideosProvider = FutureProvider.autoDispose<List<MediaFile>>((ref)
 });
 
 final folderListProvider = FutureProvider.autoDispose<List<String>>((ref) async {
-  final videos = await ref.watch(browserProvider.future);
+  final videos = await ref.watch(homeProvider.future);
   final dirs = videos.map((v) => v.directory).toSet().toList()..sort();
   return dirs;
 });

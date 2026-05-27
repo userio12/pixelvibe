@@ -20,14 +20,14 @@ import 'widgets/folder_list_tile.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/file_context_menu.dart';
 
-class BrowserScreen extends ConsumerStatefulWidget {
-  const BrowserScreen({super.key});
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  ConsumerState<BrowserScreen> createState() => _BrowserScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _BrowserScreenState extends ConsumerState<BrowserScreen> with TickerProviderStateMixin {
+class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStateMixin {
   final _searchController = TextEditingController();
   late final TabController _tabController;
   static const _tabs = ['Files', 'Recently Played'];
@@ -98,7 +98,7 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> with TickerProvid
       }
     }
     _exitSelectionMode();
-    ref.invalidate(browserProvider);
+    ref.invalidate(homeProvider);
     messenger.showSnackBar(SnackBar(content: Text('Deleted ${files.length} file(s)')));
   }
 
@@ -204,7 +204,7 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> with TickerProvid
             IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: 'Rescan device',
-              onPressed: () => ref.invalidate(browserProvider),
+              onPressed: () => ref.invalidate(homeProvider),
             ),
             Padding(
               padding: const EdgeInsets.only(right: 8),
@@ -317,7 +317,7 @@ class _BrowserScreenState extends ConsumerState<BrowserScreen> with TickerProvid
 
   Widget _buildAlbumsView(BuildContext context) {
     final foldersAsync = ref.watch(folderListProvider);
-    final videosAsync = ref.watch(browserProvider);
+    final videosAsync = ref.watch(homeProvider);
     return foldersAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Error', subtitle: e.toString()),
