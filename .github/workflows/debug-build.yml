@@ -1,0 +1,43 @@
+name: debug-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build variant'
+        required: true
+        default: 'assembleDebug'
+        type: choice
+        options:
+          - assembleDebug
+          - assembleRelease
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41'
+          channel: 'stable'
+
+      - run: flutter pub get
+
+      - name: Build debug APKs (split by ABI)
+        run: flutter build apk --debug --split-per-abi
+
+      - name: Upload arm64-v8a debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixelvibe-arm64-v8a-debug-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-debug.apk
+          compression-level: 0
+
+      - name: Upload armeabi-v7a debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixelvibe-armeabi-v7a-debug-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-armeabi-v7a-debug.apk
+          compression-level: 0
