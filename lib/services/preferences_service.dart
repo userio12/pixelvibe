@@ -148,6 +148,21 @@ class PreferencesService {
 
   // A-B loop
   // Volume normalization
+  // Audio pitch correction
+  static const _audioPitchCorrection = 'audio_pitch_correction';
+  bool getAudioPitchCorrection() => _prefs.getBool(_audioPitchCorrection) ?? true;
+  Future<void> setAudioPitchCorrection(bool v) => _prefs.setBool(_audioPitchCorrection, v);
+
+  // Preferred audio languages
+  static const _preferredAudioLanguages = 'preferred_audio_languages';
+  String getPreferredAudioLanguages() => _prefs.getString(_preferredAudioLanguages) ?? '';
+  Future<void> setPreferredAudioLanguages(String v) => _prefs.setString(_preferredAudioLanguages, v);
+
+  // Volume boost cap
+  static const _volumeBoostCap = 'volume_boost_cap';
+  double getVolumeBoostCap() => _prefs.getDouble(_volumeBoostCap) ?? 0.15;
+  Future<void> setVolumeBoostCap(double v) => _prefs.setDouble(_volumeBoostCap, v);
+
   // Audio-only background
   static const _audioBackground = 'audio_background';
   bool getAudioBackground() => _prefs.getBool(_audioBackground) ?? false;
