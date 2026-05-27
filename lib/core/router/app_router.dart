@@ -139,7 +139,134 @@ class AppRouter {
             },
           ),
         ),
+        // Settings sub-routes — builders replaced as each screen is created
+        GoRoute(
+          path: Routes.settingsAppearance,
+          parentNavigatorKey: _rootNavigatorKey,
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.settingsAppearance),
+            child: const _PlaceholderScreen(title: 'Appearance'),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        ),
+        GoRoute(
+          path: Routes.settingsPlayerLayout,
+          parentNavigatorKey: _rootNavigatorKey,
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.settingsPlayerLayout),
+            child: const _PlaceholderScreen(title: 'Player Layout'),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        ),
+        GoRoute(
+          path: Routes.settingsPlayer,
+          parentNavigatorKey: _rootNavigatorKey,
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.settingsPlayer),
+            child: const _PlaceholderScreen(title: 'Player'),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        ),
+        GoRoute(
+          path: Routes.settingsGestures,
+          parentNavigatorKey: _rootNavigatorKey,
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.settingsGestures),
+            child: const _PlaceholderScreen(title: 'Gestures'),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        ),
+        GoRoute(
+          path: Routes.settingsFolders,
+          parentNavigatorKey: _rootNavigatorKey,
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.settingsFolders),
+            child: const _PlaceholderScreen(title: 'Folders'),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        ),
+        GoRoute(
+          path: Routes.settingsDecoder,
+          parentNavigatorKey: _rootNavigatorKey,
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.settingsDecoder),
+            child: const _PlaceholderScreen(title: 'Decoder'),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        ),
+        GoRoute(
+          path: Routes.settingsSubtitles,
+          parentNavigatorKey: _rootNavigatorKey,
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.settingsSubtitles),
+            child: const _PlaceholderScreen(title: 'Subtitles'),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        ),
+        GoRoute(
+          path: Routes.settingsAudio,
+          parentNavigatorKey: _rootNavigatorKey,
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.settingsAudio),
+            child: const _PlaceholderScreen(title: 'Audio'),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        ),
+        GoRoute(
+          path: Routes.settingsAdvanced,
+          parentNavigatorKey: _rootNavigatorKey,
+          pageBuilder: (_, _) => CustomTransitionPage(
+            key: ValueKey(Routes.settingsAdvanced),
+            child: const _PlaceholderScreen(title: 'Advanced'),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class _PlaceholderScreen extends StatelessWidget {
+  final String title;
+  const _PlaceholderScreen({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF121518),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF121518),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(title, style: const TextStyle(color: Color(0xFF71C4D4))),
+      ),
+      body: const Center(
+        child: Text(
+          'Coming soon',
+          style: TextStyle(color: Color(0xFF90959A), fontSize: 16),
+        ),
+      ),
     );
   }
 }
