@@ -4,12 +4,14 @@ class SettingsCardGroup extends StatelessWidget {
   final String sectionTitle;
   final List<Widget> children;
   final double horizontalPadding;
+  final Set<int> skipDividerAfter;
 
   const SettingsCardGroup({
     super.key,
     required this.sectionTitle,
     required this.children,
     this.horizontalPadding = 16,
+    this.skipDividerAfter = const {},
   });
 
   @override
@@ -55,7 +57,7 @@ class SettingsCardGroup extends StatelessWidget {
     final items = <Widget>[];
     for (var i = 0; i < children.length; i++) {
       items.add(children[i]);
-      if (i < children.length - 1) {
+      if (i < children.length - 1 && !skipDividerAfter.contains(i)) {
         items.add(
           const Divider(
             height: 1,
