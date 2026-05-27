@@ -318,6 +318,52 @@ class PreferencesService {
   bool isOnboardingComplete() => _prefs.getBool(_onboardingComplete) ?? false;
   Future<void> setOnboardingComplete() => _prefs.setBool(_onboardingComplete, true);
 
+  // File browser
+  static const _showFullFileNames = 'show_full_file_names';
+  bool getShowFullFileNames() => _prefs.getBool(_showFullFileNames) ?? false;
+  Future<void> setShowFullFileNames(bool v) => _prefs.setBool(_showFullFileNames, v);
+
+  static const _showNewLabel = 'show_new_label';
+  bool getShowNewLabel() => _prefs.getBool(_showNewLabel) ?? true;
+  Future<void> setShowNewLabel(bool v) => _prefs.setBool(_showNewLabel, v);
+
+  static const _daysThreshold = 'days_threshold';
+  int getDaysThreshold() => _prefs.getInt(_daysThreshold) ?? 7;
+  Future<void> setDaysThreshold(int v) => _prefs.setInt(_daysThreshold, v);
+
+  static const _autoScrollToLastPlayed = 'auto_scroll_to_last_played';
+  bool getAutoScrollToLastPlayed() => _prefs.getBool(_autoScrollToLastPlayed) ?? false;
+  Future<void> setAutoScrollToLastPlayed(bool v) => _prefs.setBool(_autoScrollToLastPlayed, v);
+
+  static const _tapThumbnailToSelect = 'tap_thumbnail_to_select';
+  bool getTapThumbnailToSelect() => _prefs.getBool(_tapThumbnailToSelect) ?? false;
+  Future<void> setTapThumbnailToSelect(bool v) => _prefs.setBool(_tapThumbnailToSelect, v);
+
+  static const _showNetworkThumbnails = 'show_network_thumbnails';
+  bool getShowNetworkThumbnails() => _prefs.getBool(_showNetworkThumbnails) ?? false;
+  Future<void> setShowNetworkThumbnails(bool v) => _prefs.setBool(_showNetworkThumbnails, v);
+
+  // Player layout
+  static const _tapToToggleVisibility = 'tap_to_toggle_visibility';
+  bool getTapToToggleVisibility() => _prefs.getBool(_tapToToggleVisibility) ?? true;
+  Future<void> setTapToToggleVisibility(bool v) => _prefs.setBool(_tapToToggleVisibility, v);
+
+  static const _displaySeekbarSeconds = 'display_seekbar_seconds';
+  bool getDisplaySeekbarSeconds() => _prefs.getBool(_displaySeekbarSeconds) ?? true;
+  Future<void> setDisplaySeekbarSeconds(bool v) => _prefs.setBool(_displaySeekbarSeconds, v);
+
+  static const _dimControlsSeconds = 'dim_controls_seconds';
+  int getDimControlsSeconds() => _prefs.getInt(_dimControlsSeconds) ?? 5;
+  Future<void> setDimControlsSeconds(int v) => _prefs.setInt(_dimControlsSeconds, v);
+
+  static const _doubleTapAnimation = 'double_tap_animation';
+  bool getDoubleTapAnimation() => _prefs.getBool(_doubleTapAnimation) ?? true;
+  Future<void> setDoubleTapAnimation(bool v) => _prefs.setBool(_doubleTapAnimation, v);
+
+  static const _disableControlsTouchInput = 'disable_controls_touch_input';
+  bool getDisableControlsTouchInput() => _prefs.getBool(_disableControlsTouchInput) ?? false;
+  Future<void> setDisableControlsTouchInput(bool v) => _prefs.setBool(_disableControlsTouchInput, v);
+
   // MPV profiles
   static const _mpvActiveProfile = 'mpv_active_profile';
   String getMpvActiveProfile() => _prefs.getString(_mpvActiveProfile) ?? 'Default';

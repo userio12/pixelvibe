@@ -12,6 +12,8 @@ import '../../presentation/settings/sections/gestures_screen.dart';
 import '../../presentation/settings/sections/subtitles_screen.dart';
 import '../../presentation/settings/sections/decoder_screen.dart';
 import '../../presentation/settings/sections/advanced_screen.dart';
+import '../../presentation/settings/sections/appearance_screen.dart';
+import '../../presentation/settings/sections/player_layout_screen.dart';
 import '../../services/preferences_service.dart';
 import 'routes.dart';
 
@@ -152,7 +154,7 @@ class AppRouter {
           parentNavigatorKey: _rootNavigatorKey,
           pageBuilder: (_, _) => CustomTransitionPage(
             key: ValueKey(Routes.settingsAppearance),
-            child: const _PlaceholderScreen(title: 'Appearance'),
+            child: const AppearanceScreen(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },
@@ -163,7 +165,7 @@ class AppRouter {
           parentNavigatorKey: _rootNavigatorKey,
           pageBuilder: (_, _) => CustomTransitionPage(
             key: ValueKey(Routes.settingsPlayerLayout),
-            child: const _PlaceholderScreen(title: 'Player Layout'),
+            child: const PlayerLayoutScreen(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },
@@ -247,33 +249,6 @@ class AppRouter {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const _PlaceholderScreen({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF121518),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF121518),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white70),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(title, style: const TextStyle(color: Color(0xFF71C4D4))),
-      ),
-      body: const Center(
-        child: Text(
-          'Coming soon',
-          style: TextStyle(color: Color(0xFF90959A), fontSize: 16),
-        ),
-      ),
     );
   }
 }
