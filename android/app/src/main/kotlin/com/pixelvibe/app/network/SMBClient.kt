@@ -30,9 +30,9 @@ class SmbClient(
     private fun getSession(): com.hierynomus.smbj.session.Session {
         val s = session
         if (s != null) {
-            return try {
+            try {
                 if (s.connection?.isConnected != true) throw Exception("Not connected")
-                s
+                return s
             } catch (_: Exception) {
                 session = null
                 client = null
