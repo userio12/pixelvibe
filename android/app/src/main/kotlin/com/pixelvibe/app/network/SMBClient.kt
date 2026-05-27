@@ -31,7 +31,7 @@ class SmbClient(
         val s = session
         if (s != null) {
             return try {
-                s.isConnected
+                if (s.connection?.isConnected != true) throw Exception("Not connected")
                 s
             } catch (_: Exception) {
                 session = null
