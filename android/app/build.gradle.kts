@@ -71,5 +71,6 @@ dependencies {
     implementation("commons-net:commons-net:3.11.1")
     implementation("com.hierynomus:smbj:0.13.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("com.google.android.play:core:1.10.3")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
