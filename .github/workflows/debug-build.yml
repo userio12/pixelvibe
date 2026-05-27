@@ -1,16 +1,9 @@
 name: debug-build
 
 on:
+  push:
+    branches: [main, master]
   workflow_dispatch:
-    inputs:
-      build_type:
-        description: 'Build variant'
-        required: true
-        default: 'assembleDebug'
-        type: choice
-        options:
-          - assembleDebug
-          - assembleRelease
 
 jobs:
   build:
