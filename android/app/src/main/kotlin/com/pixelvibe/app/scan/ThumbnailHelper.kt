@@ -6,6 +6,7 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import java.io.File
 import java.io.FileOutputStream
+import java.security.MessageDigest
 
 class ThumbnailHelper(private val context: Context) {
 
@@ -17,12 +18,15 @@ class ThumbnailHelper(private val context: Context) {
             } else {
                 retriever.setDataSource(path)
             }
-            val bitmap = retriever.frameAtTime ?: return null
-            val scaled = Bitmap.createScaledBitmap(bitmap, width, (bitmap.height * width / bitmap.width).coerceAtLeast(1), true)
+            val frame = retriever.frameAtTime ?: return null
+            val scaled = Bitmap.createScaledBitmap(frame, width, (frame.height * width / frame.width).coerceAtLeast(1), true)
+            if (scaled !== frame) frame.recycle()
             val cacheDir = File(context.cacheDir, "thumbnails")
             cacheDir.mkdirs()
             evictIfNeeded(cacheDir, 500)
-            val file = File(cacheDir, "${path.hashCode()}.jpg")
+            val digest = MessageDigest.getInstance("MD5").digest(path.toByteArray())
+            val hash = digest.joinToString("") { "%02x".format(it) }
+            val file = File(cacheDir, "$hash.jpg")
             FileOutputStream(file).use { out ->
                 scaled.compress(Bitmap.CompressFormat.JPEG, 80, out)
             }

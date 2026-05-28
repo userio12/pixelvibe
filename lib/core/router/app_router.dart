@@ -20,7 +20,6 @@ import 'routes.dart';
 class AppRouter {
   late final GoRouter router;
   final _rootNavigatorKey = GlobalKey<NavigatorState>();
-  final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
   AppRouter({
     required PreferencesService preferencesService,
@@ -70,25 +69,40 @@ class AppRouter {
             },
           ),
         ),
-        ShellRoute(
-          navigatorKey: _shellNavigatorKey,
-          builder: (context, state, child) => ScaffoldWithNav(child: child),
-          routes: [
-            GoRoute(
-              path: Routes.home,
-              pageBuilder: (_, _) => NoTransitionPage(child: homeScreen),
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) => ScaffoldWithNav(navigationShell: navigationShell),
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: Routes.home,
+                  builder: (_, _) => homeScreen,
+                ),
+              ],
             ),
-            GoRoute(
-              path: Routes.playlists,
-              pageBuilder: (_, _) => NoTransitionPage(child: playlistsScreen),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: Routes.playlists,
+                  builder: (_, _) => playlistsScreen,
+                ),
+              ],
             ),
-            GoRoute(
-              path: Routes.network,
-              pageBuilder: (_, _) => NoTransitionPage(child: const NetworkScreen()),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: Routes.network,
+                  builder: (_, _) => const NetworkScreen(),
+                ),
+              ],
             ),
-            GoRoute(
-              path: Routes.settings,
-              pageBuilder: (_, _) => NoTransitionPage(child: settingsScreen),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: Routes.settings,
+                  builder: (_, _) => settingsScreen,
+                ),
+              ],
             ),
           ],
         ),
@@ -254,39 +268,18 @@ class AppRouter {
 }
 
 class ScaffoldWithNav extends StatelessWidget {
-  final Widget child;
-  const ScaffoldWithNav({super.key, required this.child});
-
-  int _currentIndex(String location) {
-    if (location.startsWith(Routes.home)) return 0;
-    if (location.startsWith(Routes.playlists)) return 1;
-    if (location.startsWith(Routes.network)) return 2;
-    if (location.startsWith(Routes.settings)) return 3;
-    return 0;
-  }
+  final StatefulNavigationShell navigationShell;
+  const ScaffoldWithNav({super.key, required this.navigationShell});
 
   @override
   Widget build(BuildContext context) {
-    final location = GoRouterState.of(context).uri.toString();
     return Scaffold(
-      body: IndexedStack(
-        key: ValueKey(location),
-        index: _currentIndex(location),
-        children: [child],
-      ),
+      body: navigationShell,
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         child: NavigationBar(
-          selectedIndex: _currentIndex(location),
-          onDestinationSelected: (i) {
-            final paths = [
-              Routes.home,
-              Routes.playlists,
-              Routes.network,
-              Routes.settings,
-            ];
-            context.go(paths[i]);
-          },
+          selectedIndex: navigationShell.currentIndex,
+          onDestinationSelected: (i) => navigationShell.goBranch(i),
           height: 72,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: const [

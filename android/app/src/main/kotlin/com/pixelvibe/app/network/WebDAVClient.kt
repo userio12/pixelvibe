@@ -58,8 +58,8 @@ class WebDAVClient(
 
     private fun parsePropfindResponse(xml: String): List<NetworkFile> {
         val files = mutableListOf<NetworkFile>()
-        val responses = xml.split("<d:response>", "</d:response>")
-            .filter { it.contains("<d:href>") }
+        val responsePattern = Regex("<[a-zA-Z]*:?response>.*?</[a-zA-Z]*:?response>", RegexOption.DOT_MATCHES_ALL)
+        val responses = responsePattern.findAll(xml).map { it.value }.toList()
 
         for (response in responses) {
             try {

@@ -364,6 +364,23 @@ class PreferencesService {
   bool getDisableControlsTouchInput() => _prefs.getBool(_disableControlsTouchInput) ?? false;
   Future<void> setDisableControlsTouchInput(bool v) => _prefs.setBool(_disableControlsTouchInput, v);
 
+  // Decoder
+  static const _gpuNext = 'gpu_next';
+  bool getGpuNext() => _prefs.getBool(_gpuNext) ?? false;
+  Future<void> setGpuNext(bool v) => _prefs.setBool(_gpuNext, v);
+
+  static const _yuv420p = 'yuv420p';
+  bool getYuv420p() => _prefs.getBool(_yuv420p) ?? false;
+  Future<void> setYuv420p(bool v) => _prefs.setBool(_yuv420p, v);
+
+  static const _debanding = 'debanding';
+  String getDebanding() => _prefs.getString(_debanding) ?? 'none';
+  Future<void> setDebanding(String v) => _prefs.setString(_debanding, v);
+
+  static const _anime4k = 'anime4k';
+  bool getAnime4k() => _prefs.getBool(_anime4k) ?? false;
+  Future<void> setAnime4k(bool v) => _prefs.setBool(_anime4k, v);
+
   // MPV profiles
   static const _mpvActiveProfile = 'mpv_active_profile';
   String getMpvActiveProfile() => _prefs.getString(_mpvActiveProfile) ?? 'Default';

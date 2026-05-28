@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/di/providers.dart';
+import '../../player/video_quality_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
+import '../widgets/pref_notifiers.dart';
+
+final _gpuNextProvider = boolPref('gpu_next', false);
+final _yuv420pProvider = boolPref('yuv420p', false);
+final _anime4kProvider = boolPref('anime4k', false);
 
 class DecoderScreen extends ConsumerWidget {
   const DecoderScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final hwdec = ref.watch(hwdecProvider);
+    final hwdecEnabled = hwdec != 'no';
+    final gpuNext = ref.watch(_gpuNextProvider);
+    final gpuApi = ref.watch(gpuApiProvider);
+    final debanding = ref.watch(preferencesServiceProvider).getDebanding();
+    final yuv420p = ref.watch(_yuv420pProvider);
+    final anime4k = ref.watch(_anime4kProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
       appBar: AppBar(
@@ -17,7 +33,7 @@ class DecoderScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white70),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Decoder',
@@ -36,39 +52,49 @@ class DecoderScreen extends ConsumerWidget {
             SettingsCardGroup(
               sectionTitle: 'Decoder',
               children: [
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'MPV Profile',
-                  subtitle: 'Fast',
+                  subtitle: ref.watch(preferencesServiceProvider).getMpvActiveProfile(),
                 ),
-                const CustomSwitchTile(
+                CustomSwitchTile(
                   title: 'Try hardware decoding',
-                  value: true,
+                  value: hwdecEnabled,
+                  onChanged: (_) => ref.read(hwdecProvider.notifier).update(
+                    hwdecEnabled ? 'no' : 'auto',
+                  ),
                 ),
-                const CustomSwitchTile(
+                CustomSwitchTile(
                   title: 'Use gpu-next',
                   subtitle: 'A new rendering backend',
-                  value: false,
+                  value: gpuNext,
+                  onChanged: (v) {
+                    ref.read(_gpuNextProvider.notifier).toggle();
+                    ref.read(gpuApiProvider.notifier).update(v ? 'gpu-next' : 'auto');
+                  },
                 ),
-                const CustomSwitchTile(
+                CustomSwitchTile(
                   title: 'Use Vulkan (Experimental)',
                   subtitle: 'Not supported (requires Android 13+ with Vulkan 1.3)',
-                  value: false,
+                  value: gpuApi == 'vulkan',
                   isDisabled: true,
                   isSubtitleError: true,
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Debanding',
-                  subtitle: 'None',
+                  subtitle: _debandingLabel(debanding),
+                  onTap: () => _showDebandingPicker(context, ref),
                 ),
-                const CustomSwitchTile(
+                CustomSwitchTile(
                   title: 'Use YUV420P pixel format',
                   subtitle: 'May fix black screens on some video codecs, can also improve performance at the cost of quality',
-                  value: false,
+                  value: yuv420p,
+                  onChanged: (_) => ref.read(_yuv420pProvider.notifier).toggle(),
                 ),
-                const CustomSwitchTile(
+                CustomSwitchTile(
                   title: 'Anime4K upscaling (Experimental)',
-                  value: false,
-                  customSubtitle: _Anime4KSubtitle(),
+                  value: anime4k,
+                  onChanged: (_) => ref.read(_anime4kProvider.notifier).toggle(),
+                  customSubtitle: const _Anime4KSubtitle(),
                 ),
               ],
             ),
@@ -76,6 +102,51 @@ class DecoderScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  String _debandingLabel(String v) {
+    switch (v) {
+      case 'weak': return 'Weak';
+      case 'strong': return 'Strong';
+      default: return 'None';
+    }
+  }
+
+  void _showDebandingPicker(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1E23),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Debanding', style: TextStyle(color: Colors.white, fontSize: 18)),
+            ),
+            _debandingOption(ctx, ref, 'None', 'none'),
+            _debandingOption(ctx, ref, 'Weak', 'weak'),
+            _debandingOption(ctx, ref, 'Strong', 'strong'),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _debandingOption(BuildContext ctx, WidgetRef ref, String label, String value) {
+    final current = ref.watch(preferencesServiceProvider).getDebanding();
+    return ListTile(
+      title: Text(label, style: const TextStyle(color: Colors.white)),
+      trailing: current == value
+          ? const Icon(Icons.check, color: Color(0xFF71C4D4))
+          : null,
+      onTap: () {
+        ref.read(preferencesServiceProvider).setDebanding(value);
+        ref.invalidate(preferencesServiceProvider);
+        Navigator.of(ctx).pop();
+      },
     );
   }
 }

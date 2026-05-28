@@ -5,47 +5,14 @@ import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/custom_switch_tile.dart';
 import '../widgets/custom_slider_tile.dart';
+import '../widgets/pref_notifiers.dart';
 
-NotifierProvider<_BoolNotifier, bool> _boolPref(String key, bool defaultValue) {
-  return NotifierProvider<_BoolNotifier, bool>(() => _BoolNotifier(key, defaultValue));
-}
-
-class _BoolNotifier extends Notifier<bool> {
-  final String _key;
-  final bool _defaultValue;
-  _BoolNotifier(this._key, this._defaultValue);
-
-  @override
-  bool build() => ref.watch(preferencesServiceProvider).getBool(_key, _defaultValue);
-  void toggle() {
-    state = !state;
-    ref.read(preferencesServiceProvider).setBool(_key, state);
-  }
-}
-
-class _IntNotifier extends Notifier<int> {
-  final String _key;
-  final int _defaultValue;
-  _IntNotifier(this._key, this._defaultValue);
-
-  @override
-  int build() => ref.watch(preferencesServiceProvider).getInt(_key, _defaultValue);
-  void update(int v) {
-    state = v;
-    ref.read(preferencesServiceProvider).setInt(_key, v);
-  }
-}
-
-NotifierProvider<_IntNotifier, int> _intPref(String key, int defaultValue) {
-  return NotifierProvider<_IntNotifier, int>(() => _IntNotifier(key, defaultValue));
-}
-
-final _showFullNamesProvider = _boolPref('show_full_file_names', false);
-final _showNewLabelProvider = _boolPref('show_new_label', true);
-final _daysThresholdProvider = _intPref('days_threshold', 7);
-final _autoScrollProvider = _boolPref('auto_scroll_to_last_played', false);
-final _tapThumbnailProvider = _boolPref('tap_thumbnail_to_select', false);
-final _showNetworkThumbsProvider = _boolPref('show_network_thumbnails', false);
+final _showFullNamesProvider = boolPref('show_full_file_names', false);
+final _showNewLabelProvider = boolPref('show_new_label', true);
+final _daysThresholdProvider = intPref('days_threshold', 7);
+final _autoScrollProvider = boolPref('auto_scroll_to_last_played', false);
+final _tapThumbnailProvider = boolPref('tap_thumbnail_to_select', false);
+final _showNetworkThumbsProvider = boolPref('show_network_thumbnails', false);
 
 class AppearanceScreen extends ConsumerWidget {
   const AppearanceScreen({super.key});
@@ -248,7 +215,11 @@ class _ThemeCarousel extends StatelessWidget {
         itemBuilder: (context, index) {
           final (name, color) = _themes[index];
           return GestureDetector(
-            onTap: () {},
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Theme: $name')),
+              );
+            },
             child: Container(
               width: 72,
               decoration: BoxDecoration(

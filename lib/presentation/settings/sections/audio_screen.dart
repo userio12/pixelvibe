@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/di/providers.dart';
 import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
@@ -29,6 +30,8 @@ class _VolumeBoostNotifier extends Notifier<double> {
   }
 }
 
+const _audioChannelOptions = ['Auto Safe', 'Stereo', 'Surround', '5.1', '7.1'];
+
 class AudioScreen extends ConsumerWidget {
   const AudioScreen({super.key});
 
@@ -38,6 +41,7 @@ class AudioScreen extends ConsumerWidget {
     final volumeNormalization = ref.watch(volumeNormalizationProvider);
     final backgroundPlayback = ref.watch(audioBackgroundProvider);
     final volumeBoostCap = ref.watch(_volumeBoostCapProvider);
+    final audioChannels = ref.watch(audioChannelsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -47,7 +51,7 @@ class AudioScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white70),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Audio',
@@ -69,6 +73,9 @@ class AudioScreen extends ConsumerWidget {
                 StandardActionTile(
                   title: 'Preferred languages',
                   subtitle: 'Not set (will use video default)',
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Coming soon')),
+                  ),
                 ),
                 CustomSwitchTile(
                   title: 'Enable audio pitch correction',
@@ -90,7 +97,54 @@ class AudioScreen extends ConsumerWidget {
                 ),
                 StandardActionTile(
                   title: 'Audio channels',
-                  subtitle: 'Auto Safe',
+                  subtitle: audioChannels,
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: const Color(0xFF1E2227),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                      ),
+                      builder: (ctx) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Text(
+                                'Audio Channels',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const Divider(height: 1, color: Color(0xFF2C3136)),
+                            ..._audioChannelOptions.map((option) {
+                              final selected = audioChannels == option;
+                              return ListTile(
+                                title: Text(
+                                  option,
+                                  style: TextStyle(
+                                    color: selected ? const Color(0xFF71C4D4) : Colors.white70,
+                                  ),
+                                ),
+                                trailing: selected
+                                    ? const Icon(Icons.check, color: Color(0xFF71C4D4))
+                                    : null,
+                                onTap: () {
+                                  ref.read(audioChannelsProvider.notifier).update(option);
+                                  Navigator.of(ctx).pop();
+                                },
+                              );
+                            }),
+                            const SizedBox(height: 8),
+                          ],
+                        );
+                      },
+                    );
+                  },
                 ),
                 CustomSliderTile(
                   title: 'Volume boost cap',

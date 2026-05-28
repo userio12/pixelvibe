@@ -49,12 +49,17 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
 
         pipHelper = PiPHelper(this)
+        val receiverFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Context.RECEIVER_NOT_EXPORTED
+        } else {
+            0
+        }
         registerReceiver(
             noisyReceiver,
             IntentFilter(android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY),
-            Context.RECEIVER_NOT_EXPORTED,
+            receiverFlags,
         )
-        registerReceiver(pipActionReceiver, IntentFilter(PlaybackService.ACTION_TOGGLE), Context.RECEIVER_NOT_EXPORTED)
+        registerReceiver(pipActionReceiver, IntentFilter(PlaybackService.ACTION_TOGGLE), receiverFlags)
 
         pipMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, pipChannel).apply {
             setMethodCallHandler { call, result ->
@@ -121,7 +126,7 @@ class MainActivity : FlutterActivity() {
         val networkChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.pixelvibe/network")
         networkPlugin = PixelvibePlugin(networkChannel)
         networkChannel.setMethodCallHandler { call, result ->
-            networkPlugin!!.handle(call, result)
+            networkPlugin?.handle(call, result) ?: result.error("NO_PLUGIN", "Network plugin not initialized", null)
         }
 
         val mediaScanner = MediaScanner(this)

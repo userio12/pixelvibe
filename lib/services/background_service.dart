@@ -39,7 +39,7 @@ class BackgroundService {
       await _channel.invokeMethod('updateMetadata', {
         'title': title,
         'duration': durationMs,
-        'thumbnail': ?thumbnail,
+        'thumbnail': thumbnail,
       });
     } catch (e) {
       Logger.error('BackgroundService.updateMetadata failed', e);

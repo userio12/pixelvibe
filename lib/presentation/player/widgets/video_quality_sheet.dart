@@ -227,7 +227,7 @@ class _HrSeekTile extends ConsumerWidget {
 class _FilterPresetTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(filterPresetProvider);
+    final current = ref.watch(vfPresetProvider);
     return ListTile(
       title: const Text('Filter preset'),
       subtitle: const Text('vf chain applied at runtime'),
@@ -241,7 +241,7 @@ class _FilterPresetTile extends ConsumerWidget {
           DropdownMenuItem(value: 'deband+sharpen', child: Text('Deband + Sharpen')),
           DropdownMenuItem(value: 'deband+denoise', child: Text('Deband + Denoise')),
         ],
-        onChanged: (v) => ref.read(filterPresetProvider.notifier).update(v ?? 'none'),
+        onChanged: (v) => ref.read(vfPresetProvider.notifier).update(v ?? 'none'),
       ),
     );
   }

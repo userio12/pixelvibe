@@ -4,9 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
+import androidx.media.MediaMetadataCompat
+import androidx.media.session.MediaSessionCompat
+import androidx.media.session.PlaybackStateCompat
 import io.flutter.plugin.common.MethodChannel
 
 class MediaSessionCallback(
@@ -34,10 +34,11 @@ class MediaSessionCallback(
                 }
             }
         }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else 0
         context.registerReceiver(receiver, IntentFilter().apply {
             addAction("com.pixelvibe.action.TOGGLE_PLAYBACK")
             addAction("com.pixelvibe.action.STOP")
-        }, Context.RECEIVER_NOT_EXPORTED)
+        }, flags)
     }
 
     fun updateMetadata(title: String, durationMs: Long, thumbnailPath: String? = null) {

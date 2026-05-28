@@ -22,29 +22,32 @@ class SmbClient(
 
     private var client: SMBClient? = null
     private var session: com.hierynomus.smbj.session.Session? = null
+    private val lock = Any()
 
     companion object {
         private const val FILE_ATTRIBUTE_DIRECTORY = 0x10000000L
     }
 
     private fun getSession(): com.hierynomus.smbj.session.Session {
-        val s = session
-        if (s != null) {
-            try {
-                if (s.connection?.isConnected != true) throw Exception("Not connected")
-                return s
-            } catch (_: Exception) {
-                session = null
-                client = null
+        synchronized(lock) {
+            val s = session
+            if (s != null) {
+                try {
+                    if (s.connection?.isConnected == false) throw Exception("Not connected")
+                    return s
+                } catch (_: Exception) {
+                    session = null
+                    client = null
+                }
             }
+            val c = SMBClient()
+            val connection = c.connect(host, port.takeIf { it > 0 } ?: 445)
+            val auth = AuthenticationContext(username, password.toCharArray(), null)
+            val sess = connection.authenticate(auth)
+            client = c
+            session = sess
+            return sess
         }
-        val c = SMBClient()
-        val connection = c.connect(host, port.takeIf { it > 0 } ?: 445)
-        val auth = AuthenticationContext(username, password.toCharArray(), null)
-        val sess = connection.authenticate(auth)
-        client = c
-        session = sess
-        return sess
     }
 
     override suspend fun listFiles(path: String): List<NetworkFile> = withContext(Dispatchers.IO) {
@@ -88,7 +91,11 @@ class SmbClient(
             SMB2CreateDisposition.FILE_OPEN,
             emptySet(),
         )
-        smbFile.inputStream
+        object : java.io.FilterInputStream(smbFile.inputStream) {
+            override fun close() {
+                try { super.close() } finally { smbFile.close() }
+            }
+        }
     }
 
     override suspend fun disconnect() = withContext(Dispatchers.IO) {

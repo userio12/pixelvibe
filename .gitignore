@@ -50,3 +50,4 @@ app.*.map.json
 # Keystore files (sensitive)
 *.keystore
 *.b64
+graphify-mpvEx/

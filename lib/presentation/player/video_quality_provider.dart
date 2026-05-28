@@ -52,8 +52,8 @@ const filterPresetMap = <String, String>{
   'deband+denoise': 'deband,hqdn3d',
 };
 
-final filterPresetProvider = NotifierProvider.autoDispose<FilterPresetNotifier, String>(FilterPresetNotifier.new);
-class FilterPresetNotifier extends Notifier<String> {
+final vfPresetProvider = NotifierProvider.autoDispose<VfPresetNotifier, String>(VfPresetNotifier.new);
+class VfPresetNotifier extends Notifier<String> {
   @override
   String build() => ref.watch(preferencesServiceProvider).getFilterPreset();
   Future<void> update(String v) async {
@@ -355,7 +355,7 @@ class MpvProfileNotifier extends Notifier<String> {
     final properties = <String, String>{
       'hwdec': ref.read(hwdecProvider),
       'gpu-api': ref.read(gpuApiProvider),
-      'vf': filterPresetMap[ref.read(filterPresetProvider)] ?? '',
+      'vf': filterPresetMap[ref.read(vfPresetProvider)] ?? '',
       'glsl-shaders': ref.read(shaderPresetProvider),
       'brightness': ref.read(videoBrightnessProvider).toString(),
       'contrast': ref.read(videoContrastProvider).toString(),

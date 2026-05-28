@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'bootstrap.dart';
+import 'core/di/providers.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'presentation/home/home_screen.dart';
-import 'presentation/player/player_screen.dart';
-import 'presentation/playlist/playlist_list_screen.dart';
-import 'presentation/settings/settings_screen.dart';
-import 'presentation/settings/settings_provider.dart';
-import 'core/di/providers.dart';
 import 'data/repositories/media_repository.dart';
-import 'services/app_localizations.dart';
+import 'presentation/home/home_screen.dart';
+import 'presentation/playlist/playlist_list_screen.dart';
+import 'presentation/player/player_screen.dart';
+import 'presentation/settings/settings_provider.dart';
+import 'presentation/settings/settings_screen.dart';
 import 'services/logger.dart';
 import 'services/update_checker.dart';
 import 'utils/permissions/permission_handler.dart';
@@ -111,7 +110,6 @@ class _PixelvibeAppState extends ConsumerState<PixelvibeApp> {
       themeMode: themeMode,
       routerConfig: _appRouter.router,
       localizationsDelegates: const [
-        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

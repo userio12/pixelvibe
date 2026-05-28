@@ -26,7 +26,8 @@ class AudioFocusHelper(private val context: Context) {
                     .build()
             )
             .build()
-        audioFocusRequest?.let { audioManager.requestAudioFocus(it) }
+        val result = audioFocusRequest?.let { audioManager.requestAudioFocus(it) } ?: AudioManager.AUDIOFOCUS_REQUEST_FAILED
+        callback(result)
     }
 
     fun abandonFocus() {

@@ -11,7 +11,8 @@ object NetworkClientFactory {
         return when (protocol.lowercase()) {
             "smb" -> SmbClient(host, port, username, password)
             "ftp" -> FTPClient(host, port, username, password)
-            "webdav", "dav" -> WebDAVClient(host, port, username, password)
+            "webdav", "dav" -> WebDAVClient(host, port, username, password, useTls = false)
+            "webdavs", "davs" -> WebDAVClient(host, port, username, password, useTls = true)
             else -> throw IllegalArgumentException("Unsupported protocol: $protocol")
         }
     }

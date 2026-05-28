@@ -1,42 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/di/providers.dart';
 import '../../../presentation/player/gesture_config_provider.dart';
 import '../../../presentation/player/video_quality_provider.dart';
+import '../../../utils/platform_helper.dart';
 import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
 import '../widgets/custom_slider_tile.dart';
+import '../widgets/pref_notifiers.dart';
 
-NotifierProvider<_BoolNotifier, bool> _boolPref(String key, bool defaultValue) {
-  return NotifierProvider<_BoolNotifier, bool>(() => _BoolNotifier(key, defaultValue));
-}
-
-class _BoolNotifier extends Notifier<bool> {
-  final String _key;
-  final bool _defaultValue;
-  _BoolNotifier(this._key, this._defaultValue);
-
-  @override
-  bool build() => ref.watch(preferencesServiceProvider).getBool(_key, _defaultValue);
-  void toggle() {
-    state = !state;
-    ref.read(preferencesServiceProvider).setBool(_key, state);
-  }
-}
-
-final _nextPrevNavProvider = _boolPref('enable_next_prev_navigation', true);
-final _rememberBrightnessProvider = _boolPref('remember_brightness', false);
-final _keepScreenOnPausedProvider = _boolPref('keep_screen_on_when_paused', false);
-final _showRippleProvider = _boolPref('show_ripple_when_seeking', true);
-final _showSeekTimeProvider = _boolPref('show_seek_time', true);
-final _allowGesturesInPanelsProvider = _boolPref('allow_gestures_in_panels', false);
-final _swapVolBrightnessProvider = _boolPref('swap_volume_brightness', false);
-final _showLoadingCircleProvider = _boolPref('show_loading_circle', true);
-final _showStatusBarProvider = _boolPref('show_status_bar_with_controls', false);
-final _showNavBarProvider = _boolPref('show_nav_bar_with_controls', false);
-final _dynamicSpeedOverlayProvider = _boolPref('dynamic_speed_overlay', true);
+final _nextPrevNavProvider = boolPref('enable_next_prev_navigation', true);
+final _rememberBrightnessProvider = boolPref('remember_brightness', false);
+final _keepScreenOnPausedProvider = boolPref('keep_screen_on_when_paused', false);
+final _showRippleProvider = boolPref('show_ripple_when_seeking', true);
+final _showSeekTimeProvider = boolPref('show_seek_time', true);
+final _allowGesturesInPanelsProvider = boolPref('allow_gestures_in_panels', false);
+final _swapVolBrightnessProvider = boolPref('swap_volume_brightness', false);
+final _showLoadingCircleProvider = boolPref('show_loading_circle', true);
+final _showStatusBarProvider = boolPref('show_status_bar_with_controls', false);
+final _showNavBarProvider = boolPref('show_nav_bar_with_controls', false);
+final _dynamicSpeedOverlayProvider = boolPref('dynamic_speed_overlay', true);
+final _holdSpeedProvider = doublePref('hold_speed', 2.0);
 
 final _sensitivityProvider = NotifierProvider<_SensitivityNotifier, double>(_SensitivityNotifier.new);
 class _SensitivityNotifier extends Notifier<double> {
@@ -45,6 +32,35 @@ class _SensitivityNotifier extends Notifier<double> {
   void update(double v) {
     state = v;
     ref.read(preferencesServiceProvider).setGestureSensitivity(v);
+  }
+}
+
+String _sensitivityLevel(double s) {
+  final v = (s * 50).round();
+  if (v >= 67) return 'High';
+  if (v >= 34) return 'Medium';
+  return 'Low';
+}
+
+const _orientationOptions = [
+  PlayerOrientation.video,
+  PlayerOrientation.free,
+  PlayerOrientation.landscape,
+  PlayerOrientation.portrait,
+];
+
+String _orientationLabel(PlayerOrientation o) {
+  switch (o) {
+    case PlayerOrientation.video:
+      return 'Video';
+    case PlayerOrientation.free:
+      return 'Free';
+    case PlayerOrientation.landscape:
+      return 'Landscape';
+    case PlayerOrientation.portrait:
+      return 'Portrait';
+    default:
+      return o.name;
   }
 }
 
@@ -75,6 +91,9 @@ class PlayerSettingsScreen extends ConsumerWidget {
     final showStatus = ref.watch(_showStatusBarProvider);
     final showNav = ref.watch(_showNavBarProvider);
     final dynamicOverlay = ref.watch(_dynamicSpeedOverlayProvider);
+    final skipInterval = ref.watch(skipIntervalProvider);
+    final playerOrientation = ref.watch(playerOrientationProvider);
+    final holdSpeed = ref.watch(_holdSpeedProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -84,7 +103,7 @@ class PlayerSettingsScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white70),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Player',
@@ -103,9 +122,56 @@ class PlayerSettingsScreen extends ConsumerWidget {
             SettingsCardGroup(
               sectionTitle: 'General',
               children: [
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Orientation',
-                  subtitle: 'Video',
+                  subtitle: _orientationLabel(playerOrientation),
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: const Color(0xFF1E2227),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                      ),
+                      builder: (ctx) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Text(
+                                'Orientation',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const Divider(height: 1, color: Color(0xFF2C3136)),
+                            ..._orientationOptions.map((option) {
+                              final selected = playerOrientation == option;
+                              return ListTile(
+                                title: Text(
+                                  _orientationLabel(option),
+                                  style: TextStyle(
+                                    color: selected ? const Color(0xFF71C4D4) : Colors.white70,
+                                  ),
+                                ),
+                                trailing: selected
+                                    ? const Icon(Icons.check, color: Color(0xFF71C4D4))
+                                    : null,
+                                onTap: () {
+                                  ref.read(playerOrientationProvider.notifier).setOrientation(option);
+                                  Navigator.of(ctx).pop();
+                                },
+                              );
+                            }),
+                            const SizedBox(height: 8),
+                          ],
+                        );
+                      },
+                    );
+                  },
                 ),
                 CustomSwitchTile(
                   title: 'Save position on quit',
@@ -168,12 +234,12 @@ class PlayerSettingsScreen extends ConsumerWidget {
                 ),
                 CustomSliderTile(
                   title: 'Custom skip duration',
-                  subtitle: 'Duration to skip forward on custom skip button (90 s)',
-                  value: 90,
+                  subtitle: 'Duration to skip forward on custom skip button ($skipInterval s)',
+                  value: skipInterval.toDouble(),
                   min: 5,
                   max: 300,
                   divisions: 59,
-                  onChanged: (_) {},
+                  onChanged: (v) => ref.read(skipIntervalProvider.notifier).update(v.round()),
                 ),
               ],
             ),
@@ -202,7 +268,7 @@ class PlayerSettingsScreen extends ConsumerWidget {
                 ),
                 CustomSliderTile(
                   title: 'Horizontal swipe sensitivity',
-                  subtitle: 'Current: ${(sensitivity * 50).round()}/100 (Medium)',
+                  subtitle: 'Current: ${(sensitivity * 50).round()}/100 (${_sensitivityLevel(sensitivity)})',
                   value: sensitivity,
                   min: 0.5,
                   max: 2.0,
@@ -211,12 +277,12 @@ class PlayerSettingsScreen extends ConsumerWidget {
                 ),
                 CustomSliderTile(
                   title: 'Hold for multi - x speed',
-                  subtitle: '2.00x',
-                  value: 2.0,
+                  subtitle: '${holdSpeed.toStringAsFixed(2)}x',
+                  value: holdSpeed,
                   min: 1.0,
                   max: 5.0,
                   divisions: 40,
-                  onChanged: (_) {},
+                  onChanged: (v) => ref.read(_holdSpeedProvider.notifier).update(v),
                 ),
                 CustomSwitchTile(
                   title: 'Dynamic Speed Overlay',

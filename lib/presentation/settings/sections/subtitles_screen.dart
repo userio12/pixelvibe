@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/di/providers.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
@@ -52,7 +53,7 @@ class SubtitlesScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white70),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Subtitles',
@@ -71,9 +72,12 @@ class SubtitlesScreen extends ConsumerWidget {
             SettingsCardGroup(
               sectionTitle: 'General',
               children: [
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Preferred languages',
                   subtitle: 'Not set (will use video default)',
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Coming soon')),
+                  ),
                 ),
                 CustomSwitchTile(
                   title: 'Automatically load subtitles',
@@ -93,36 +97,75 @@ class SubtitlesScreen extends ConsumerWidget {
                   value: scaleByWindow,
                   onChanged: (_) => ref.read(_scaleByWindowProvider.notifier).toggle(),
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Fonts directory',
                   subtitle: 'Not set (using system fonts)',
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Coming soon')),
+                  ),
                 ),
               ],
             ),
             SettingsCardGroup(
               sectionTitle: 'Subtitle Search',
               children: [
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Subtitle Save Location',
                   subtitle: 'Not set (will use video default)',
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Coming soon')),
+                  ),
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Subtitle Sources',
                   subtitle: 'All',
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Coming soon')),
+                  ),
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Subtitle Languages',
                   subtitle: 'English',
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Coming soon')),
+                  ),
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Advanced Search Filters',
-                  titleColor: Color(0xFF71C4D4),
-                  trailing: Icon(Icons.keyboard_arrow_down, color: Color(0xFF71C4D4)),
+                  titleColor: const Color(0xFF71C4D4),
+                  trailing: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF71C4D4)),
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Coming soon')),
+                  ),
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Clear Subtitle Downloads',
                   subtitle: 'Delete all files in the current save location',
-                  titleColor: Color(0xFFDCA7A7),
+                  titleColor: const Color(0xFFDCA7A7),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Clear Subtitle Downloads'),
+                        content: const Text('Are you sure you want to delete all downloaded subtitle files?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(ctx).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Downloads cleared')),
+                              );
+                            },
+                            child: const Text('Clear'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

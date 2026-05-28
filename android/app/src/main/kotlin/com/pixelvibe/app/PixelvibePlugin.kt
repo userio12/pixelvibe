@@ -89,7 +89,10 @@ class PixelvibePlugin(private val channel: MethodChannel) {
         scope.launch {
             try {
                 proxy.setStreamSource(client, path)
-                proxy.startProxy()
+                if (!proxy.startProxy()) {
+                    result.error("PROXY_FAILED", "Failed to start streaming proxy", null)
+                    return@launch
+                }
                 val proxyUrl = proxy.getProxyUrl(path)
                 result.success(proxyUrl)
             } catch (e: Exception) {

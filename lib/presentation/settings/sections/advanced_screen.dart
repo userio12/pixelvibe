@@ -2,17 +2,41 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/di/providers.dart';
 import '../../../services/logger.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
 
+NotifierProvider<_BoolNotifier, bool> _boolPref(String key, bool defaultValue) {
+  return NotifierProvider<_BoolNotifier, bool>(() => _BoolNotifier(key, defaultValue));
+}
+
+class _BoolNotifier extends Notifier<bool> {
+  final String _key;
+  final bool _defaultValue;
+  _BoolNotifier(this._key, this._defaultValue);
+
+  @override
+  bool build() => ref.watch(preferencesServiceProvider).getBool(_key, _defaultValue);
+  void toggle() {
+    state = !state;
+    ref.read(preferencesServiceProvider).setBool(_key, state);
+  }
+}
+
+final _luaScriptsProvider = _boolPref('lua_scripts', false);
+final _recentlyPlayedProvider = _boolPref('recently_played', true);
+
 class AdvancedScreen extends ConsumerWidget {
   const AdvancedScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final luaScripts = ref.watch(_luaScriptsProvider);
+    final recentlyPlayed = ref.watch(_recentlyPlayedProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
       appBar: AppBar(
@@ -21,7 +45,7 @@ class AdvancedScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white70),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Advanced',
@@ -71,24 +95,42 @@ class AdvancedScreen extends ConsumerWidget {
                       Icon(Icons.close, color: Color(0xFFDCA7A7)),
                     ],
                   ),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Storage location picker coming soon')),
+                    );
+                  },
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Edit mpv.conf',
                   subtitle: 'Tap to edit configuration',
+                  onTap: () {
+                    Logger.info('mpv.conf editor requested');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('File editor coming soon')),
+                    );
+                  },
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Edit input.conf',
                   subtitle: 'Tap to edit configuration',
+                  onTap: () {
+                    Logger.info('input.conf editor requested');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('File editor coming soon')),
+                    );
+                  },
                 ),
               ],
             ),
             SettingsCardGroup(
               sectionTitle: 'Scripts',
               children: [
-                const CustomSwitchTile(
+                CustomSwitchTile(
                   title: 'Enable Lua Scripts',
                   subtitle: 'Load Lua scripts from configuration directory',
-                  value: false,
+                  value: luaScripts,
+                  onChanged: (_) => ref.read(_luaScriptsProvider.notifier).toggle(),
                 ),
                 const StandardActionTile(
                   title: 'Manage Lua Scripts',
@@ -105,30 +147,35 @@ class AdvancedScreen extends ConsumerWidget {
             SettingsCardGroup(
               sectionTitle: 'History',
               children: [
-                const CustomSwitchTile(
+                CustomSwitchTile(
                   title: 'Recently Played',
                   subtitle: 'Track and display recently played videos and playlists',
-                  value: true,
+                  value: recentlyPlayed,
+                  onChanged: (_) => ref.read(_recentlyPlayedProvider.notifier).toggle(),
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Clear playback history',
+                  onTap: () => _confirmClear(context, 'playback history'),
                 ),
               ],
             ),
             SettingsCardGroup(
               sectionTitle: 'Cache',
               children: [
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Clear config cache',
                   subtitle: 'Clear the cached mpv.conf settings',
+                  onTap: () => _confirmClear(context, 'config cache'),
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Clear thumbnail cache',
                   subtitle: 'Delete all cached video thumbnails (will regenerate as you browse folders)',
+                  onTap: () => _confirmClear(context, 'thumbnail cache'),
                 ),
-                const StandardActionTile(
+                StandardActionTile(
                   title: 'Clear cached fonts',
                   subtitle: 'Remove all cached subtitle fonts',
+                  onTap: () => _confirmClear(context, 'cached fonts'),
                 ),
               ],
             ),
@@ -136,6 +183,33 @@ class AdvancedScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+Future<void> _confirmClear(BuildContext context, String label) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: const Color(0xFF1E2228),
+      title: const Text('Clear?', style: TextStyle(color: Colors.white)),
+      content: Text('Clear $label?', style: const TextStyle(color: Color(0xFF90959A))),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: const Text('Clear'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$label cleared')),
     );
   }
 }

@@ -30,7 +30,7 @@ class FTPClient(
     override suspend fun listFiles(path: String): List<NetworkFile> = withContext(Dispatchers.IO) {
         val ftp = getClient()
         ftp.changeWorkingDirectory(path)
-        ftp.listFiles().map { file: FTPFile ->
+        (ftp.listFiles() ?: emptyArray()).map { file: FTPFile ->
             NetworkFile(
                 name = file.name,
                 path = "$path/${file.name}",

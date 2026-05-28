@@ -1,33 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/di/providers.dart';
+import '../../../services/logger.dart';
 import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
 import '../widgets/custom_slider_tile.dart';
+import '../widgets/pref_notifiers.dart';
 
-NotifierProvider<_BoolNotifier, bool> _boolPref(String key, bool defaultValue) {
-  return NotifierProvider<_BoolNotifier, bool>(() => _BoolNotifier(key, defaultValue));
-}
-
-class _BoolNotifier extends Notifier<bool> {
-  final String _key;
-  final bool _defaultValue;
-  _BoolNotifier(this._key, this._defaultValue);
-
-  @override
-  bool build() => ref.watch(preferencesServiceProvider).getBool(_key, _defaultValue);
-  void toggle() {
-    state = !state;
-    ref.read(preferencesServiceProvider).setBool(_key, state);
-  }
-}
-
-final _tapToToggleVisibilityProvider = _boolPref('tap_to_toggle_visibility', true);
-final _displaySeekbarSecondsProvider = _boolPref('display_seekbar_seconds', true);
-final _doubleTapAnimationProvider = _boolPref('double_tap_animation', true);
-final _disableControlsTouchInputProvider = _boolPref('disable_controls_touch_input', false);
+final _tapToToggleVisibilityProvider = boolPref('tap_to_toggle_visibility', true);
+final _displaySeekbarSecondsProvider = boolPref('display_seekbar_seconds', true);
+final _doubleTapAnimationProvider = boolPref('double_tap_animation', true);
+final _disableControlsTouchInputProvider = boolPref('disable_controls_touch_input', false);
 
 class PlayerLayoutScreen extends ConsumerWidget {
   const PlayerLayoutScreen({super.key});
@@ -49,7 +35,7 @@ class PlayerLayoutScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white70),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Player Layout',
@@ -94,20 +80,65 @@ class PlayerLayoutScreen extends ConsumerWidget {
                 StandardActionTile(
                   title: 'Top left controls',
                   subtitle: ref.watch(preferencesServiceProvider).getTopLeftControls(),
-                  onTap: () {},
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Coming soon')),
+                    );
+                  },
                 ),
                 StandardActionTile(
                   title: 'Top right controls',
                   subtitle: ref.watch(preferencesServiceProvider).getTopRightControls(),
-                  onTap: () {},
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Coming soon')),
+                    );
+                  },
                 ),
                 StandardActionTile(
                   title: 'Bottom center controls',
                   subtitle: ref.watch(preferencesServiceProvider).getBottomCenterControls(),
-                  onTap: () {},
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Coming soon')),
+                    );
+                  },
                 ),
                 StandardActionTile(
                   title: 'Reset to defaults',
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: const Color(0xFF1A1E23),
+                        title: const Text('Reset to defaults', style: TextStyle(color: Colors.white)),
+                        content: const Text(
+                          'This will reset top left, top right, and bottom center controls to their default values.',
+                          style: TextStyle(color: Color(0xFF90959A)),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            child: const Text('Cancel', style: TextStyle(color: Color(0xFF8A929A))),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              final prefs = ref.read(preferencesServiceProvider);
+                              prefs.setTopLeftControls('backArrow');
+                              prefs.setTopRightControls('info,loadSubtitle,addToPlaylist,more,lock,pip,sleepTimer,volume');
+                              prefs.setBottomCenterControls('skipBack,playPause,skipForward');
+                              Navigator.of(ctx).pop();
+                              Logger.info('Controls reset to defaults');
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Controls reset to defaults')),
+                              );
+                            },
+                            child: const Text('Reset', style: TextStyle(color: Color(0xFF71C4D4))),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
