@@ -25,12 +25,15 @@ class VolumeSlider extends StatelessWidget {
         Icon(icon, size: 20, color: theme.colorScheme.onSurface),
         SizedBox(
           width: 120,
-          child: Slider(
-            value: volume,
-            onChanged: onChanged,
-            min: 0,
-            max: 1,
-            divisions: 100,
+          child: Semantics(
+            label: 'Volume',
+            child: Slider(
+              value: volume,
+              onChanged: onChanged,
+              min: 0,
+              max: 1,
+              divisions: 100,
+            ),
           ),
         ),
       ],

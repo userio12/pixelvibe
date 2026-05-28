@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/di/providers.dart';
 import '../../../data/database/app_database.dart';
 
-final allPlaylistsProvider = FutureProvider<List<Playlist>>((ref) {
+final allPlaylistsProvider = FutureProvider.autoDispose<List<Playlist>>((ref) {
   return ref.watch(playlistDaoProvider).getAllPlaylists();
 });
 
@@ -61,7 +61,12 @@ class AddToPlaylistSheet extends ConsumerWidget {
                           title,
                           durationMs,
                         );
-                        if (context.mounted) Navigator.of(context).pop();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Added to "${pl.name}"')),
+                          );
+                          Navigator.of(context).pop();
+                        }
                       },
                     );
                   },

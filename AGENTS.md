@@ -8,7 +8,7 @@ Flutter Android video player built on `media_kit` (libmpv via Dart FFI). Materia
 flutter pub get              # install dependencies
 flutter analyze              # static analysis
 flutter test                 # run tests
-dart run build_runner build  # code generation (drift, freezed, riverpod)
+dart run build_runner build  # code generation (drift)
 ```
 
 ## Architecture
@@ -20,6 +20,11 @@ dart run build_runner build  # code generation (drift, freezed, riverpod)
 | Data | `lib/data/` | drift (SQLite), platform channels |
 | Domain | `lib/domain/` | Pure Dart models |
 | Platform | `android/.../kotlin/` | PiP, background playback, network proxy |
+
+## Default Tools
+
+- **grep**: Use `rg` (ripgrep) via bash for all code searches, not the built-in Grep tool. Prefer `rg -n` with file-type flags (e.g. `-tdart`).
+- **graphify**: Always load the graphify-windows skill before answering questions about the codebase to leverage the persistent knowledge graph in `graphify-out/`.
 
 ## Key Constraints
 

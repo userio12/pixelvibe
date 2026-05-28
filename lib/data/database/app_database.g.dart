@@ -395,6 +395,7 @@ class $RecentlyPlayedTable extends RecentlyPlayed
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
@@ -757,6 +758,17 @@ class $VideoMetadataTable extends VideoMetadata
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
+  static const VerificationMeta _contentUriMeta = const VerificationMeta(
+    'contentUri',
+  );
+  @override
+  late final GeneratedColumn<String> contentUri = GeneratedColumn<String>(
+    'content_uri',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -826,10 +838,38 @@ class $VideoMetadataTable extends VideoMetadata
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _playCountMeta = const VerificationMeta(
+    'playCount',
+  );
+  @override
+  late final GeneratedColumn<int> playCount = GeneratedColumn<int>(
+    'play_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _watchedMeta = const VerificationMeta(
+    'watched',
+  );
+  @override
+  late final GeneratedColumn<bool> watched = GeneratedColumn<bool>(
+    'watched',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("watched" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     filePath,
+    contentUri,
     title,
     durationMs,
     width,
@@ -837,6 +877,8 @@ class $VideoMetadataTable extends VideoMetadata
     codec,
     bitrate,
     addedAt,
+    playCount,
+    watched,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -860,6 +902,12 @@ class $VideoMetadataTable extends VideoMetadata
       );
     } else if (isInserting) {
       context.missing(_filePathMeta);
+    }
+    if (data.containsKey('content_uri')) {
+      context.handle(
+        _contentUriMeta,
+        contentUri.isAcceptableOrUnknown(data['content_uri']!, _contentUriMeta),
+      );
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -905,6 +953,18 @@ class $VideoMetadataTable extends VideoMetadata
     } else if (isInserting) {
       context.missing(_addedAtMeta);
     }
+    if (data.containsKey('play_count')) {
+      context.handle(
+        _playCountMeta,
+        playCount.isAcceptableOrUnknown(data['play_count']!, _playCountMeta),
+      );
+    }
+    if (data.containsKey('watched')) {
+      context.handle(
+        _watchedMeta,
+        watched.isAcceptableOrUnknown(data['watched']!, _watchedMeta),
+      );
+    }
     return context;
   }
 
@@ -922,6 +982,10 @@ class $VideoMetadataTable extends VideoMetadata
         DriftSqlType.string,
         data['${effectivePrefix}file_path'],
       )!,
+      contentUri: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_uri'],
+      ),
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title'],
@@ -950,6 +1014,14 @@ class $VideoMetadataTable extends VideoMetadata
         DriftSqlType.int,
         data['${effectivePrefix}added_at'],
       )!,
+      playCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}play_count'],
+      )!,
+      watched: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}watched'],
+      )!,
     );
   }
 
@@ -963,6 +1035,7 @@ class VideoMetadataData extends DataClass
     implements Insertable<VideoMetadataData> {
   final int id;
   final String filePath;
+  final String? contentUri;
   final String? title;
   final int? durationMs;
   final int? width;
@@ -970,9 +1043,12 @@ class VideoMetadataData extends DataClass
   final String? codec;
   final String? bitrate;
   final int addedAt;
+  final int playCount;
+  final bool watched;
   const VideoMetadataData({
     required this.id,
     required this.filePath,
+    this.contentUri,
     this.title,
     this.durationMs,
     this.width,
@@ -980,12 +1056,17 @@ class VideoMetadataData extends DataClass
     this.codec,
     this.bitrate,
     required this.addedAt,
+    required this.playCount,
+    required this.watched,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['file_path'] = Variable<String>(filePath);
+    if (!nullToAbsent || contentUri != null) {
+      map['content_uri'] = Variable<String>(contentUri);
+    }
     if (!nullToAbsent || title != null) {
       map['title'] = Variable<String>(title);
     }
@@ -1005,6 +1086,8 @@ class VideoMetadataData extends DataClass
       map['bitrate'] = Variable<String>(bitrate);
     }
     map['added_at'] = Variable<int>(addedAt);
+    map['play_count'] = Variable<int>(playCount);
+    map['watched'] = Variable<bool>(watched);
     return map;
   }
 
@@ -1012,6 +1095,9 @@ class VideoMetadataData extends DataClass
     return VideoMetadataCompanion(
       id: Value(id),
       filePath: Value(filePath),
+      contentUri: contentUri == null && nullToAbsent
+          ? const Value.absent()
+          : Value(contentUri),
       title: title == null && nullToAbsent
           ? const Value.absent()
           : Value(title),
@@ -1031,6 +1117,8 @@ class VideoMetadataData extends DataClass
           ? const Value.absent()
           : Value(bitrate),
       addedAt: Value(addedAt),
+      playCount: Value(playCount),
+      watched: Value(watched),
     );
   }
 
@@ -1042,6 +1130,7 @@ class VideoMetadataData extends DataClass
     return VideoMetadataData(
       id: serializer.fromJson<int>(json['id']),
       filePath: serializer.fromJson<String>(json['filePath']),
+      contentUri: serializer.fromJson<String?>(json['contentUri']),
       title: serializer.fromJson<String?>(json['title']),
       durationMs: serializer.fromJson<int?>(json['durationMs']),
       width: serializer.fromJson<int?>(json['width']),
@@ -1049,6 +1138,8 @@ class VideoMetadataData extends DataClass
       codec: serializer.fromJson<String?>(json['codec']),
       bitrate: serializer.fromJson<String?>(json['bitrate']),
       addedAt: serializer.fromJson<int>(json['addedAt']),
+      playCount: serializer.fromJson<int>(json['playCount']),
+      watched: serializer.fromJson<bool>(json['watched']),
     );
   }
   @override
@@ -1057,6 +1148,7 @@ class VideoMetadataData extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'filePath': serializer.toJson<String>(filePath),
+      'contentUri': serializer.toJson<String?>(contentUri),
       'title': serializer.toJson<String?>(title),
       'durationMs': serializer.toJson<int?>(durationMs),
       'width': serializer.toJson<int?>(width),
@@ -1064,12 +1156,15 @@ class VideoMetadataData extends DataClass
       'codec': serializer.toJson<String?>(codec),
       'bitrate': serializer.toJson<String?>(bitrate),
       'addedAt': serializer.toJson<int>(addedAt),
+      'playCount': serializer.toJson<int>(playCount),
+      'watched': serializer.toJson<bool>(watched),
     };
   }
 
   VideoMetadataData copyWith({
     int? id,
     String? filePath,
+    Value<String?> contentUri = const Value.absent(),
     Value<String?> title = const Value.absent(),
     Value<int?> durationMs = const Value.absent(),
     Value<int?> width = const Value.absent(),
@@ -1077,9 +1172,12 @@ class VideoMetadataData extends DataClass
     Value<String?> codec = const Value.absent(),
     Value<String?> bitrate = const Value.absent(),
     int? addedAt,
+    int? playCount,
+    bool? watched,
   }) => VideoMetadataData(
     id: id ?? this.id,
     filePath: filePath ?? this.filePath,
+    contentUri: contentUri.present ? contentUri.value : this.contentUri,
     title: title.present ? title.value : this.title,
     durationMs: durationMs.present ? durationMs.value : this.durationMs,
     width: width.present ? width.value : this.width,
@@ -1087,11 +1185,16 @@ class VideoMetadataData extends DataClass
     codec: codec.present ? codec.value : this.codec,
     bitrate: bitrate.present ? bitrate.value : this.bitrate,
     addedAt: addedAt ?? this.addedAt,
+    playCount: playCount ?? this.playCount,
+    watched: watched ?? this.watched,
   );
   VideoMetadataData copyWithCompanion(VideoMetadataCompanion data) {
     return VideoMetadataData(
       id: data.id.present ? data.id.value : this.id,
       filePath: data.filePath.present ? data.filePath.value : this.filePath,
+      contentUri: data.contentUri.present
+          ? data.contentUri.value
+          : this.contentUri,
       title: data.title.present ? data.title.value : this.title,
       durationMs: data.durationMs.present
           ? data.durationMs.value
@@ -1101,6 +1204,8 @@ class VideoMetadataData extends DataClass
       codec: data.codec.present ? data.codec.value : this.codec,
       bitrate: data.bitrate.present ? data.bitrate.value : this.bitrate,
       addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      playCount: data.playCount.present ? data.playCount.value : this.playCount,
+      watched: data.watched.present ? data.watched.value : this.watched,
     );
   }
 
@@ -1109,13 +1214,16 @@ class VideoMetadataData extends DataClass
     return (StringBuffer('VideoMetadataData(')
           ..write('id: $id, ')
           ..write('filePath: $filePath, ')
+          ..write('contentUri: $contentUri, ')
           ..write('title: $title, ')
           ..write('durationMs: $durationMs, ')
           ..write('width: $width, ')
           ..write('height: $height, ')
           ..write('codec: $codec, ')
           ..write('bitrate: $bitrate, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('playCount: $playCount, ')
+          ..write('watched: $watched')
           ..write(')'))
         .toString();
   }
@@ -1124,6 +1232,7 @@ class VideoMetadataData extends DataClass
   int get hashCode => Object.hash(
     id,
     filePath,
+    contentUri,
     title,
     durationMs,
     width,
@@ -1131,6 +1240,8 @@ class VideoMetadataData extends DataClass
     codec,
     bitrate,
     addedAt,
+    playCount,
+    watched,
   );
   @override
   bool operator ==(Object other) =>
@@ -1138,18 +1249,22 @@ class VideoMetadataData extends DataClass
       (other is VideoMetadataData &&
           other.id == this.id &&
           other.filePath == this.filePath &&
+          other.contentUri == this.contentUri &&
           other.title == this.title &&
           other.durationMs == this.durationMs &&
           other.width == this.width &&
           other.height == this.height &&
           other.codec == this.codec &&
           other.bitrate == this.bitrate &&
-          other.addedAt == this.addedAt);
+          other.addedAt == this.addedAt &&
+          other.playCount == this.playCount &&
+          other.watched == this.watched);
 }
 
 class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
   final Value<int> id;
   final Value<String> filePath;
+  final Value<String?> contentUri;
   final Value<String?> title;
   final Value<int?> durationMs;
   final Value<int?> width;
@@ -1157,9 +1272,12 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
   final Value<String?> codec;
   final Value<String?> bitrate;
   final Value<int> addedAt;
+  final Value<int> playCount;
+  final Value<bool> watched;
   const VideoMetadataCompanion({
     this.id = const Value.absent(),
     this.filePath = const Value.absent(),
+    this.contentUri = const Value.absent(),
     this.title = const Value.absent(),
     this.durationMs = const Value.absent(),
     this.width = const Value.absent(),
@@ -1167,10 +1285,13 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     this.codec = const Value.absent(),
     this.bitrate = const Value.absent(),
     this.addedAt = const Value.absent(),
+    this.playCount = const Value.absent(),
+    this.watched = const Value.absent(),
   });
   VideoMetadataCompanion.insert({
     this.id = const Value.absent(),
     required String filePath,
+    this.contentUri = const Value.absent(),
     this.title = const Value.absent(),
     this.durationMs = const Value.absent(),
     this.width = const Value.absent(),
@@ -1178,11 +1299,14 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     this.codec = const Value.absent(),
     this.bitrate = const Value.absent(),
     required int addedAt,
+    this.playCount = const Value.absent(),
+    this.watched = const Value.absent(),
   }) : filePath = Value(filePath),
        addedAt = Value(addedAt);
   static Insertable<VideoMetadataData> custom({
     Expression<int>? id,
     Expression<String>? filePath,
+    Expression<String>? contentUri,
     Expression<String>? title,
     Expression<int>? durationMs,
     Expression<int>? width,
@@ -1190,10 +1314,13 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     Expression<String>? codec,
     Expression<String>? bitrate,
     Expression<int>? addedAt,
+    Expression<int>? playCount,
+    Expression<bool>? watched,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (filePath != null) 'file_path': filePath,
+      if (contentUri != null) 'content_uri': contentUri,
       if (title != null) 'title': title,
       if (durationMs != null) 'duration_ms': durationMs,
       if (width != null) 'width': width,
@@ -1201,12 +1328,15 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
       if (codec != null) 'codec': codec,
       if (bitrate != null) 'bitrate': bitrate,
       if (addedAt != null) 'added_at': addedAt,
+      if (playCount != null) 'play_count': playCount,
+      if (watched != null) 'watched': watched,
     });
   }
 
   VideoMetadataCompanion copyWith({
     Value<int>? id,
     Value<String>? filePath,
+    Value<String?>? contentUri,
     Value<String?>? title,
     Value<int?>? durationMs,
     Value<int?>? width,
@@ -1214,10 +1344,13 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     Value<String?>? codec,
     Value<String?>? bitrate,
     Value<int>? addedAt,
+    Value<int>? playCount,
+    Value<bool>? watched,
   }) {
     return VideoMetadataCompanion(
       id: id ?? this.id,
       filePath: filePath ?? this.filePath,
+      contentUri: contentUri ?? this.contentUri,
       title: title ?? this.title,
       durationMs: durationMs ?? this.durationMs,
       width: width ?? this.width,
@@ -1225,6 +1358,8 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
       codec: codec ?? this.codec,
       bitrate: bitrate ?? this.bitrate,
       addedAt: addedAt ?? this.addedAt,
+      playCount: playCount ?? this.playCount,
+      watched: watched ?? this.watched,
     );
   }
 
@@ -1236,6 +1371,9 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     }
     if (filePath.present) {
       map['file_path'] = Variable<String>(filePath.value);
+    }
+    if (contentUri.present) {
+      map['content_uri'] = Variable<String>(contentUri.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -1258,6 +1396,12 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     if (addedAt.present) {
       map['added_at'] = Variable<int>(addedAt.value);
     }
+    if (playCount.present) {
+      map['play_count'] = Variable<int>(playCount.value);
+    }
+    if (watched.present) {
+      map['watched'] = Variable<bool>(watched.value);
+    }
     return map;
   }
 
@@ -1266,13 +1410,16 @@ class VideoMetadataCompanion extends UpdateCompanion<VideoMetadataData> {
     return (StringBuffer('VideoMetadataCompanion(')
           ..write('id: $id, ')
           ..write('filePath: $filePath, ')
+          ..write('contentUri: $contentUri, ')
           ..write('title: $title, ')
           ..write('durationMs: $durationMs, ')
           ..write('width: $width, ')
           ..write('height: $height, ')
           ..write('codec: $codec, ')
           ..write('bitrate: $bitrate, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('playCount: $playCount, ')
+          ..write('watched: $watched')
           ..write(')'))
         .toString();
   }
@@ -3080,6 +3227,7 @@ typedef $$VideoMetadataTableCreateCompanionBuilder =
     VideoMetadataCompanion Function({
       Value<int> id,
       required String filePath,
+      Value<String?> contentUri,
       Value<String?> title,
       Value<int?> durationMs,
       Value<int?> width,
@@ -3087,11 +3235,14 @@ typedef $$VideoMetadataTableCreateCompanionBuilder =
       Value<String?> codec,
       Value<String?> bitrate,
       required int addedAt,
+      Value<int> playCount,
+      Value<bool> watched,
     });
 typedef $$VideoMetadataTableUpdateCompanionBuilder =
     VideoMetadataCompanion Function({
       Value<int> id,
       Value<String> filePath,
+      Value<String?> contentUri,
       Value<String?> title,
       Value<int?> durationMs,
       Value<int?> width,
@@ -3099,6 +3250,8 @@ typedef $$VideoMetadataTableUpdateCompanionBuilder =
       Value<String?> codec,
       Value<String?> bitrate,
       Value<int> addedAt,
+      Value<int> playCount,
+      Value<bool> watched,
     });
 
 class $$VideoMetadataTableFilterComposer
@@ -3117,6 +3270,11 @@ class $$VideoMetadataTableFilterComposer
 
   ColumnFilters<String> get filePath => $composableBuilder(
     column: $table.filePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contentUri => $composableBuilder(
+    column: $table.contentUri,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3154,6 +3312,16 @@ class $$VideoMetadataTableFilterComposer
     column: $table.addedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<int> get playCount => $composableBuilder(
+    column: $table.playCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get watched => $composableBuilder(
+    column: $table.watched,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$VideoMetadataTableOrderingComposer
@@ -3172,6 +3340,11 @@ class $$VideoMetadataTableOrderingComposer
 
   ColumnOrderings<String> get filePath => $composableBuilder(
     column: $table.filePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contentUri => $composableBuilder(
+    column: $table.contentUri,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3209,6 +3382,16 @@ class $$VideoMetadataTableOrderingComposer
     column: $table.addedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get playCount => $composableBuilder(
+    column: $table.playCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get watched => $composableBuilder(
+    column: $table.watched,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$VideoMetadataTableAnnotationComposer
@@ -3225,6 +3408,11 @@ class $$VideoMetadataTableAnnotationComposer
 
   GeneratedColumn<String> get filePath =>
       $composableBuilder(column: $table.filePath, builder: (column) => column);
+
+  GeneratedColumn<String> get contentUri => $composableBuilder(
+    column: $table.contentUri,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
@@ -3248,6 +3436,12 @@ class $$VideoMetadataTableAnnotationComposer
 
   GeneratedColumn<int> get addedAt =>
       $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get playCount =>
+      $composableBuilder(column: $table.playCount, builder: (column) => column);
+
+  GeneratedColumn<bool> get watched =>
+      $composableBuilder(column: $table.watched, builder: (column) => column);
 }
 
 class $$VideoMetadataTableTableManager
@@ -3287,6 +3481,7 @@ class $$VideoMetadataTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> filePath = const Value.absent(),
+                Value<String?> contentUri = const Value.absent(),
                 Value<String?> title = const Value.absent(),
                 Value<int?> durationMs = const Value.absent(),
                 Value<int?> width = const Value.absent(),
@@ -3294,9 +3489,12 @@ class $$VideoMetadataTableTableManager
                 Value<String?> codec = const Value.absent(),
                 Value<String?> bitrate = const Value.absent(),
                 Value<int> addedAt = const Value.absent(),
+                Value<int> playCount = const Value.absent(),
+                Value<bool> watched = const Value.absent(),
               }) => VideoMetadataCompanion(
                 id: id,
                 filePath: filePath,
+                contentUri: contentUri,
                 title: title,
                 durationMs: durationMs,
                 width: width,
@@ -3304,11 +3502,14 @@ class $$VideoMetadataTableTableManager
                 codec: codec,
                 bitrate: bitrate,
                 addedAt: addedAt,
+                playCount: playCount,
+                watched: watched,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String filePath,
+                Value<String?> contentUri = const Value.absent(),
                 Value<String?> title = const Value.absent(),
                 Value<int?> durationMs = const Value.absent(),
                 Value<int?> width = const Value.absent(),
@@ -3316,9 +3517,12 @@ class $$VideoMetadataTableTableManager
                 Value<String?> codec = const Value.absent(),
                 Value<String?> bitrate = const Value.absent(),
                 required int addedAt,
+                Value<int> playCount = const Value.absent(),
+                Value<bool> watched = const Value.absent(),
               }) => VideoMetadataCompanion.insert(
                 id: id,
                 filePath: filePath,
+                contentUri: contentUri,
                 title: title,
                 durationMs: durationMs,
                 width: width,
@@ -3326,6 +3530,8 @@ class $$VideoMetadataTableTableManager
                 codec: codec,
                 bitrate: bitrate,
                 addedAt: addedAt,
+                playCount: playCount,
+                watched: watched,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

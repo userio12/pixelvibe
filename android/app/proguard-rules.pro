@@ -25,7 +25,7 @@
 -keep class com.hierynomus.** { *; }
 -keep class net.engio.** { *; }
 -dontwarn com.hierynomus.**
--dontwarn net.engio.****
+-dontwarn net.engio.**
 
 # Apache Commons Net (FTP)
 -keep class org.apache.commons.net.** { *; }

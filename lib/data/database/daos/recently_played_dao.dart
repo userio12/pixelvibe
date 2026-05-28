@@ -15,7 +15,7 @@ class RecentlyPlayedDao extends DatabaseAccessor<AppDatabase> with _$RecentlyPla
   }
 
   Future<void> record(String filePath, String? title, String? thumbnailPath) {
-    return into(recentlyPlayed).insert(
+    return into(recentlyPlayed).insertOnConflictUpdate(
       RecentlyPlayedCompanion(
         filePath: Value(filePath),
         title: Value(title),

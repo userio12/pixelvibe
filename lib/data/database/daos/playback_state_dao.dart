@@ -11,7 +11,7 @@ class PlaybackStateDao extends DatabaseAccessor<AppDatabase> with _$PlaybackStat
     return (select(playbackStates)..where((t) => t.filePath.equals(path))).getSingleOrNull();
   }
 
-  Future<void> upsetPosition(String path, int positionMs, int durationMs) {
+  Future<void> upsertPosition(String path, int positionMs, int durationMs) {
     return into(playbackStates).insertOnConflictUpdate(
       PlaybackStatesCompanion(
         filePath: Value(path),

@@ -1,7 +1,19 @@
 import 'package:flutter/services.dart';
+import 'logger.dart';
+
+typedef BackgroundEventHandler = void Function(String method, dynamic arguments);
 
 class BackgroundService {
   static const _channel = MethodChannel('com.pixelvibe/background');
+  BackgroundEventHandler? onEvent;
+
+  BackgroundService() {
+    _channel.setMethodCallHandler(_handleMethodCall);
+  }
+
+  Future<void> _handleMethodCall(MethodCall call) async {
+    onEvent?.call(call.method, call.arguments);
+  }
 
   Future<void> startService({String title = 'pixelvibe', String content = 'Playing'}) async {
     try {
@@ -9,22 +21,29 @@ class BackgroundService {
         'title': title,
         'content': content,
       });
-    } catch (_) {}
+    } catch (e) {
+      Logger.error('BackgroundService.startService failed', e);
+    }
   }
 
   Future<void> stopService() async {
     try {
       await _channel.invokeMethod('stopService');
-    } catch (_) {}
+    } catch (e) {
+      Logger.error('BackgroundService.stopService failed', e);
+    }
   }
 
-  Future<void> updateMetadata({required String title, required int durationMs}) async {
+  Future<void> updateMetadata({required String title, required int durationMs, String? thumbnail}) async {
     try {
       await _channel.invokeMethod('updateMetadata', {
         'title': title,
         'duration': durationMs,
+        'thumbnail': thumbnail,
       });
-    } catch (_) {}
+    } catch (e) {
+      Logger.error('BackgroundService.updateMetadata failed', e);
+    }
   }
 
   Future<void> updatePlaybackState({required bool playing, required int positionMs}) async {
@@ -33,6 +52,8 @@ class BackgroundService {
         'playing': playing,
         'position': positionMs,
       });
-    } catch (_) {}
+    } catch (e) {
+      Logger.error('BackgroundService.updatePlaybackState failed', e);
+    }
   }
 }

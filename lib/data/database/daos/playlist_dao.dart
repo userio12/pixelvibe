@@ -28,10 +28,6 @@ class PlaylistDao extends DatabaseAccessor<AppDatabase> with _$PlaylistDaoMixin 
     });
   }
 
-  Future<List<PlaylistItem>> getItems(int playlistId) {
-    return (select(playlistItems)..where((t) => t.playlistId.equals(playlistId))).get();
-  }
-
   Future<void> addItem(int playlistId, String filePath, String? title, int? durationMs) {
     return into(playlistItems).insert(
       PlaylistItemsCompanion(
@@ -43,5 +39,66 @@ class PlaylistDao extends DatabaseAccessor<AppDatabase> with _$PlaylistDaoMixin 
         addedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
     );
+  }
+
+  Future<void> deleteItem(int id) {
+    return (delete(playlistItems)..where((t) => t.id.equals(id))).go();
+  }
+
+  Future<void> updateItemOrder(int id, int sortOrder) {
+    return (update(playlistItems)..where((t) => t.id.equals(id))).write(
+      PlaylistItemsCompanion(sortOrder: Value(sortOrder)),
+    );
+  }
+
+  Future<void> reorderItems(int playlistId, List<int> itemIds) async {
+    await transaction(() async {
+      for (var i = 0; i < itemIds.length; i++) {
+        await (update(playlistItems)
+              ..where((t) => t.id.equals(itemIds[i])))
+            .write(PlaylistItemsCompanion(sortOrder: Value(i)));
+      }
+    });
+  }
+
+  Future<List<PlaylistItem>> getItems(int playlistId) {
+    return (select(playlistItems)
+          ..where((t) => t.playlistId.equals(playlistId))
+          ..orderBy([(t) => OrderingTerm(expression: t.sortOrder)]))
+        .get();
+  }
+
+  Future<List<PlaylistItem>> getItemsPaged(int playlistId, {int limit = 100, int offset = 0}) {
+    return (select(playlistItems)
+          ..where((t) => t.playlistId.equals(playlistId))
+          ..orderBy([(t) => OrderingTerm(expression: t.sortOrder)])
+          ..limit(limit, offset: offset))
+        .get();
+  }
+
+  Future<int> getItemCount(int playlistId) {
+    return (select(playlistItems)
+          ..where((t) => t.playlistId.equals(playlistId)))
+        .map((row) => row.id)
+        .get()
+        .then((rows) => rows.length);
+  }
+
+  Future<({int count, int totalDuration})> getPlaylistStats(int playlistId) async {
+    final rows = await customSelect(
+      'SELECT COUNT(*) AS cnt, COALESCE(SUM(duration_ms), 0) AS total '
+      'FROM playlist_items WHERE playlist_id = ?',
+      variables: [Variable(playlistId)],
+    ).get();
+    final row = rows.first;
+    return (
+      count: row.read<int>('cnt'),
+      totalDuration: row.read<int>('total'),
+    );
+  }
+
+  Future<void> renamePlaylist(int id, String newName) {
+    return (update(playlists)..where((t) => t.id.equals(id)))
+        .write(PlaylistsCompanion(name: Value(newName)));
   }
 }

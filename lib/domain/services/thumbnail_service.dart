@@ -1,5 +1,18 @@
+import 'package:flutter/services.dart';
+import '../../services/logger.dart';
+
 class ThumbnailService {
-  // Placeholder - thumbnails will be generated via media_kit or platform channel
-  // in a later phase. For now, returns null to indicate no thumbnail available.
-  String? getThumbnailPath(String videoPath) => null;
+  static const _channel = MethodChannel('com.pixelvibe/thumbnails');
+
+  Future<String?> getThumbnailPath(String videoPath, {int width = 320}) async {
+    try {
+      return await _channel.invokeMethod<String>('getThumbnail', {
+        'path': videoPath,
+        'width': width,
+      });
+    } catch (e) {
+      Logger.error('ThumbnailService.getThumbnailPath failed', e);
+      return null;
+    }
+  }
 }

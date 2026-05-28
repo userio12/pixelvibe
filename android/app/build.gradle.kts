@@ -28,6 +28,15 @@ android {
         multiDexEnabled = true
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = System.getenv("ANDROID_KEYSTORE_PATH")?.let { File(it) }
+            storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+            keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -36,18 +45,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("arm64-v8a", "armeabi-v7a")
-            isUniversalApk = true
-        }
-    }
 }
 
 flutter {
@@ -55,10 +56,11 @@ flutter {
 }
 
 dependencies {
-    implementation("androidx.media:media:1.7.0")
+    // MediaSession via platform android.media.* (minSdk 26)
     implementation("org.nanohttpd:nanohttpd:2.3.1")
     implementation("commons-net:commons-net:3.11.1")
     implementation("com.hierynomus:smbj:0.13.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("com.google.android.play:core:1.10.3")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

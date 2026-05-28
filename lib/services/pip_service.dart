@@ -1,17 +1,25 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'logger.dart';
 
 class PiPService {
   static const _channel = MethodChannel('com.pixelvibe/pip');
 
   final _toggleController = StreamController<void>.broadcast();
+  final _noisyController = StreamController<void>.broadcast();
+  final _audioFocusController = StreamController<int>.broadcast();
   Stream<void> get onTogglePlayback => _toggleController.stream;
+  Stream<void> get onNoisy => _noisyController.stream;
+  Stream<int> get onAudioFocusChange => _audioFocusController.stream;
+  bool _handlerSet = false;
+  bool _disposed = false;
 
   Future<bool> isPipSupported() async {
     try {
       final result = await _channel.invokeMethod<bool>('isPipSupported');
       return result ?? false;
-    } catch (_) {
+    } catch (e) {
+      Logger.error('PiPService.isPipSupported error', e);
       return false;
     }
   }
@@ -23,21 +31,53 @@ class PiPService {
         'height': height,
         'playing': playing,
       });
-    } catch (_) {}
+    } catch (e) {
+      Logger.error('PiPService.enterPip error', e);
+    }
+  }
+
+  Future<void> requestAudioFocus() async {
+    try {
+      await _channel.invokeMethod('requestAudioFocus');
+    } catch (e) {
+      Logger.error('PiPService.requestAudioFocus error', e);
+    }
+  }
+
+  Future<void> abandonAudioFocus() async {
+    try {
+      await _channel.invokeMethod('abandonAudioFocus');
+    } catch (e) {
+      Logger.error('PiPService.abandonAudioFocus error', e);
+    }
   }
 
   void onPipModeChanged(void Function(bool isInPip) callback) {
+    if (_handlerSet) return;
+    _handlerSet = true;
     _channel.setMethodCallHandler((call) async {
+      if (_disposed) return null;
       if (call.method == 'onPictureInPictureModeChanged') {
-        final args = call.arguments as Map<dynamic, dynamic>;
-        callback(args['isInPip'] as bool);
+        final args = call.arguments;
+        if (args is Map<dynamic, dynamic>) {
+          callback(args['isInPip'] as bool? ?? false);
+        }
       } else if (call.method == 'togglePlayback') {
         _toggleController.add(null);
+      } else if (call.method == 'audioNoisy') {
+        _noisyController.add(null);
+      } else if (call.method == 'audioFocusChange') {
+        _audioFocusController.add(call.arguments as int? ?? 0);
       }
+      return null;
     });
   }
 
   void dispose() {
+    _disposed = true;
+    _channel.setMethodCallHandler(null);
     _toggleController.close();
+    _noisyController.close();
+    _audioFocusController.close();
   }
 }

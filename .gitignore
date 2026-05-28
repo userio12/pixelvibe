@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# graphify knowledge graph output
+/graphify-out/
+
+# Keystore files (sensitive)
+*.keystore
+*.b64
+graphify-mpvEx/

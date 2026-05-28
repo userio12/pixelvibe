@@ -1,214 +1,222 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'settings_provider.dart';
+import '../../core/router/routes.dart';
+import 'widgets/settings_card_group.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    final dynamicColor = ref.watch(dynamicColorProvider);
-    final defaultSpeed = ref.watch(defaultSpeedProvider);
-    final resume = ref.watch(resumePlaybackProvider);
-    final autoPip = ref.watch(autoPipProvider);
-    final skipInterval = ref.watch(skipIntervalProvider);
-    final fontSize = ref.watch(subtitleFontSizeProvider);
-    final hwdec = ref.watch(hwdecProvider);
-    final gpuApi = ref.watch(gpuApiProvider);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        children: [
-          _SectionHeader(title: 'Appearance'),
-          _ThemeTile(themeMode: themeMode),
-          SwitchListTile(
-            title: const Text('Dynamic color'),
-            subtitle: const Text('Use Material You dynamic color'),
-            value: dynamicColor,
-            onChanged: (_) => ref.read(dynamicColorProvider.notifier).toggle(),
-          ),
-          const Divider(height: 32),
-
-          _SectionHeader(title: 'Playback'),
-          _SpeedTile(defaultSpeed: defaultSpeed),
-          SwitchListTile(
-            title: const Text('Resume playback'),
-            subtitle: const Text('Save and resume position'),
-            value: resume,
-            onChanged: (_) => ref.read(resumePlaybackProvider.notifier).toggle(),
-          ),
-          SwitchListTile(
-            title: const Text('Auto PiP'),
-            subtitle: const Text('Enter PiP when leaving the app'),
-            value: autoPip,
-            onChanged: (_) => ref.read(autoPipProvider.notifier).toggle(),
-          ),
-          ListTile(
-            title: const Text('Skip interval'),
-            trailing: SegmentedButton<int>(
-              segments: const [
-                ButtonSegment(value: 5, label: Text('5s')),
-                ButtonSegment(value: 10, label: Text('10s')),
-                ButtonSegment(value: 30, label: Text('30s')),
-              ],
-              selected: {skipInterval},
-              onSelectionChanged: (s) => ref.read(skipIntervalProvider.notifier).update(s.first),
-              showSelectedIcon: false,
-            ),
-          ),
-          const Divider(height: 32),
-
-          _SectionHeader(title: 'Subtitles'),
-          ListTile(
-            title: const Text('Font size'),
-            subtitle: Text('${fontSize.round()}pt'),
-            trailing: SizedBox(
-              width: 200,
-              child: Slider(
-                value: fontSize,
-                min: 10,
-                max: 36,
-                divisions: 13,
-                onChanged: (v) => ref.read(subtitleFontSizeProvider.notifier).update(v),
-              ),
-            ),
-          ),
-          const Divider(height: 32),
-
-          _SectionHeader(title: 'Decoder'),
-          ListTile(
-            title: const Text('Hardware decoding'),
-            trailing: DropdownButton<String>(
-              value: hwdec,
-              items: const [
-                DropdownMenuItem(value: 'auto', child: Text('Auto')),
-                DropdownMenuItem(value: 'yes', child: Text('Force on')),
-                DropdownMenuItem(value: 'no', child: Text('Force off')),
-              ],
-              onChanged: (v) => ref.read(hwdecProvider.notifier).update(v ?? 'auto'),
-            ),
-          ),
-          ListTile(
-            title: const Text('GPU API'),
-            trailing: DropdownButton<String>(
-              value: gpuApi,
-              items: const [
-                DropdownMenuItem(value: 'auto', child: Text('Auto')),
-                DropdownMenuItem(value: 'vulkan', child: Text('Vulkan')),
-                DropdownMenuItem(value: 'opengl', child: Text('OpenGL')),
-              ],
-              onChanged: (v) => ref.read(gpuApiProvider.notifier).update(v ?? 'auto'),
-            ),
-          ),
-          const Divider(height: 32),
-
-          _SectionHeader(title: 'Advanced'),
-          ListTile(
-            leading: const Icon(Icons.code),
-            title: const Text('mpv.conf'),
-            subtitle: const Text('Load and edit mpv configuration'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _editConfig(context, 'mpv.conf'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.code),
-            title: const Text('input.conf'),
-            subtitle: const Text('Load and edit mpv input bindings'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _editConfig(context, 'input.conf'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.extension),
-            title: const Text('Lua scripts'),
-            subtitle: const Text('Browse and load scripts into mpv'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _browseScripts(context),
-          ),
-          const Divider(height: 32),
-
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('About pixelvibe'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/about'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _editConfig(BuildContext context, String filename) {
-    // TODO: Implement config file picker + editor
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$filename editor coming soon')),
-    );
-  }
-
-  void _browseScripts(BuildContext context) {
-    // TODO: Implement Lua script browser
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Lua script browser coming soon')),
-    );
-  }
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
+class _SettingsScreenState extends State<SettingsScreen> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(title, style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary)),
-    );
-  }
-}
-
-class _ThemeTile extends ConsumerWidget {
-  final ThemeMode themeMode;
-  const _ThemeTile({required this.themeMode});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ListTile(
-      title: const Text('Theme mode'),
-      trailing: SegmentedButton<ThemeMode>(
-        segments: const [
-          ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto)),
-          ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode)),
-          ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode)),
-        ],
-        selected: {themeMode},
-        onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).update(s.first),
-        showSelectedIcon: false,
+    return Scaffold(
+      backgroundColor: const Color(0xFF121518),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF121518),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: const Text(
+          'Preferences',
+          style: TextStyle(
+            color: Color(0xFF71C4D4),
+            fontSize: 22,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF22272C),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search settings...',
+                    hintStyle: const TextStyle(color: Color(0xFF90959A)),
+                    prefixIcon: const Icon(Icons.search, color: Color(0xFF90959A)),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Color(0xFF90959A)),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            if (_matches('UI & Appearance', 'Appearance', 'Player Layout'))
+              SettingsCardGroup(
+                sectionTitle: 'UI & Appearance',
+                children: [
+                  _SettingsMenuTile(
+                    icon: Icons.palette_outlined,
+                    title: 'Appearance',
+                    subtitle: 'Dark mode, Material You',
+                    onTap: () => context.push(Routes.settingsAppearance),
+                  ),
+                  _SettingsMenuTile(
+                    icon: Icons.space_dashboard_outlined,
+                    title: 'Player Layout',
+                    subtitle: 'Customize player button layout',
+                    onTap: () => context.push(Routes.settingsPlayerLayout),
+                  ),
+                ],
+              ),
+            if (_matches('Playback & Controls', 'Player', 'Gestures'))
+              SettingsCardGroup(
+                sectionTitle: 'Playback & Controls',
+                children: [
+                  _SettingsMenuTile(
+                    icon: Icons.play_circle_outline,
+                    title: 'Player',
+                    subtitle: 'Orientation, gestures and controls',
+                    onTap: () => context.push(Routes.settingsPlayer),
+                  ),
+                  _SettingsMenuTile(
+                    icon: Icons.gesture,
+                    title: 'Gestures',
+                    subtitle: 'Double tap, media controls',
+                    onTap: () => context.push(Routes.settingsGestures),
+                  ),
+                ],
+              ),
+            if (_matches('File Management', 'Folders'))
+              SettingsCardGroup(
+                sectionTitle: 'File Management',
+                children: [
+                  _SettingsMenuTile(
+                    icon: Icons.folder_outlined,
+                    title: 'Folders',
+                    subtitle: 'Manage folder blacklist',
+                    onTap: () => context.push(Routes.settingsFolders),
+                  ),
+                ],
+              ),
+            if (_matches('Media Settings', 'Decoder', 'Subtitles', 'Audio'))
+              SettingsCardGroup(
+                sectionTitle: 'Media Settings',
+                children: [
+                  _SettingsMenuTile(
+                    icon: Icons.memory,
+                    title: 'Decoder',
+                    subtitle: 'Hardware decoding, pixel format, debanding',
+                    onTap: () => context.push(Routes.settingsDecoder),
+                  ),
+                  _SettingsMenuTile(
+                    icon: Icons.subtitles_outlined,
+                    title: 'Subtitles',
+                    subtitle: 'Preferred languages, fonts and search',
+                    onTap: () => context.push(Routes.settingsSubtitles),
+                  ),
+                  _SettingsMenuTile(
+                    icon: Icons.music_note_outlined,
+                    title: 'Audio',
+                    subtitle: 'Preferred languages, audio channels, pitch correction',
+                    onTap: () => context.push(Routes.settingsAudio),
+                  ),
+                ],
+              ),
+            if (_matches('Advanced & About', 'Advanced', 'About'))
+              SettingsCardGroup(
+                sectionTitle: 'Advanced & About',
+                children: [
+                  _SettingsMenuTile(
+                    icon: Icons.code,
+                    title: 'Advanced',
+                    subtitle: 'Configuration location, mpv.conf',
+                    onTap: () => context.push(Routes.settingsAdvanced),
+                  ),
+                  _SettingsMenuTile(
+                    icon: Icons.info_outline,
+                    title: 'About',
+                    subtitle: 'Acknowledgments, licenses',
+                    onTap: () => context.push(Routes.about),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
+
+  bool _matches(String section, String t1, [String? t2, String? t3]) {
+    if (_searchQuery.isEmpty) return true;
+    final terms = [section, t1, ?t2, ?t3];
+    return terms.any((t) => t.toLowerCase().contains(_searchQuery));
+  }
 }
 
-class _SpeedTile extends ConsumerWidget {
-  final double defaultSpeed;
-  const _SpeedTile({required this.defaultSpeed});
+class _SettingsMenuTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SettingsMenuTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0];
-    return ListTile(
-      title: const Text('Default speed'),
-      subtitle: Text('${defaultSpeed}x'),
-      trailing: SizedBox(
-        width: 200,
-        child: DropdownButton<double>(
-          value: defaultSpeed,
-          isExpanded: true,
-          items: speeds.map((s) => DropdownMenuItem(value: s, child: Text('${s}x'))).toList(),
-          onChanged: (v) => ref.read(defaultSpeedProvider.notifier).update(v ?? 1.0),
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF71C4D4), size: 24),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Color(0xFF90959A), fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Color(0xFF90959A), size: 20),
+          ],
         ),
       ),
     );

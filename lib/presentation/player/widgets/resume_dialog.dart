@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../../utils/format_utils.dart';
 
 class ResumeDialog extends StatelessWidget {
@@ -33,19 +32,11 @@ class ResumeDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(false);
-            final encoded = Uri.encodeComponent(filePath);
-            context.push('/player/$encoded');
-          },
+          onPressed: () => Navigator.of(context).pop(false),
           child: const Text('Start Over'),
         ),
         FilledButton(
-          onPressed: () {
-            Navigator.of(context).pop(true);
-            final encoded = Uri.encodeComponent(filePath);
-            context.push('/player/$encoded');
-          },
+          onPressed: () => Navigator.of(context).pop(true),
           child: const Text('Resume'),
         ),
       ],
