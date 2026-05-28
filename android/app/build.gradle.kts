@@ -66,7 +66,7 @@ flutter {
 }
 
 dependencies {
-    implementation("androidx.media:media:1.7.0")
+    implementation("androidx.media:media:1.8.0")
     implementation("org.nanohttpd:nanohttpd:2.3.1")
     implementation("commons-net:commons-net:3.11.1")
     implementation("com.hierynomus:smbj:0.13.0")
