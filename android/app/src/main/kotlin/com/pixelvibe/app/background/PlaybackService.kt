@@ -93,7 +93,7 @@ class PlaybackService : Service() {
             .setOngoing(true)
             .addAction(android.R.drawable.ic_media_pause, "Play/Pause", togglePendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
-            .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
+            .setStyle(NotificationCompat.MediaStyle()
                 .setShowActionsInCompactView(0))
             .build()
     }
