@@ -4,23 +4,23 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.media.MediaMetadata
+import android.media.session.MediaSession
+import android.media.session.PlaybackState
 import android.os.Build
-import androidx.media.MediaMetadataCompat
-import androidx.media.session.MediaSessionCompat
-import androidx.media.session.PlaybackStateCompat
 import io.flutter.plugin.common.MethodChannel
 
 class MediaSessionCallback(
     private val context: Context,
     private val channel: MethodChannel
-) : MediaSessionCompat.Callback() {
+) : MediaSession.Callback() {
 
-    private val mediaSession: MediaSessionCompat
+    private val mediaSession: MediaSession
     private var isPlaying = false
     private val receiver: BroadcastReceiver
 
     init {
-        mediaSession = MediaSessionCompat(context, "pixelvibe").apply {
+        mediaSession = MediaSession(context, "pixelvibe").apply {
             setCallback(this@MediaSessionCallback)
             isActive = true
         }
@@ -43,36 +43,32 @@ class MediaSessionCallback(
     }
 
     fun updateMetadata(title: String, durationMs: Long, thumbnailPath: String? = null) {
-        val builder = MediaMetadataCompat.Builder()
-            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, durationMs)
+        val builder = MediaMetadata.Builder()
+            .putString(MediaMetadata.METADATA_KEY_TITLE, title)
+            .putLong(MediaMetadata.METADATA_KEY_DURATION, durationMs)
         if (thumbnailPath != null) {
             val artUri = if (thumbnailPath.startsWith("/")) {
                 android.net.Uri.fromFile(java.io.File(thumbnailPath))
             } else {
                 android.net.Uri.parse(thumbnailPath)
             }
-            builder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, artUri.toString())
+            builder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, artUri.toString())
         }
         mediaSession.setMetadata(builder.build())
     }
 
     fun updatePlaybackState(playing: Boolean, positionMs: Long) {
         isPlaying = playing
-        val state = if (playing) {
-            PlaybackStateCompat.STATE_PLAYING
-        } else {
-            PlaybackStateCompat.STATE_PAUSED
-        }
+        val state = if (playing) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED
         mediaSession.setPlaybackState(
-            PlaybackStateCompat.Builder()
+            PlaybackState.Builder()
                 .setState(state, positionMs, 1.0f)
                 .setActions(
-                    PlaybackStateCompat.ACTION_PLAY or
-                    PlaybackStateCompat.ACTION_PAUSE or
-                    PlaybackStateCompat.ACTION_PLAY_PAUSE or
-                    PlaybackStateCompat.ACTION_STOP or
-                    PlaybackStateCompat.ACTION_SEEK_TO
+                    PlaybackState.ACTION_PLAY or
+                    PlaybackState.ACTION_PAUSE or
+                    PlaybackState.ACTION_PLAY_PAUSE or
+                    PlaybackState.ACTION_STOP or
+                    PlaybackState.ACTION_SEEK_TO
                 )
                 .build()
         )

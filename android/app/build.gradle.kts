@@ -66,7 +66,7 @@ flutter {
 }
 
 dependencies {
-    implementation("androidx.media:media:1.8.0")
+    // MediaSession via platform android.media.* (minSdk 26)
     implementation("org.nanohttpd:nanohttpd:2.3.1")
     implementation("commons-net:commons-net:3.11.1")
     implementation("com.hierynomus:smbj:0.13.0")
