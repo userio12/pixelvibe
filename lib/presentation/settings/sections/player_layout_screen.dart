@@ -15,6 +15,90 @@ final _displaySeekbarSecondsProvider = boolPref('display_seekbar_seconds', true)
 final _doubleTapAnimationProvider = boolPref('double_tap_animation', true);
 final _disableControlsTouchInputProvider = boolPref('disable_controls_touch_input', false);
 
+void _showControlPicker(BuildContext context,
+    String title, String currentValue,
+    Future<void> Function(String) onSave) {
+  final allControls = [
+    'backArrow', 'info', 'loadSubtitle', 'addToPlaylist',
+    'more', 'lock', 'pip', 'sleepTimer', 'volume',
+    'skipBack', 'skipForward', 'playPause',
+  ];
+  final selected = currentValue.split(',').map((s) => s.trim()).toSet();
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: const Color(0xFF1E2227),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final localSelected = {...selected};
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFF2C3136)),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: allControls.map((control) {
+                    final sel = localSelected.contains(control);
+                    return FilterChip(
+                      label: Text(control),
+                      selected: sel,
+                      onSelected: (v) {
+                        setSheetState(() {
+                          if (v) { localSelected.add(control); }
+                          else { localSelected.remove(control); }
+                        });
+                      },
+                      selectedColor: const Color(0xFF71C4D4),
+                      checkmarkColor: const Color(0xFF0D2228),
+                      backgroundColor: const Color(0xFF2C3136),
+                      labelStyle: TextStyle(
+                        color: sel ? const Color(0xFF0D2228) : Colors.white70,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF71C4D4),
+                      foregroundColor: const Color(0xFF0D2228),
+                    ),
+                    onPressed: () {
+                      onSave(localSelected.join(','));
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text('Apply'),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 class PlayerLayoutScreen extends ConsumerWidget {
   const PlayerLayoutScreen({super.key});
 
@@ -34,7 +118,7 @@ class PlayerLayoutScreen extends ConsumerWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white70),
           onPressed: () => context.pop(),
         ),
         title: const Text(
@@ -77,32 +161,20 @@ class PlayerLayoutScreen extends ConsumerWidget {
             SettingsCardGroup(
               sectionTitle: 'Control Buttons',
               children: [
-                StandardActionTile(
+                _ControlPickerTile(
                   title: 'Top left controls',
-                  subtitle: ref.watch(preferencesServiceProvider).getTopLeftControls(),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Coming soon')),
-                    );
-                  },
+                  currentValue: ref.watch(preferencesServiceProvider).getTopLeftControls(),
+                  onSave: (v) => ref.read(preferencesServiceProvider).setTopLeftControls(v),
                 ),
-                StandardActionTile(
+                _ControlPickerTile(
                   title: 'Top right controls',
-                  subtitle: ref.watch(preferencesServiceProvider).getTopRightControls(),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Coming soon')),
-                    );
-                  },
+                  currentValue: ref.watch(preferencesServiceProvider).getTopRightControls(),
+                  onSave: (v) => ref.read(preferencesServiceProvider).setTopRightControls(v),
                 ),
-                StandardActionTile(
+                _ControlPickerTile(
                   title: 'Bottom center controls',
-                  subtitle: ref.watch(preferencesServiceProvider).getBottomCenterControls(),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Coming soon')),
-                    );
-                  },
+                  currentValue: ref.watch(preferencesServiceProvider).getBottomCenterControls(),
+                  onSave: (v) => ref.read(preferencesServiceProvider).setBottomCenterControls(v),
                 ),
                 StandardActionTile(
                   title: 'Reset to defaults',
@@ -226,6 +298,27 @@ class _RadioTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ControlPickerTile extends StatelessWidget {
+  final String title;
+  final String currentValue;
+  final Future<void> Function(String) onSave;
+
+  const _ControlPickerTile({
+    required this.title,
+    required this.currentValue,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StandardActionTile(
+      title: title,
+      subtitle: currentValue,
+      onTap: () => _showControlPicker(context, title, currentValue, onSave),
     );
   }
 }

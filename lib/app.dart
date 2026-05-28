@@ -5,15 +5,15 @@ import 'bootstrap.dart';
 import 'core/di/providers.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'data/repositories/media_repository.dart';
+import 'presentation/home/home_provider.dart';
 import 'presentation/home/home_screen.dart';
 import 'presentation/playlist/playlist_list_screen.dart';
 import 'presentation/player/player_screen.dart';
 import 'presentation/settings/settings_provider.dart';
 import 'presentation/settings/settings_screen.dart';
 import 'services/logger.dart';
+import 'services/scan_service.dart';
 import 'services/update_checker.dart';
-import 'utils/permissions/permission_handler.dart';
 
 class PixelvibeApp extends ConsumerStatefulWidget {
   const PixelvibeApp({super.key});
@@ -38,20 +38,7 @@ class _PixelvibeAppState extends ConsumerState<PixelvibeApp> {
     );
     _checkUpdate();
     _initDeepLinks();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _triggerAutoScan());
-  }
-
-  Future<void> _triggerAutoScan() async {
-    try {
-      final granted = await requestStoragePermission();
-      if (!granted) return;
-      if (!mounted) return;
-      final repo = ref.read(mediaRepositoryProvider);
-      await repo.scanDevice();
-      Logger.info('Auto-scan completed');
-    } catch (e) {
-      Logger.error('Auto-scan failed', e);
-    }
+    _initContentObserver();
   }
 
   Future<void> _checkUpdate() async {
@@ -80,6 +67,12 @@ class _PixelvibeAppState extends ConsumerState<PixelvibeApp> {
     }
   }
 
+  void _initContentObserver() {
+    ScanService.setOnContentChanged(() {
+      ref.invalidate(homeProvider);
+    });
+  }
+
   String? _extractVideoUrl(String uri) {
     final parsed = Uri.tryParse(uri);
     if (parsed == null) return null;
@@ -102,11 +95,12 @@ class _PixelvibeAppState extends ConsumerState<PixelvibeApp> {
     final useDynamicColor = ref.watch(dynamicColorProvider);
     final useAmoled = ref.watch(amoledModeProvider);
     final contrast = ref.watch(contrastLevelProvider);
+    final seedSwatch = ref.watch(selectedThemeSwatchProvider);
     return MaterialApp.router(
       title: 'pixelvibe',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(useDynamicColor: useDynamicColor, useAmoled: useAmoled, contrast: contrast),
-      darkTheme: AppTheme.dark(useDynamicColor: useDynamicColor, useAmoled: useAmoled, contrast: contrast),
+      theme: AppTheme.light(useDynamicColor: useDynamicColor, useAmoled: useAmoled, contrast: contrast, seedSwatch: seedSwatch),
+      darkTheme: AppTheme.dark(useDynamicColor: useDynamicColor, useAmoled: useAmoled, contrast: contrast, seedSwatch: seedSwatch),
       themeMode: themeMode,
       routerConfig: _appRouter.router,
       localizationsDelegates: const [

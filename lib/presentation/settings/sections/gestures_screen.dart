@@ -59,6 +59,7 @@ class _StringNotifier extends Notifier<String> {
 }
 
 final _doubleTapSeekDurationProvider = _intPref('double_tap_seek_duration', 10);
+final _doubleTapSeekAreaWidthProvider = _intPref('double_tap_seek_area_width', 35);
 final _centerGestureSingleTapProvider = _boolPref('center_gesture_single_tap', false);
 final _doubleTapLeftActionProvider = _stringPref('double_tap_left_action', 'Seek');
 final _doubleTapRightActionProvider = _stringPref('double_tap_right_action', 'Seek');
@@ -73,6 +74,7 @@ class GesturesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final doubleTapSeekDuration = ref.watch(_doubleTapSeekDurationProvider);
+    final doubleTapSeekAreaWidth = ref.watch(_doubleTapSeekAreaWidthProvider);
     final centerGestureSingleTap = ref.watch(_centerGestureSingleTapProvider);
     final doubleTapLeftAction = ref.watch(_doubleTapLeftActionProvider);
     final doubleTapRightAction = ref.watch(_doubleTapRightActionProvider);
@@ -88,7 +90,7 @@ class GesturesScreen extends ConsumerWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white70),
           onPressed: () => context.pop(),
         ),
         title: const Text(
@@ -109,19 +111,25 @@ class GesturesScreen extends ConsumerWidget {
               sectionTitle: 'Double tap',
               skipDividerAfter: {5},
               children: [
-                StandardActionTile(
+                _SliderTile(
                   title: 'Double tap seek duration',
                   subtitle: '${doubleTapSeekDuration}s',
-                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Coming soon: duration picker')),
-                  ),
+                  value: doubleTapSeekDuration.toDouble(),
+                  min: 5,
+                  max: 60,
+                  divisions: 11,
+                  labelSuffix: 's',
+                  onChanged: (v) => ref.read(_doubleTapSeekDurationProvider.notifier).update(v.round()),
                 ),
-                StandardActionTile(
+                _SliderTile(
                   title: 'Double Tap Seek Area Width',
-                  subtitle: 'Current: 35%',
-                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Coming soon: width picker')),
-                  ),
+                  subtitle: 'Current: $doubleTapSeekAreaWidth%',
+                  value: doubleTapSeekAreaWidth.toDouble(),
+                  min: 10,
+                  max: 50,
+                  divisions: 8,
+                  labelSuffix: '%',
+                  onChanged: (v) => ref.read(_doubleTapSeekAreaWidthProvider.notifier).update(v.round()),
                 ),
                 StandardActionTile(
                   title: 'Double tap (left)',
@@ -204,6 +212,53 @@ class GesturesScreen extends ConsumerWidget {
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SliderTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final double value;
+  final double min;
+  final double max;
+  final int divisions;
+  final String labelSuffix;
+  final ValueChanged<double> onChanged;
+
+  const _SliderTile({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.labelSuffix,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 16)),
+          const SizedBox(height: 4),
+          Text(subtitle, style: const TextStyle(color: Color(0xFF90959A), fontSize: 13)),
+          Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: divisions,
+            activeColor: const Color(0xFF71C4D4),
+            inactiveColor: const Color(0xFF2C3136),
+            label: '${value.round()}$labelSuffix',
+            onChanged: onChanged,
+          ),
+        ],
       ),
     );
   }

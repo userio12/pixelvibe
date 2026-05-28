@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 enum PlayerButton {
-  backArrow(Icons.arrow_back, 'Back'),
+  backArrow(Icons.arrow_back_ios, 'Back'),
   videoTitle(null, 'Title'),
   speed(Icons.speed, 'Speed'),
   skipBack(Icons.replay_10, 'Skip -10s'),

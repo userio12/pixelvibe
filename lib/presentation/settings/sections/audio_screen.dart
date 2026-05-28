@@ -7,16 +7,7 @@ import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
 import '../widgets/custom_slider_tile.dart';
-
-final _pitchCorrectionProvider = NotifierProvider.autoDispose<_PitchNotifier, bool>(_PitchNotifier.new);
-class _PitchNotifier extends Notifier<bool> {
-  @override
-  bool build() => ref.watch(preferencesServiceProvider).getAudioPitchCorrection();
-  void toggle() {
-    state = !state;
-    ref.read(preferencesServiceProvider).setAudioPitchCorrection(state);
-  }
-}
+import '../widgets/language_picker.dart';
 
 final _volumeBoostCapProvider = NotifierProvider.autoDispose<_VolumeBoostNotifier, double>(
   _VolumeBoostNotifier.new,
@@ -37,7 +28,7 @@ class AudioScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pitchCorrection = ref.watch(_pitchCorrectionProvider);
+    final pitchCorrection = ref.watch(audioPitchCorrectionProvider);
     final volumeNormalization = ref.watch(volumeNormalizationProvider);
     final backgroundPlayback = ref.watch(audioBackgroundProvider);
     final volumeBoostCap = ref.watch(_volumeBoostCapProvider);
@@ -50,7 +41,7 @@ class AudioScreen extends ConsumerWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white70),
           onPressed: () => context.pop(),
         ),
         title: const Text(
@@ -70,18 +61,16 @@ class AudioScreen extends ConsumerWidget {
             SettingsCardGroup(
               sectionTitle: 'Audio',
               children: [
-                StandardActionTile(
+                _LanguageTile(
                   title: 'Preferred languages',
-                  subtitle: 'Not set (will use video default)',
-                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Coming soon')),
-                  ),
+                  currentValue: ref.watch(preferencesServiceProvider).getPreferredAudioLanguages(),
+                  onSave: (v) => ref.read(preferencesServiceProvider).setPreferredAudioLanguages(v),
                 ),
                 CustomSwitchTile(
                   title: 'Enable audio pitch correction',
                   subtitle: 'Prevents the audio from becoming high-pitched at faster speeds and low-pitched at slower speeds',
                   value: pitchCorrection,
-                  onChanged: (_) => ref.read(_pitchCorrectionProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(audioPitchCorrectionProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Volume normalization',
@@ -161,6 +150,41 @@ class AudioScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LanguageTile extends StatelessWidget {
+  final String title;
+  final String currentValue;
+  final void Function(String) onSave;
+
+  const _LanguageTile({
+    required this.title,
+    required this.currentValue,
+    required this.onSave,
+  });
+
+  String _displayValue() {
+    if (currentValue.isEmpty) return 'Not set (will use video default)';
+    final codes = currentValue.split(',');
+    final names = codes.map((c) {
+      final trimmed = c.trim().toLowerCase();
+      final match = commonLanguages.firstWhere(
+        (e) => e.$1 == trimmed,
+        orElse: () => ('', trimmed),
+      );
+      return match.$1 == '' ? trimmed : match.$2;
+    });
+    return names.join(', ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StandardActionTile(
+      title: title,
+      subtitle: _displayValue(),
+      onTap: () => showLanguagePicker(context, currentValue, onSave),
     );
   }
 }

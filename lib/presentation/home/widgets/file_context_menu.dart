@@ -180,7 +180,7 @@ class _FileContextSheet extends StatelessWidget {
           onTap: () { Navigator.of(context).pop(); _addToPlaylist(context); },
         ),
         ListTile(
-          leading: Icon(Icons.delete, color: theme.colorScheme.error),
+          leading: Icon(Icons.delete_outline, color: theme.colorScheme.error),
           title: Text('Delete', style: TextStyle(color: theme.colorScheme.error)),
           onTap: () { Navigator.of(context).pop(); _delete(context); },
         ),

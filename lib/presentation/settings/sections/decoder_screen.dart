@@ -32,7 +32,7 @@ class DecoderScreen extends ConsumerWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white70),
           onPressed: () => context.pop(),
         ),
         title: const Text(
@@ -93,7 +93,10 @@ class DecoderScreen extends ConsumerWidget {
                 CustomSwitchTile(
                   title: 'Anime4K upscaling (Experimental)',
                   value: anime4k,
-                  onChanged: (_) => ref.read(_anime4kProvider.notifier).toggle(),
+                  onChanged: (v) {
+                    ref.read(_anime4kProvider.notifier).toggle();
+                    ref.read(shaderPresetProvider.notifier).update(v ? 'Anime4K_Restore_CNN_L.glsl' : '');
+                  },
                   customSubtitle: const _Anime4KSubtitle(),
                 ),
               ],
@@ -145,6 +148,8 @@ class DecoderScreen extends ConsumerWidget {
       onTap: () {
         ref.read(preferencesServiceProvider).setDebanding(value);
         ref.invalidate(preferencesServiceProvider);
+        final vfPreset = value == 'none' ? 'none' : 'deband';
+        ref.read(vfPresetProvider.notifier).update(vfPreset);
         Navigator.of(ctx).pop();
       },
     );

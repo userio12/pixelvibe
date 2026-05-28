@@ -109,7 +109,7 @@ class _NetworkScreenState extends ConsumerState<NetworkScreen> {
                 controller: _urlController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.link, color: Color(0xFFA0A5AA)),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFFA0A5AA)),
                   hintText: 'Video URL',
                   hintStyle: const TextStyle(color: Color(0xFFA0A5AA)),
                   filled: true,

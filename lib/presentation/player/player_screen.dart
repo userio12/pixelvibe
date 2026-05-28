@@ -613,7 +613,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     switch (btn) {
       case PlayerButton.backArrow:
         return IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           tooltip: btn.tooltip,
           onPressed: () => context.pop(),
         );

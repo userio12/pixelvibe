@@ -115,6 +115,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     }
   }
 
+  void _retryScan(BuildContext context, WidgetRef ref) {
+    ref.invalidate(homeProvider);
+  }
+
+  Future<void> _handleRefresh() async {
+    ref.invalidate(homeProvider);
+    await ref.read(homeProvider.future);
+  }
+
   void _showDisplayOptionsSheet() {
     showModalBottomSheet(
       context: context,
@@ -139,7 +148,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             ? IconButton(icon: const Icon(Icons.close), onPressed: _exitSelectionMode)
             : (currentDir != null
                 ? IconButton(
-                    icon: const Icon(Icons.arrow_back),
+                    icon: const Icon(Icons.arrow_back_ios),
                     onPressed: () => ref.read(currentDirectoryProvider.notifier).leave(),
                   )
                 : null),
@@ -214,16 +223,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         icon: Icons.error_outline,
         title: 'Could not load videos',
         subtitle: e.toString(),
+        action: TextButton.icon(
+          icon: const Icon(Icons.refresh),
+          label: const Text('Retry'),
+          onPressed: () => _retryScan(context, ref),
+        ),
       ),
       data: (videos) {
         if (videos.isEmpty) {
-          return const EmptyState(
-            icon: Icons.video_library_outlined,
-            title: 'No videos found',
-            subtitle: 'Tap the refresh button to scan.',
+          return RefreshIndicator(
+            onRefresh: _handleRefresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 200),
+                EmptyState(
+                  icon: Icons.video_library_outlined,
+                  title: 'No videos found',
+                  subtitle: 'Tap the refresh button to scan.',
+                ),
+              ],
+            ),
           );
         }
-        return _buildView(context, videos, viewMode);
+        return RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: _buildView(context, videos, viewMode),
+        );
       },
     );
   }
@@ -231,8 +257,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   Widget _buildFilesView(BuildContext context, AsyncValue<List<MediaFile>> videosAsync, ViewMode viewMode) {
     return videosAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Error', subtitle: e.toString()),
-      data: (videos) => _buildView(context, videos, viewMode),
+      error: (e, _) => EmptyState(
+        icon: Icons.error_outline,
+        title: 'Error',
+        subtitle: e.toString(),
+        action: TextButton.icon(
+          icon: const Icon(Icons.refresh),
+          label: const Text('Retry'),
+          onPressed: () => _retryScan(context, ref),
+        ),
+      ),
+      data: (videos) => RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: _buildView(context, videos, viewMode),
+      ),
     );
   }
 
@@ -279,7 +317,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final videosAsync = ref.watch(homeProvider);
     return foldersAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Error', subtitle: e.toString()),
+      error: (e, _) => EmptyState(
+        icon: Icons.error_outline,
+        title: 'Error',
+        subtitle: e.toString(),
+        action: TextButton.icon(
+          icon: const Icon(Icons.refresh),
+          label: const Text('Retry'),
+          onPressed: () => _retryScan(context, ref),
+        ),
+      ),
       data: (folders) {
         if (folders.isEmpty) {
           return const EmptyState(icon: Icons.folder_open, title: 'No folders', subtitle: 'Scan your device first');
@@ -331,7 +378,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final foldersAsync = ref.watch(folderListProvider);
     return foldersAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Error', subtitle: e.toString()),
+      error: (e, _) => EmptyState(
+        icon: Icons.error_outline,
+        title: 'Error',
+        subtitle: e.toString(),
+        action: TextButton.icon(
+          icon: const Icon(Icons.refresh),
+          label: const Text('Retry'),
+          onPressed: () => _retryScan(context, ref),
+        ),
+      ),
       data: (folders) {
         if (folders.isEmpty) {
           return const EmptyState(icon: Icons.folder_open, title: 'No folders', subtitle: 'Scan your device first');

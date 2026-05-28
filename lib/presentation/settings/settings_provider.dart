@@ -170,6 +170,18 @@ class ShowTimeRemainingNotifier extends Notifier<bool> {
   }
 }
 
+final selectedThemeSwatchProvider = NotifierProvider.autoDispose<SelectedThemeSwatchNotifier, String>(
+  SelectedThemeSwatchNotifier.new,
+);
+class SelectedThemeSwatchNotifier extends Notifier<String> {
+  @override
+  String build() => ref.watch(preferencesServiceProvider).getSelectedThemeSwatch();
+  void update(String swatch) {
+    state = swatch;
+    ref.read(preferencesServiceProvider).setSelectedThemeSwatch(swatch);
+  }
+}
+
 enum SeekbarStyle { standard, wavy, thick }
 
 final seekbarStyleProvider = NotifierProvider.autoDispose<SeekbarStyleNotifier, SeekbarStyle>(
@@ -197,6 +209,28 @@ class AudioBackgroundNotifier extends Notifier<bool> {
   Future<void> toggle() async {
     state = !state;
     await ref.read(preferencesServiceProvider).setAudioBackground(state);
+  }
+}
+
+final audioPitchCorrectionProvider = NotifierProvider.autoDispose<AudioPitchCorrectionNotifier, bool>(
+  AudioPitchCorrectionNotifier.new,
+);
+class AudioPitchCorrectionNotifier extends Notifier<bool> {
+  @override
+  bool build() => ref.watch(preferencesServiceProvider).getAudioPitchCorrection();
+  Future<void> toggle() async {
+    state = !state;
+    await ref.read(preferencesServiceProvider).setAudioPitchCorrection(state);
+    _apply();
+  }
+  void _apply() {
+    final player = ref.read(playerProvider);
+    if (player.platform is NativePlayer) {
+      (player.platform as NativePlayer).setProperty(
+        'audio-pitch-correction',
+        state ? 'yes' : 'no',
+      );
+    }
   }
 }
 

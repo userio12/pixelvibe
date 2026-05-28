@@ -2,11 +2,28 @@ import 'package:flutter/material.dart';
 import 'app_theme_extensions.dart';
 
 class AppTheme {
-  static const _seedColor = Color(0xFF6750A4);
+  static const _defaultSeed = Color(0xFF6750A4);
 
-  static ThemeData light({bool useDynamicColor = true, bool useAmoled = false, double contrast = 0.0}) {
+  static const Map<String, Color> themeSwatches = {
+    'Default': Color(0xFF6750A4),
+    'Dynamic': Color(0xFF71C4D4),
+    'Catppuccin': Color(0xFFCBA6F7),
+    'Cloud': Color(0xFF89DCEB),
+    'Rose Pine': Color(0xFFEBBCBA),
+    'Dracula': Color(0xFFBD93F9),
+    'Nord': Color(0xFF81A1C1),
+    'Solarized': Color(0xFF268BD2),
+  };
+
+  static Color _seedColor(String? swatch) =>
+      swatch != null && themeSwatches.containsKey(swatch)
+          ? themeSwatches[swatch]!
+          : _defaultSeed;
+
+  static ThemeData light({bool useDynamicColor = true, bool useAmoled = false, double contrast = 0.0, String? seedSwatch}) {
+    final seed = _seedColor(seedSwatch);
     final colorScheme = useDynamicColor
-        ? ColorScheme.fromSeed(seedColor: _seedColor, brightness: Brightness.light, contrastLevel: contrast)
+        ? ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light, contrastLevel: contrast)
         : ColorScheme.fromSwatch(primarySwatch: Colors.deepPurple, brightness: Brightness.light);
     final custom = useAmoled ? PixelvibeColors.amoled : PixelvibeColors.light;
     return ThemeData(
@@ -26,9 +43,10 @@ class AppTheme {
     );
   }
 
-  static ThemeData dark({bool useDynamicColor = true, bool useAmoled = false, double contrast = 0.0}) {
+  static ThemeData dark({bool useDynamicColor = true, bool useAmoled = false, double contrast = 0.0, String? seedSwatch}) {
+    final seed = _seedColor(seedSwatch);
     final colorScheme = useDynamicColor
-        ? ColorScheme.fromSeed(seedColor: _seedColor, brightness: Brightness.dark, contrastLevel: contrast)
+        ? ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark, contrastLevel: contrast)
         : ColorScheme.fromSwatch(primarySwatch: Colors.deepPurple, brightness: Brightness.dark);
     final custom = useAmoled ? PixelvibeColors.amoled : PixelvibeColors.dark;
     final surfaceColor = useAmoled ? Colors.black : colorScheme.surface;

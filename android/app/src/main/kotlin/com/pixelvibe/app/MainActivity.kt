@@ -5,7 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
+import android.database.ContentObserver
+import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Rational
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -32,6 +36,27 @@ class MainActivity : FlutterActivity() {
     private var pipMethodChannel: MethodChannel? = null
     private var networkPlugin: PixelvibePlugin? = null
     private val scanScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val mediaChangeObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        private var debounced = false
+
+        override fun onChange(selfChange: Boolean) {
+            onChange(selfChange, null)
+        }
+
+        override fun onChange(selfChange: Boolean, uri: Uri?) {
+            if (uri != null && !uri.toString().startsWith(MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString())) {
+                return
+            }
+            if (debounced) return
+            debounced = true
+            Handler(Looper.getMainLooper()).postDelayed({
+                debounced = false
+                flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
+                    MethodChannel(messenger, "com.pixelvibe/scan").invokeMethod("contentChanged", null)
+                }
+            }, 3000L)
+        }
+    }
     private val noisyReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             pipMethodChannel?.invokeMethod("audioNoisy", null)
@@ -138,7 +163,7 @@ class MainActivity : FlutterActivity() {
                             try {
                                 val scanResult = withContext(Dispatchers.IO) { mediaScanner.scanVideos() }
                                 result.success(scanResult)
-                            } catch (e: Exception) {
+                            } catch (e: Throwable) {
                                 result.error("SCAN_ERROR", e.message, null)
                             }
                         }
@@ -147,6 +172,12 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+
+        contentResolver.registerContentObserver(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            true,
+            mediaChangeObserver
+        )
 
         val thumbnailHelper = ThumbnailHelper(this)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.pixelvibe/thumbnails").apply {
@@ -181,6 +212,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         scanScope.cancel()
+        contentResolver.unregisterContentObserver(mediaChangeObserver)
         networkPlugin?.disconnectAll()
         networkPlugin?.cancel()
         mediaSessionCallback?.release()

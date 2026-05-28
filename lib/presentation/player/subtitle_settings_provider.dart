@@ -54,6 +54,13 @@ class AutoloadSubtitlesNotifier extends Notifier<bool> {
   void toggle() {
     state = !state;
     ref.read(preferencesServiceProvider).setBool('autoload_subtitles', state);
+    _apply();
+  }
+  void _apply() {
+    final player = ref.read(playerProvider);
+    if (player.platform is NativePlayer) {
+      (player.platform as NativePlayer).setProperty('sub-auto', state ? 'all' : 'no');
+    }
   }
 }
 
@@ -153,6 +160,25 @@ class SubtitleBorderColorNotifier extends Notifier<int> {
   void update(int v) {
     state = v;
     ref.read(preferencesServiceProvider).setInt('subtitle_border_color', v);
+  }
+}
+
+final subScaleByWindowProvider = NotifierProvider.autoDispose<SubScaleByWindowNotifier, bool>(
+  SubScaleByWindowNotifier.new,
+);
+class SubScaleByWindowNotifier extends Notifier<bool> {
+  @override
+  bool build() => ref.watch(preferencesServiceProvider).getScaleByWindow();
+  Future<void> toggle() async {
+    state = !state;
+    await ref.read(preferencesServiceProvider).setScaleByWindow(state);
+    _apply();
+  }
+  void _apply() {
+    final player = ref.read(playerProvider);
+    if (player.platform is NativePlayer) {
+      (player.platform as NativePlayer).setProperty('sub-scale-by-window', state ? 'yes' : 'no');
+    }
   }
 }
 

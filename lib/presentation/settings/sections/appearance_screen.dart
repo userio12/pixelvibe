@@ -36,7 +36,7 @@ class AppearanceScreen extends ConsumerWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white70),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
@@ -60,7 +60,10 @@ class AppearanceScreen extends ConsumerWidget {
                   value: themeMode,
                   onChanged: (m) => ref.read(themeModeProvider.notifier).update(m),
                 ),
-                const _ThemeCarousel(),
+                _ThemeCarousel(
+                  selectedSwatch: ref.watch(selectedThemeSwatchProvider),
+                  onChanged: (s) => ref.read(selectedThemeSwatchProvider.notifier).update(s),
+                ),
                 CustomSwitchTile(
                   title: 'AMOLED Black Mode',
                   value: amoled,
@@ -190,21 +193,31 @@ class _ThemeSegmentedControl extends StatelessWidget {
 }
 
 class _ThemeCarousel extends StatelessWidget {
-  const _ThemeCarousel();
+  final String selectedSwatch;
+  final ValueChanged<String> onChanged;
+
+  const _ThemeCarousel({
+    required this.selectedSwatch,
+    required this.onChanged,
+  });
 
   static const _themes = [
-    ('Default', Color(0xFF6750A4)),
-    ('Dynamic', Color(0xFF71C4D4)),
-    ('Catppuccin', Color(0xFFCBA6F7)),
-    ('Cloud', Color(0xFF89DCEB)),
-    ('Rose Pine', Color(0xFFEBBCBA)),
-    ('Dracula', Color(0xFFBD93F9)),
-    ('Nord', Color(0xFF81A1C1)),
-    ('Solarized', Color(0xFF268BD2)),
+    'Default', 'Dynamic', 'Catppuccin', 'Cloud',
+    'Rose Pine', 'Dracula', 'Nord', 'Solarized',
   ];
 
   @override
   Widget build(BuildContext context) {
+    final themeColors = {
+      'Default': const Color(0xFF6750A4),
+      'Dynamic': const Color(0xFF71C4D4),
+      'Catppuccin': const Color(0xFFCBA6F7),
+      'Cloud': const Color(0xFF89DCEB),
+      'Rose Pine': const Color(0xFFEBBCBA),
+      'Dracula': const Color(0xFFBD93F9),
+      'Nord': const Color(0xFF81A1C1),
+      'Solarized': const Color(0xFF268BD2),
+    };
     return SizedBox(
       height: 100,
       child: ListView.separated(
@@ -213,21 +226,19 @@ class _ThemeCarousel extends StatelessWidget {
         itemCount: _themes.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final (name, color) = _themes[index];
+          final name = _themes[index];
+          final color = themeColors[name]!;
+          final isSelected = selectedSwatch == name;
           return GestureDetector(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Theme: $name')),
-              );
-            },
+            onTap: () => onChanged(name),
             child: Container(
               width: 72,
               decoration: BoxDecoration(
-                color: color.withAlpha(40),
+                color: isSelected ? color.withAlpha(60) : color.withAlpha(40),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: color.withAlpha(80),
-                  width: 1.5,
+                  color: isSelected ? color : color.withAlpha(80),
+                  width: isSelected ? 2.5 : 1.5,
                 ),
               ),
               child: Column(

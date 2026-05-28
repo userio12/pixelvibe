@@ -6,7 +6,7 @@ import android.media.AudioManager
 
 class AudioFocusHelper(private val context: Context) {
 
-    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private val audioManager = context.getSystemService(AudioManager::class.java)!!
     private var onFocusChange: ((Int) -> Unit)? = null
 
     private val afChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->

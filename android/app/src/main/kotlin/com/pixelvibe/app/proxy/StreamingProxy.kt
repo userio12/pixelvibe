@@ -11,29 +11,27 @@ class StreamingProxy(private val port: Int = 8765) : NanoHTTPD(port) {
         const val TAG = "StreamingProxy"
     }
 
+    private data class StreamSource(val client: NetworkClient, val path: String)
+
     @Volatile
-    private var currentClient: NetworkClient? = null
-    @Volatile
-    private var currentPath: String? = null
+    private var streamSource: StreamSource? = null
 
     fun setStreamSource(client: NetworkClient, path: String) {
-        currentClient?.let { runBlocking { it.disconnect() } }
-        currentClient = client
-        currentPath = path
+        streamSource?.let { runBlocking { it.client.disconnect() } }
+        streamSource = StreamSource(client, path)
     }
 
     override fun serve(session: IHTTPSession): Response {
         return try {
-            val client = currentClient
-            val path = currentPath
-            if (client == null || path == null) {
+            val source = streamSource
+            if (source == null) {
                 return newFixedLengthResponse(
                     Response.Status.NOT_FOUND, "text/plain", "No stream available"
                 )
             }
 
-            val inputStream = runBlocking { client.getInputStream(path) }
-            val mimeType = guessMimeType(path)
+            val inputStream = runBlocking { source.client.getInputStream(source.path) }
+            val mimeType = guessMimeType(source.path)
 
             newChunkedResponse(Response.Status.OK, mimeType, inputStream)
         } catch (e: Exception) {

@@ -2,6 +2,35 @@ import 'package:flutter/material.dart';
 import '../theme/app_animations.dart';
 import '../theme/app_theme_extensions.dart';
 
+Future<bool?> showConfirmDialog({
+  required BuildContext context,
+  required String title,
+  String? message,
+  String confirmLabel = 'Confirm',
+  String cancelLabel = 'Cancel',
+}) {
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: const Color(0xFF1E2228),
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      content: message != null
+          ? Text(message, style: const TextStyle(color: Color(0xFF90959A)))
+          : null,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(cancelLabel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: Text(confirmLabel),
+        ),
+      ],
+    ),
+  );
+}
+
 class _StateLayout extends StatelessWidget {
   final Widget icon;
   final String title;

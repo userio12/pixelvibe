@@ -18,6 +18,8 @@ class FTPClient(
         val existing = client
         if (existing == null || !existing.isConnected) {
             val newClient = ApacheFTPClient()
+            newClient.connectTimeout = 10000
+            newClient.setDataTimeout(30000)
             newClient.connect(host, port)
             newClient.login(username, password)
             newClient.enterLocalPassiveMode()

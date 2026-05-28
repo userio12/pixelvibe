@@ -44,7 +44,7 @@ class AdvancedScreen extends ConsumerWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white70),
           onPressed: () => context.pop(),
         ),
         title: const Text(
@@ -83,43 +83,27 @@ class AdvancedScreen extends ConsumerWidget {
               children: [
                 StandardActionTile(
                   title: 'Pick configuration storage location',
-                  trailing: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 1,
-                        height: 24,
-                        child: DecoratedBox(decoration: BoxDecoration(color: Color(0xFF2C3136))),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.close, color: Color(0xFFDCA7A7)),
-                    ],
-                  ),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Storage location picker coming soon')),
+                  subtitle: ref.watch(preferencesServiceProvider).getConfigStoragePath().isEmpty
+                      ? 'Not set (using default)'
+                      : ref.watch(preferencesServiceProvider).getConfigStoragePath(),
+                  onTap: () async {
+                    final result = await FilePicker.platform.getDirectoryPath(
+                      dialogTitle: 'Select configuration storage location',
                     );
+                    if (result != null) {
+                      await ref.read(preferencesServiceProvider).setConfigStoragePath(result);
+                    }
                   },
                 ),
                 StandardActionTile(
                   title: 'Edit mpv.conf',
                   subtitle: 'Tap to edit configuration',
-                  onTap: () {
-                    Logger.info('mpv.conf editor requested');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('File editor coming soon')),
-                    );
-                  },
+                  onTap: () => _editConfigFile(context, ref, 'mpv.conf'),
                 ),
                 StandardActionTile(
                   title: 'Edit input.conf',
                   subtitle: 'Tap to edit configuration',
-                  onTap: () {
-                    Logger.info('input.conf editor requested');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('File editor coming soon')),
-                    );
-                  },
+                  onTap: () => _editConfigFile(context, ref, 'input.conf'),
                 ),
               ],
             ),
@@ -207,10 +191,104 @@ Future<void> _confirmClear(BuildContext context, String label) async {
     ),
   );
   if (confirmed != true) return;
+  try {
+    switch (label) {
+      case 'playback history':
+        final dbPath = '${Directory.systemTemp.path}/pixelvibe_history.db';
+        final dbFile = File(dbPath);
+        if (await dbFile.exists()) await dbFile.delete();
+        break;
+      case 'config cache':
+        final paths = <String>[
+          '${Directory.systemTemp.path}/pixelvibe_mpv.conf',
+          '${Directory.systemTemp.path}/pixelvibe_input.conf',
+        ];
+        for (final p in paths) {
+          final f = File(p);
+          if (await f.exists()) await f.delete();
+        }
+        break;
+      case 'thumbnail cache':
+        final thumbDir = Directory('${Directory.systemTemp.path}/pixelvibe_thumbs');
+        if (await thumbDir.exists()) {
+          await thumbDir.delete(recursive: true);
+          await thumbDir.create();
+        }
+        break;
+      case 'cached fonts':
+        final fontDir = Directory('${Directory.systemTemp.path}/pixelvibe_fonts');
+        if (await fontDir.exists()) {
+          await fontDir.delete(recursive: true);
+          await fontDir.create();
+        }
+        break;
+    }
+    Logger.info('Cleared $label');
+  } catch (e) {
+    Logger.error('Error clearing $label', e);
+  }
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('$label cleared')),
     );
+  }
+}
+
+Future<void> _editConfigFile(BuildContext context, WidgetRef ref, String filename) async {
+  final configDir = ref.read(preferencesServiceProvider).getConfigStoragePath();
+  if (configDir.isEmpty) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please set a configuration storage location first')),
+      );
+    }
+    return;
+  }
+  final file = File('$configDir/$filename');
+  String content = '';
+  if (await file.exists()) {
+    content = await file.readAsString();
+  }
+  if (!context.mounted) return;
+  final controller = TextEditingController(text: content);
+  final result = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: const Color(0xFF1E2228),
+      title: Text(filename, style: const TextStyle(color: Colors.white)),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: TextField(
+          controller: controller,
+          maxLines: null,
+          style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 13),
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: '# Enter configuration here',
+            hintStyle: TextStyle(color: Color(0xFF90959A)),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(controller.text),
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+  if (result != null) {
+    await file.writeAsString(result);
+    Logger.info('$filename saved');
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$filename saved')),
+      );
+    }
   }
 }
 

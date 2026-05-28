@@ -58,7 +58,8 @@ class SmbClient(
         val parts = cleanPath.split("/", limit = 2)
         val shareName = parts[0]
         val subPath = if (parts.size > 1) parts[1] else ""
-        val share = sess.connectShare(shareName) as DiskShare
+        val share = sess.connectShare(shareName)
+        require(share is DiskShare) { "Share $shareName is not a DiskShare" }
         try {
             val files = share.list(subPath, "*")
             files.map { f ->
@@ -82,15 +83,21 @@ class SmbClient(
         if (parts.size < 2) throw IllegalArgumentException("Invalid SMB path: $path")
         val shareName = parts[0]
         val filePath = parts[1]
-        val share = sess.connectShare(shareName) as DiskShare
-        val smbFile = share.openFile(
-            filePath,
-            EnumSet.of(AccessMask.GENERIC_READ),
-            EnumSet.of(FileAttributes.FILE_ATTRIBUTE_NORMAL),
-            EnumSet.of(SMB2ShareAccess.FILE_SHARE_READ),
-            SMB2CreateDisposition.FILE_OPEN,
-            emptySet(),
-        )
+        val share = sess.connectShare(shareName)
+        require(share is DiskShare) { "Share $shareName is not a DiskShare" }
+        val smbFile = try {
+            share.openFile(
+                filePath,
+                EnumSet.of(AccessMask.GENERIC_READ),
+                EnumSet.of(FileAttributes.FILE_ATTRIBUTE_NORMAL),
+                EnumSet.of(SMB2ShareAccess.FILE_SHARE_READ),
+                SMB2CreateDisposition.FILE_OPEN,
+                emptySet(),
+            )
+        } catch (e: Exception) {
+            try { share.close() } catch (_: Exception) { }
+            throw e
+        }
         object : java.io.FilterInputStream(smbFile.inputStream) {
             override fun close() {
                 try { super.close() } finally { smbFile.close() }
@@ -99,8 +106,10 @@ class SmbClient(
     }
 
     override suspend fun disconnect() = withContext(Dispatchers.IO) {
-        try { client?.close() } catch (e: Exception) { Log.e("SMBClient", "Disconnect error", e) }
-        client = null
-        session = null
+        synchronized(lock) {
+            try { client?.close() } catch (e: Exception) { Log.e("SMBClient", "Disconnect error", e) }
+            client = null
+            session = null
+        }
     }
 }

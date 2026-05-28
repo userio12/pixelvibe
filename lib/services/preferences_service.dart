@@ -206,6 +206,38 @@ class PreferencesService {
   bool getScaleByWindow() => _prefs.getBool(_scaleByWindow) ?? true;
   Future<void> setScaleByWindow(bool v) => _prefs.setBool(_scaleByWindow, v);
 
+  static const _subtitleLanguages = 'subtitle_languages';
+  String getSubtitleLanguages() => _prefs.getString(_subtitleLanguages) ?? 'en';
+  Future<void> setSubtitleLanguages(String v) => _prefs.setString(_subtitleLanguages, v);
+
+  static const _subtitleFontsDirectory = 'subtitle_fonts_directory';
+  String getSubtitleFontsDirectory() => _prefs.getString(_subtitleFontsDirectory) ?? '';
+  Future<void> setSubtitleFontsDirectory(String v) => _prefs.setString(_subtitleFontsDirectory, v);
+
+  static const _subtitleSaveLocation = 'subtitle_save_location';
+  String getSubtitleSaveLocation() => _prefs.getString(_subtitleSaveLocation) ?? '';
+  Future<void> setSubtitleSaveLocation(String v) => _prefs.setString(_subtitleSaveLocation, v);
+
+  static const _subtitleSources = 'subtitle_sources';
+  String getSubtitleSources() => _prefs.getString(_subtitleSources) ?? 'opensubtitles,embedded,podnapisi';
+  Future<void> setSubtitleSources(String v) => _prefs.setString(_subtitleSources, v);
+
+  static const _configStoragePath = 'config_storage_path';
+  String getConfigStoragePath() => _prefs.getString(_configStoragePath) ?? '';
+  Future<void> setConfigStoragePath(String v) => _prefs.setString(_configStoragePath, v);
+
+  static const _doubleTapSeekDuration = 'double_tap_seek_duration';
+  int getDoubleTapSeekDuration() => _prefs.getInt(_doubleTapSeekDuration) ?? 10;
+  Future<void> setDoubleTapSeekDuration(int v) => _prefs.setInt(_doubleTapSeekDuration, v);
+
+  static const _doubleTapSeekAreaWidth = 'double_tap_seek_area_width';
+  int getDoubleTapSeekAreaWidth() => _prefs.getInt(_doubleTapSeekAreaWidth) ?? 35;
+  Future<void> setDoubleTapSeekAreaWidth(int v) => _prefs.setInt(_doubleTapSeekAreaWidth, v);
+
+  static const _selectedThemeSwatch = 'selected_theme_swatch';
+  String getSelectedThemeSwatch() => _prefs.getString(_selectedThemeSwatch) ?? 'Default';
+  Future<void> setSelectedThemeSwatch(String v) => _prefs.setString(_selectedThemeSwatch, v);
+
   // Audio pitch correction
   static const _audioPitchCorrection = 'audio_pitch_correction';
   bool getAudioPitchCorrection() => _prefs.getBool(_audioPitchCorrection) ?? true;
@@ -389,4 +421,9 @@ class PreferencesService {
   static const _mpvProfiles = 'mpv_profiles';
   String getMpvProfiles() => _prefs.getString(_mpvProfiles) ?? '[]';
   Future<void> setMpvProfiles(String v) => _prefs.setString(_mpvProfiles, v);
+
+  // Folder blacklist
+  static const _blacklistedFolders = 'blacklisted_folders';
+  List<String> getBlacklistedFolders() => _prefs.getStringList(_blacklistedFolders) ?? [];
+  Future<void> setBlacklistedFolders(List<String> v) => _prefs.setStringList(_blacklistedFolders, v);
 }
