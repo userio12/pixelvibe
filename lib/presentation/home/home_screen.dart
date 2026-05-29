@@ -287,12 +287,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               mainAxisSpacing: 8,
             ),
             itemCount: 8,
-            itemBuilder: (_, __) => const SkeletonTile(isGrid: true),
+            itemBuilder: (context, index) => const SkeletonTile(isGrid: true),
           )
         : ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             itemCount: 12,
-            itemBuilder: (_, __) => const SkeletonTile(isGrid: false),
+            itemBuilder: (context, index) => const SkeletonTile(isGrid: false),
           );
   }
 

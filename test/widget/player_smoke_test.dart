@@ -13,7 +13,6 @@ import 'package:pixelvibe/data/database/daos/recently_played_dao.dart';
 import 'package:pixelvibe/data/database/daos/video_metadata_dao.dart';
 import 'package:pixelvibe/services/background_service.dart';
 import 'package:pixelvibe/services/pip_service.dart';
-import 'package:pixelvibe/presentation/settings/settings_provider.dart';
 
 class MockPlayer extends Mock implements Player {
   @override
@@ -104,10 +103,10 @@ class FakePreferencesService extends Fake implements PreferencesService {
   @override bool getMediaControlsSingleTap() => true;
   @override bool getMediaControlsLongPress() => true;
   @override bool getMediaControlsSwipe() => true;
-  @override int getSubtitleJustify() => 0;
-  @override int getSubtitleSecondarySid() => -1;
-  @override bool getSubtitleAssOverride() => false;
-  @override String getShaderPreset() => '';
+  int getSubtitleJustify() => 0;
+  int getSubtitleSecondarySid() => -1;
+  bool getSubtitleAssOverride() => false;
+  String getShaderPreset() => '';
   @override bool getGpuNext() => false;
   @override bool getYuv420p() => false;
   @override bool getAnime4k() => false;

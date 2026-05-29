@@ -1,11 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pixelvibe/data/repositories/media_repository.dart';
-import 'package:pixelvibe/domain/models/media_file.dart';
 import 'package:pixelvibe/domain/services/media_scanner.dart';
 import 'package:pixelvibe/services/scan_service.dart';
 import 'package:pixelvibe/data/database/daos/video_metadata_dao.dart';
-import 'package:pixelvibe/data/database/app_database.dart';
 
 class MockVideoMetadataDao extends Mock implements VideoMetadataDao {}
 class MockMediaScanner extends Mock implements MediaScanner {}

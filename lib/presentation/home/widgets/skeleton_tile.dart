@@ -33,7 +33,7 @@ class _SkeletonTileState extends State<SkeletonTile> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final baseColor = theme.colorScheme.surfaceContainerHighest.withOpacity(0.5);
+    final baseColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
     final highlightColor = theme.colorScheme.surfaceContainerHighest;
 
     return AnimatedBuilder(

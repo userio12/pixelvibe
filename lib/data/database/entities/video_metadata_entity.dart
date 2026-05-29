@@ -14,6 +14,5 @@ class VideoMetadata extends Table {
   IntColumn get playCount => integer().withDefault(const Constant(0))();
   BoolColumn get watched => boolean().withDefault(const Constant(false))();
 
-  @override
   List<Index> get indexes => [Index('video_added_at', 'CREATE INDEX video_added_at ON video_metadata (added_at)')];
 }

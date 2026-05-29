@@ -176,10 +176,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       section, 
       t1, 
       s1,
-      if (t2 != null) t2,
-      if (s2 != null) s2,
-      if (t3 != null) t3,
-      if (s3 != null) s3,
+      ?t2,
+      ?s2,
+      ?t3,
+      ?s3,
     ];
     return terms.any((t) => t.toLowerCase().contains(query));
   }

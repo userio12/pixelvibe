@@ -7,6 +7,5 @@ class RecentlyPlayed extends Table {
   TextColumn get thumbnailPath => text().nullable()();
   IntColumn get playedAt => integer()();
 
-  @override
   List<Index> get indexes => [Index('recent_played_at', 'CREATE INDEX recent_played_at ON recently_played (played_at)')];
 }

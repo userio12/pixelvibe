@@ -421,7 +421,7 @@ class _NetworkScreenState extends ConsumerState<NetworkScreen> {
                   }
                   
                   final proxyUrl = await service.streamFile(id: id, path: f.path);
-                  if (!context.mounted) return;
+                  if (!mounted) return;
                   if (proxyUrl != null) {
                     if (Navigator.of(context).canPop()) {
                       Navigator.of(context).pop();

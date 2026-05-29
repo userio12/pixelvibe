@@ -9,7 +9,6 @@ import '../../core/di/providers.dart';
 import '../../services/background_service.dart';
 import '../../services/logger.dart';
 import '../../services/network_service.dart';
-import '../../utils/platform_helper.dart';
 import '../settings/settings_provider.dart';
 import 'player_provider.dart';
 import 'player_screen_provider.dart';
