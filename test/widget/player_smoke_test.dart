@@ -76,7 +76,7 @@ class FakePreferencesService extends Fake implements PreferencesService {
   @override bool getVolumeNormalization() => false;
   @override double getVolumeBoostCap() => 0.15;
   @override String getAudioChannels() => 'auto';
-  @override bool getSmartSubtitleAutoSelect() => true;
+  bool getSmartSubtitleAutoSelect() => true;
   @override int getDoubleTapSeekDuration() => 10;
   @override int getDimControlsSeconds() => 5;
   @override bool getTapToToggleVisibility() => true;
@@ -213,4 +213,6 @@ class _MockPlayerStream extends Mock implements PlayerStream {
   @override Stream<AudioDevice> get audioDevice => const Stream.empty();
   @override Stream<List<AudioDevice>> get audioDevices => const Stream.empty();
   @override Stream<bool> get completed => const Stream.empty();
+}
+Stream.empty();
 }
