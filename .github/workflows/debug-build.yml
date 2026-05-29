@@ -2,9 +2,9 @@ name: debug-build
 
 on:
   push:
-    branches: ['**']
+    branches: [main, master, dev]
   pull_request:
-    branches: ['**']
+    branches: [main, master, dev]
   workflow_dispatch:
 
 jobs:
