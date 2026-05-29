@@ -19,6 +19,7 @@ import 'widgets/folder_list_tile.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/file_context_menu.dart';
 import 'widgets/display_options_sheet.dart';
+import 'widgets/skeleton_tile.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -218,7 +219,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   Widget _buildFilesTab(BuildContext context, AsyncValue<List<MediaFile>> videosAsync, ViewMode viewMode) {
     return videosAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => _buildSkeleton(context),
       error: (e, _) => EmptyState(
         icon: Icons.error_outline,
         title: 'Could not load videos',
@@ -256,7 +257,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
 
   Widget _buildFilesView(BuildContext context, AsyncValue<List<MediaFile>> videosAsync, ViewMode viewMode) {
     return videosAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => _buildSkeleton(context),
       error: (e, _) => EmptyState(
         icon: Icons.error_outline,
         title: 'Error',
@@ -274,6 +275,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     );
   }
 
+  Widget _buildSkeleton(BuildContext context) {
+    final layout = ref.watch(layoutProvider);
+    return layout == LayoutMode.grid
+        ? GridView.builder(
+            padding: const EdgeInsets.all(8),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.75,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemCount: 8,
+            itemBuilder: (_, __) => const SkeletonTile(isGrid: true),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            itemCount: 12,
+            itemBuilder: (_, __) => const SkeletonTile(isGrid: false),
+          );
+  }
+
   Widget _buildView(BuildContext context, List<MediaFile> videos, ViewMode viewMode) {
     final layout = ref.watch(layoutProvider);
     switch (viewMode) {
@@ -281,6 +303,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         return layout == LayoutMode.grid
             ? GridView.builder(
                 padding: const EdgeInsets.all(8),
+                cacheExtent: 1000,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   childAspectRatio: 0.75,
@@ -297,6 +320,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               )
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
+                cacheExtent: 1000,
                 itemCount: videos.length,
                 itemBuilder: (_, i) => VideoListTile(
                   file: videos[i],
@@ -316,7 +340,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final foldersAsync = ref.watch(folderListProvider);
     final videosAsync = ref.watch(homeProvider);
     return foldersAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => _buildSkeleton(context),
       error: (e, _) => EmptyState(
         icon: Icons.error_outline,
         title: 'Error',
@@ -332,11 +356,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           return const EmptyState(icon: Icons.folder_open, title: 'No folders', subtitle: 'Scan your device first');
         }
         return videosAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => _buildSkeleton(context),
           error: (_, _) => const SizedBox.shrink(),
           data: (videos) {
             return GridView.builder(
               padding: const EdgeInsets.all(8),
+              cacheExtent: 1000,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 childAspectRatio: 0.85,
@@ -377,7 +402,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   Widget _buildFolderTree(BuildContext context) {
     final foldersAsync = ref.watch(folderListProvider);
     return foldersAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => _buildSkeleton(context),
       error: (e, _) => EmptyState(
         icon: Icons.error_outline,
         title: 'Error',
@@ -394,6 +419,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         }
         return ListView(
           padding: const EdgeInsets.symmetric(horizontal: 8),
+          cacheExtent: 1000,
           children: [
             FolderListTile(
               name: 'All Videos',

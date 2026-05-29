@@ -26,12 +26,14 @@ class GestureHandler extends ConsumerStatefulWidget {
 }
 
 class _GestureHandlerState extends ConsumerState<GestureHandler> {
-  double _startX = 0;
-  double _startY = 0;
   double _currentBrightness = 1.0;
   double _currentVolume = 1.0;
   double _currentZoom = 0.0;
   double _baseZoom = 0.0;
+  
+  Offset? _startFocalPoint;
+  bool _isVerticalDrag = false;
+  bool _isHorizontalDrag = false;
 
   @override
   void initState() {
@@ -57,63 +59,73 @@ class _GestureHandlerState extends ConsumerState<GestureHandler> {
     }
   }
 
-  void _onHorizontalDragStart(DragStartDetails details) {
-    if (widget.locked) return;
-    if (!ref.read(horizontalSwipeSeekProvider)) return;
-    _startX = details.localPosition.dx;
-  }
-
-  void _onHorizontalDragUpdate(DragUpdateDetails details) {
-    if (!ref.read(horizontalSwipeSeekProvider)) return;
-    final delta = details.localPosition.dx - _startX;
-    if (delta.abs() < 20) return;
-    final sensitivity = ref.read(gestureSensitivityProvider);
-    final width = context.size?.width ?? 1;
-    final seconds = ((delta / width) * 120 * sensitivity).round();
-    if (seconds.abs() >= 1) {
-      widget.onSkip(seconds);
-      _startX = details.localPosition.dx;
-    }
-  }
-
-  void _onVerticalDragStart(DragStartDetails details) {
-    if (widget.locked) return;
-    _startY = details.localPosition.dy;
-    _startX = details.localPosition.dx;
-  }
-
-  void _onVerticalDragUpdate(DragUpdateDetails details) {
-    final width = context.size?.width ?? 1;
-    final edgeWidth = width * 0.15;
-    final delta = (details.localPosition.dy - _startY) / (context.size?.height ?? 1);
-
-    if (details.localPosition.dx < edgeWidth && ref.read(brightnessGestureProvider)) {
-      _currentBrightness = (_currentBrightness - delta).clamp(0.0, 1.0);
-      _startY = details.localPosition.dy;
-    } else if (details.localPosition.dx > width - edgeWidth && ref.read(volumeGestureProvider)) {
-      _currentVolume = (_currentVolume - delta).clamp(0.0, 1.0);
-      ref.read(playerProvider).setVolume(_currentVolume);
-      _startY = details.localPosition.dy;
-    }
-  }
-
   void _onScaleStart(ScaleStartDetails details) {
     if (widget.locked) return;
-    if (!ref.read(pinchToZoomGestureProvider)) return;
+    _startFocalPoint = details.localFocalPoint;
     _baseZoom = _currentZoom;
+    _isVerticalDrag = false;
+    _isHorizontalDrag = false;
   }
 
   void _onScaleUpdate(ScaleUpdateDetails details) {
-    if (!ref.read(pinchToZoomGestureProvider)) return;
-    final newZoom = _baseZoom + (details.scale - 1.0);
-    _currentZoom = newZoom.clamp(-1.0, 2.0);
-    final platform = ref.read(playerProvider).platform;
-    if (platform is NativePlayer) {
-      platform.setProperty('video-zoom', _currentZoom.toStringAsFixed(2));
+    if (widget.locked || _startFocalPoint == null) return;
+
+    // Handle Zoom (Scale)
+    if (details.scale != 1.0 && ref.read(pinchToZoomGestureProvider)) {
+      final newZoom = _baseZoom + (details.scale - 1.0);
+      _currentZoom = newZoom.clamp(-1.0, 2.0);
+      final platform = ref.read(playerProvider).platform;
+      if (platform is NativePlayer) {
+        platform.setProperty('video-zoom', _currentZoom.toStringAsFixed(2));
+      }
+      ref.read(playerOverlayProvider.notifier).show(ZoomChange(_currentZoom));
+      return;
     }
-    ref.read(playerOverlayProvider.notifier).show(
-      ZoomChange(_currentZoom),
-    );
+
+    // Handle Panning (Drag)
+    final delta = details.localFocalPoint - _startFocalPoint!;
+    
+    // Determine drag direction if not yet established
+    if (!_isVerticalDrag && !_isHorizontalDrag) {
+      if (delta.dy.abs() > delta.dx.abs() && delta.dy.abs() > 10) {
+        _isVerticalDrag = true;
+      } else if (delta.dx.abs() > delta.dy.abs() && delta.dx.abs() > 10) {
+        _isHorizontalDrag = true;
+      }
+    }
+
+    if (_isVerticalDrag) {
+      _handleVerticalDrag(delta.dy);
+      _startFocalPoint = details.localFocalPoint;
+    } else if (_isHorizontalDrag) {
+      _handleHorizontalDrag(delta.dx);
+      _startFocalPoint = details.localFocalPoint;
+    }
+  }
+
+  void _handleVerticalDrag(double deltaY) {
+    final height = context.size?.height ?? 1;
+    final width = context.size?.width ?? 1;
+    final edgeWidth = width * 0.2;
+    final normalizedDelta = deltaY / height;
+
+    if (_startFocalPoint!.dx < edgeWidth && ref.read(brightnessGestureProvider)) {
+      _currentBrightness = (_currentBrightness - normalizedDelta).clamp(0.0, 1.0);
+      // In a real app, use a service to set system brightness
+    } else if (_startFocalPoint!.dx > width - edgeWidth && ref.read(volumeGestureProvider)) {
+      _currentVolume = (_currentVolume - normalizedDelta).clamp(0.0, 1.0);
+      ref.read(playerProvider).setVolume(_currentVolume);
+    }
+  }
+
+  void _handleHorizontalDrag(double deltaX) {
+    if (!ref.read(horizontalSwipeSeekProvider)) return;
+    final width = context.size?.width ?? 1;
+    final sensitivity = ref.read(gestureSensitivityProvider);
+    final seconds = ((deltaX / width) * 120 * sensitivity).round();
+    if (seconds.abs() >= 1) {
+      widget.onSkip(seconds);
+    }
   }
 
   @override
@@ -121,10 +133,6 @@ class _GestureHandlerState extends ConsumerState<GestureHandler> {
     return GestureDetector(
       onTapUp: _onTapUp,
       onDoubleTapDown: _onDoubleTapDown,
-      onHorizontalDragStart: _onHorizontalDragStart,
-      onHorizontalDragUpdate: _onHorizontalDragUpdate,
-      onVerticalDragStart: _onVerticalDragStart,
-      onVerticalDragUpdate: _onVerticalDragUpdate,
       onScaleStart: _onScaleStart,
       onScaleUpdate: _onScaleUpdate,
       child: widget.child,

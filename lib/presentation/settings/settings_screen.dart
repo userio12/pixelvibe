@@ -72,7 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            if (_matches('UI & Appearance', 'Appearance', 'Player Layout'))
+            if (_matches('UI & Appearance', 'Appearance', 'Dark mode, Material You', 'Player Layout', 'Customize player button layout'))
               SettingsCardGroup(
                 sectionTitle: 'UI & Appearance',
                 children: [
@@ -90,7 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
-            if (_matches('Playback & Controls', 'Player', 'Gestures'))
+            if (_matches('Playback & Controls', 'Player', 'Orientation, gestures and controls', 'Gestures', 'Double tap, media controls'))
               SettingsCardGroup(
                 sectionTitle: 'Playback & Controls',
                 children: [
@@ -108,7 +108,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
-            if (_matches('File Management', 'Folders'))
+            if (_matches('File Management', 'Folders', 'Manage folder blacklist'))
               SettingsCardGroup(
                 sectionTitle: 'File Management',
                 children: [
@@ -120,7 +120,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
-            if (_matches('Media Settings', 'Decoder', 'Subtitles', 'Audio'))
+            if (_matches('Media Settings', 'Decoder', 'Hardware decoding, pixel format, debanding', 'Subtitles', 'Preferred languages, fonts and search', 'Audio', 'Preferred languages, audio channels, pitch correction'))
               SettingsCardGroup(
                 sectionTitle: 'Media Settings',
                 children: [
@@ -144,7 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
-            if (_matches('Advanced & About', 'Advanced', 'About'))
+            if (_matches('Advanced & About', 'Advanced', 'Configuration location, mpv.conf', 'About', 'Acknowledgments, licenses'))
               SettingsCardGroup(
                 sectionTitle: 'Advanced & About',
                 children: [
@@ -169,10 +169,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  bool _matches(String section, String t1, [String? t2, String? t3]) {
+  bool _matches(String section, String t1, String s1, [String? t2, String? s2, String? t3, String? s3]) {
     if (_searchQuery.isEmpty) return true;
-    final terms = [section, t1, ?t2, ?t3];
-    return terms.any((t) => t.toLowerCase().contains(_searchQuery));
+    final query = _searchQuery.toLowerCase();
+    final terms = [
+      section, 
+      t1, 
+      s1,
+      if (t2 != null) t2,
+      if (s2 != null) s2,
+      if (t3 != null) t3,
+      if (s3 != null) s3,
+    ];
+    return terms.any((t) => t.toLowerCase().contains(query));
   }
 }
 

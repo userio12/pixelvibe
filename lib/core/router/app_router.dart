@@ -15,7 +15,20 @@ import '../../presentation/settings/sections/advanced_screen.dart';
 import '../../presentation/settings/sections/appearance_screen.dart';
 import '../../presentation/settings/sections/player_layout_screen.dart';
 import '../../services/preferences_service.dart';
+import '../../services/logger.dart';
 import 'routes.dart';
+
+class LoggerObserver extends NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    Logger.info('Router: pushed ${route.settings.name}');
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    Logger.info('Router: popped ${route.settings.name}');
+  }
+}
 
 class AppRouter {
   late final GoRouter router;
@@ -31,6 +44,7 @@ class AppRouter {
     final onboardingComplete = preferencesService.isOnboardingComplete();
     router = GoRouter(
       navigatorKey: _rootNavigatorKey,
+      observers: [LoggerObserver()],
       initialLocation: onboardingComplete ? Routes.home : Routes.onboarding,
       errorBuilder: (context, state) => Scaffold(
         appBar: AppBar(title: const Text('Page not found')),

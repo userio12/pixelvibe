@@ -38,6 +38,9 @@
 # JSON (org.json shipped with Android)
 -keep class org.json.** { *; }
 
+# Pixelvibe App Native Code
+-keep class com.pixelvibe.app.** { *; }
+
 # Flutter engine
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.** { *; }

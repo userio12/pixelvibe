@@ -4,6 +4,7 @@ import 'package:media_kit/media_kit.dart';
 import '../../core/di/providers.dart';
 import '../../domain/models/mpv_profile.dart';
 import '../../services/preferences_service.dart';
+import '../settings/settings_provider.dart';
 import 'player_provider.dart';
 
 // ── Hwdec profile ──────────────────────────────────────────────────
@@ -213,27 +214,6 @@ class ScreenshotSubsNotifier extends Notifier<bool> {
     if (player.platform is NativePlayer) {
       (player.platform as NativePlayer).setProperty(
         'subs-with-subs',
-        state ? 'yes' : 'no',
-      );
-    }
-  }
-}
-
-// ── Precise seeking (hr-seek) ──────────────────────────────────────
-final hrSeekProvider = NotifierProvider.autoDispose<HrSeekNotifier, bool>(HrSeekNotifier.new);
-class HrSeekNotifier extends Notifier<bool> {
-  @override
-  bool build() => ref.watch(preferencesServiceProvider).getHrSeek();
-  Future<void> toggle() async {
-    state = !state;
-    await ref.read(preferencesServiceProvider).setHrSeek(state);
-    _apply();
-  }
-  void _apply() {
-    final player = ref.read(playerProvider);
-    if (player.platform is NativePlayer) {
-      (player.platform as NativePlayer).setProperty(
-        'hr-seek',
         state ? 'yes' : 'no',
       );
     }

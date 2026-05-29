@@ -58,13 +58,12 @@ class NetworkService {
     String path = '/',
   }) async {
     try {
-      final result = await _channel.invokeMethod<String>('listFiles', {
+      final result = await _channel.invokeMethod<List<dynamic>>('listFiles', {
         'id': id,
         'path': path,
       });
       if (result == null) return [];
-      final list = jsonDecode(result) as List<dynamic>;
-      return list.map((e) => NetworkFile.fromJson(e as Map<String, dynamic>)).toList();
+      return result.map((e) => NetworkFile.fromJson(Map<String, dynamic>.from(e as Map))).toList();
     } catch (e) {
       Logger.error('NetworkService.listFiles failed', e);
       return [];
@@ -80,6 +79,16 @@ class NetworkService {
     } catch (e) {
       Logger.error('NetworkService.streamFile failed', e);
       return null;
+    }
+  }
+
+  Future<bool> stopProxy() async {
+    try {
+      final result = await _channel.invokeMethod<bool>('stopProxy');
+      return result ?? false;
+    } catch (e) {
+      Logger.error('NetworkService.stopProxy failed', e);
+      return false;
     }
   }
 

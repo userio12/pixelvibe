@@ -3,14 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/di/providers.dart';
 import '../../player/video_quality_provider.dart';
+import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
-import '../widgets/pref_notifiers.dart';
-
-final _gpuNextProvider = boolPref('gpu_next', false);
-final _yuv420pProvider = boolPref('yuv420p', false);
-final _anime4kProvider = boolPref('anime4k', false);
 
 class DecoderScreen extends ConsumerWidget {
   const DecoderScreen({super.key});
@@ -19,11 +15,11 @@ class DecoderScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hwdec = ref.watch(hwdecProvider);
     final hwdecEnabled = hwdec != 'no';
-    final gpuNext = ref.watch(_gpuNextProvider);
+    final gpuNext = ref.watch(gpuNextProvider);
     final gpuApi = ref.watch(gpuApiProvider);
-    final debanding = ref.watch(preferencesServiceProvider).getDebanding();
-    final yuv420p = ref.watch(_yuv420pProvider);
-    final anime4k = ref.watch(_anime4kProvider);
+    final debanding = ref.watch(debandingProvider);
+    final yuv420p = ref.watch(yuv420pProvider);
+    final anime4k = ref.watch(anime4kProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -68,7 +64,7 @@ class DecoderScreen extends ConsumerWidget {
                   subtitle: 'A new rendering backend',
                   value: gpuNext,
                   onChanged: (v) {
-                    ref.read(_gpuNextProvider.notifier).toggle();
+                    ref.read(gpuNextProvider.notifier).toggle();
                     ref.read(gpuApiProvider.notifier).update(v ? 'gpu-next' : 'auto');
                   },
                 ),
@@ -88,13 +84,13 @@ class DecoderScreen extends ConsumerWidget {
                   title: 'Use YUV420P pixel format',
                   subtitle: 'May fix black screens on some video codecs, can also improve performance at the cost of quality',
                   value: yuv420p,
-                  onChanged: (_) => ref.read(_yuv420pProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(yuv420pProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Anime4K upscaling (Experimental)',
                   value: anime4k,
                   onChanged: (v) {
-                    ref.read(_anime4kProvider.notifier).toggle();
+                    ref.read(anime4kProvider.notifier).toggle();
                     ref.read(shaderPresetProvider.notifier).update(v ? 'Anime4K_Restore_CNN_L.glsl' : '');
                   },
                   customSubtitle: const _Anime4KSubtitle(),
@@ -139,15 +135,14 @@ class DecoderScreen extends ConsumerWidget {
   }
 
   Widget _debandingOption(BuildContext ctx, WidgetRef ref, String label, String value) {
-    final current = ref.watch(preferencesServiceProvider).getDebanding();
+    final current = ref.watch(debandingProvider);
     return ListTile(
       title: Text(label, style: const TextStyle(color: Colors.white)),
       trailing: current == value
           ? const Icon(Icons.check, color: Color(0xFF71C4D4))
           : null,
       onTap: () {
-        ref.read(preferencesServiceProvider).setDebanding(value);
-        ref.invalidate(preferencesServiceProvider);
+        ref.read(debandingProvider.notifier).update(value);
         final vfPreset = value == 'none' ? 'none' : 'deband';
         ref.read(vfPresetProvider.notifier).update(vfPreset);
         Navigator.of(ctx).pop();

@@ -28,6 +28,28 @@ void main() async {
     await bootstrap();
   } catch (e, s) {
     Logger.error('Bootstrap failed', e, s);
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text('Failed to initialize app', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(e.toString(), textAlign: TextAlign.center),
+                const SizedBox(height: 24),
+                ElevatedButton(onPressed: () => main(), child: const Text('Retry')),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ));
+    return;
   }
   runApp(const ProviderScope(child: PixelvibeApp()));
 }

@@ -6,6 +6,7 @@ import '../../core/di/providers.dart';
 import '../../core/router/routes.dart';
 import '../../data/database/app_database.dart';
 import '../../services/network_service.dart';
+import '../../services/network_discovery_service.dart';
 
 final connectionListProvider = FutureProvider.autoDispose<List<NetworkConnection>>((ref) {
   return ref.watch(networkConnectionDaoProvider).getAll();
@@ -67,6 +68,8 @@ class _NetworkScreenState extends ConsumerState<NetworkScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildStreamLinkSection(),
+            const SizedBox(height: 24),
+            _buildDiscoveredSection(),
             const SizedBox(height: 24),
             _buildLocalNetworkSection(connections),
           ],
@@ -154,6 +157,93 @@ class _NetworkScreenState extends ConsumerState<NetworkScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDiscoveredSection() {
+    final discovered = ref.watch(discoveredServicesProvider);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: Text(
+            'Discovered on Network',
+            style: TextStyle(
+              color: Color(0xFF4DB6AC),
+              fontSize: 18,
+            ),
+          ),
+        ),
+        discovered.when(
+          loading: () => const Center(child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: CircularProgressIndicator(),
+          )),
+          error: (e, _) => const SizedBox.shrink(),
+          data: (services) {
+            if (services.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF22262B),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Text(
+                  'Searching for local servers...',
+                  style: TextStyle(color: Color(0xFFA0A5AA), fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }
+            return Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF22262B),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: services.map((s) => _buildDiscoveredCard(s)).toList(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDiscoveredCard(DiscoveredService service) {
+    final icon = switch (service.type) {
+      NetworkServiceType.smb => Icons.computer,
+      NetworkServiceType.ftp => Icons.cloud,
+      NetworkServiceType.webdav => Icons.web,
+      NetworkServiceType.sftp => Icons.security,
+    };
+
+    return Card(
+      color: const Color(0xFF2C3136),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFF71C4D4)),
+        title: Text(service.name, style: const TextStyle(color: Colors.white)),
+        subtitle: Text(
+          '${service.type.name.toUpperCase()} \u00b7 ${service.host}:${service.port}',
+          style: const TextStyle(color: Color(0xFFA0A5AA)),
+        ),
+        trailing: const Icon(Icons.add_circle_outline, color: Color(0xFF4DB6AC)),
+        onTap: () {
+          context.push(Routes.networkConnectionForm, extra: {
+            'protocol': service.type.name,
+            'host': service.host,
+            'port': service.port,
+            'name': service.name,
+          });
+        },
+      ),
     );
   }
 
@@ -323,9 +413,22 @@ class _NetworkScreenState extends ConsumerState<NetworkScreen> {
                 leading: Icon(f.isDirectory ? Icons.folder : Icons.movie_outlined),
                 title: Text(f.name, overflow: TextOverflow.ellipsis),
                 subtitle: Text(f.isDirectory ? 'Directory' : '${f.size}B'),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Browsed: ${f.path}')));
+                onTap: () async {
+                  if (f.isDirectory) {
+                    Navigator.of(ctx).pop();
+                    _connect(conn.copyWith(host: '${conn.host}${f.path}')); // Simple recursive browsing attempt
+                    return;
+                  }
+                  
+                  final proxyUrl = await service.streamFile(id: id, path: f.path);
+                  if (!context.mounted) return;
+                  if (proxyUrl != null) {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                    final encoded = Uri.encodeComponent(proxyUrl);
+                    context.push('${Routes.player}/$encoded');
+                  }
                 },
               )),
           if (files.length > 20)

@@ -1,39 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/di/providers.dart';
 import '../../../presentation/player/gesture_config_provider.dart';
-import '../../../presentation/player/video_quality_provider.dart';
 import '../../../utils/platform_helper.dart';
 import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
 import '../widgets/custom_slider_tile.dart';
-import '../widgets/pref_notifiers.dart';
-
-final _nextPrevNavProvider = boolPref('enable_next_prev_navigation', true);
-final _rememberBrightnessProvider = boolPref('remember_brightness', false);
-final _keepScreenOnPausedProvider = boolPref('keep_screen_on_when_paused', false);
-final _showRippleProvider = boolPref('show_ripple_when_seeking', true);
-final _showSeekTimeProvider = boolPref('show_seek_time', true);
-final _allowGesturesInPanelsProvider = boolPref('allow_gestures_in_panels', false);
-final _swapVolBrightnessProvider = boolPref('swap_volume_brightness', false);
-final _showLoadingCircleProvider = boolPref('show_loading_circle', true);
-final _showStatusBarProvider = boolPref('show_status_bar_with_controls', false);
-final _showNavBarProvider = boolPref('show_nav_bar_with_controls', false);
-final _dynamicSpeedOverlayProvider = boolPref('dynamic_speed_overlay', true);
-final _holdSpeedProvider = doublePref('hold_speed', 2.0);
-
-final _sensitivityProvider = NotifierProvider<_SensitivityNotifier, double>(_SensitivityNotifier.new);
-class _SensitivityNotifier extends Notifier<double> {
-  @override
-  double build() => ref.watch(preferencesServiceProvider).getGestureSensitivity();
-  void update(double v) {
-    state = v;
-    ref.read(preferencesServiceProvider).setGestureSensitivity(v);
-  }
-}
 
 String _sensitivityLevel(double s) {
   final v = (s * 50).round();
@@ -70,30 +44,30 @@ class PlayerSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final resume = ref.watch(resumePlaybackProvider);
-    final closeAfterEnd = ref.watch(preferencesServiceProvider).getCloseAfterEnd();
+    final closeAfterEnd = ref.watch(closeAfterEndProvider);
     final autoplayNext = ref.watch(autoplayNextProvider);
-    final nextPrevNav = ref.watch(_nextPrevNavProvider);
-    final rememberBrightness = ref.watch(_rememberBrightnessProvider);
+    final nextPrevNav = ref.watch(nextPrevNavProvider);
+    final rememberBrightness = ref.watch(rememberBrightnessProvider);
     final autoPip = ref.watch(autoPipProvider);
-    final keepScreenOn = ref.watch(_keepScreenOnPausedProvider);
-    final showRipple = ref.watch(_showRippleProvider);
-    final showSeekTime = ref.watch(_showSeekTimeProvider);
+    final keepScreenOn = ref.watch(keepScreenOnProvider);
+    final showRipple = ref.watch(showRippleProvider);
+    final showSeekTime = ref.watch(showSeekTimeProvider);
     final preciseSeek = ref.watch(hrSeekProvider);
     final brightnessGesture = ref.watch(brightnessGestureProvider);
     final volumeGesture = ref.watch(volumeGestureProvider);
     final pinchZoom = ref.watch(pinchToZoomGestureProvider);
     final horizontalSwipe = ref.watch(horizontalSwipeSeekProvider);
-    final sensitivity = ref.watch(_sensitivityProvider);
+    final sensitivity = ref.watch(gestureSensitivityProvider);
     final reduceMotion = ref.watch(reduceMotionProvider);
-    final allowPanels = ref.watch(_allowGesturesInPanelsProvider);
-    final swapVolBright = ref.watch(_swapVolBrightnessProvider);
-    final showLoading = ref.watch(_showLoadingCircleProvider);
-    final showStatus = ref.watch(_showStatusBarProvider);
-    final showNav = ref.watch(_showNavBarProvider);
-    final dynamicOverlay = ref.watch(_dynamicSpeedOverlayProvider);
+    final allowPanels = ref.watch(allowGesturesInPanelsProvider);
+    final swapVolBright = ref.watch(swapVolumeBrightnessProvider);
+    final showLoading = ref.watch(showLoadingCircleProvider);
+    final showStatus = ref.watch(showStatusBarProvider);
+    final showNav = ref.watch(showNavBarProvider);
+    final dynamicOverlay = ref.watch(dynamicSpeedOverlayProvider);
     final skipInterval = ref.watch(skipIntervalProvider);
     final playerOrientation = ref.watch(playerOrientationProvider);
-    final holdSpeed = ref.watch(_holdSpeedProvider);
+    final holdSpeed = ref.watch(holdSpeedProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -181,7 +155,7 @@ class PlayerSettingsScreen extends ConsumerWidget {
                 CustomSwitchTile(
                   title: 'Close after the end of playback',
                   value: closeAfterEnd,
-                  onChanged: (_) => ref.read(preferencesServiceProvider).setCloseAfterEnd(!closeAfterEnd),
+                  onChanged: (_) => ref.read(closeAfterEndProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Autoplay next video',
@@ -193,12 +167,12 @@ class PlayerSettingsScreen extends ConsumerWidget {
                   title: 'Enable next/previous navigation',
                   subtitle: 'Show next/previous buttons for all videos in folder',
                   value: nextPrevNav,
-                  onChanged: (_) => ref.read(_nextPrevNavProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(nextPrevNavProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Remember display brightness',
                   value: rememberBrightness,
-                  onChanged: (_) => ref.read(_rememberBrightnessProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(rememberBrightnessProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Auto Picture-in-Picture',
@@ -210,7 +184,7 @@ class PlayerSettingsScreen extends ConsumerWidget {
                   title: 'Keep screen on when paused',
                   subtitle: 'Screen can turn off while video is paused',
                   value: keepScreenOn,
-                  onChanged: (_) => ref.read(_keepScreenOnPausedProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(keepScreenOnProvider.notifier).toggle(),
                 ),
               ],
             ),
@@ -220,12 +194,12 @@ class PlayerSettingsScreen extends ConsumerWidget {
                 CustomSwitchTile(
                   title: 'Show ripple when double tap seeking',
                   value: showRipple,
-                  onChanged: (_) => ref.read(_showRippleProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(showRippleProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Show seek time',
                   value: showSeekTime,
-                  onChanged: (_) => ref.read(_showSeekTimeProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(showSeekTimeProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Use precise seeking',
@@ -273,7 +247,7 @@ class PlayerSettingsScreen extends ConsumerWidget {
                   min: 0.5,
                   max: 2.0,
                   divisions: 15,
-                  onChanged: (v) => ref.read(_sensitivityProvider.notifier).update(v),
+                  onChanged: (v) => ref.read(gestureSensitivityProvider.notifier).update(v),
                 ),
                 CustomSliderTile(
                   title: 'Hold for multi - x speed',
@@ -282,13 +256,13 @@ class PlayerSettingsScreen extends ConsumerWidget {
                   min: 1.0,
                   max: 5.0,
                   divisions: 40,
-                  onChanged: (v) => ref.read(_holdSpeedProvider.notifier).update(v),
+                  onChanged: (v) => ref.read(holdSpeedProvider.notifier).update(v),
                 ),
                 CustomSwitchTile(
                   title: 'Dynamic Speed Overlay',
                   subtitle: 'Show advance overlay for speed control during long press and swipe',
                   value: dynamicOverlay,
-                  onChanged: (_) => ref.read(_dynamicSpeedOverlayProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(dynamicSpeedOverlayProvider.notifier).toggle(),
                 ),
               ],
             ),
@@ -298,17 +272,17 @@ class PlayerSettingsScreen extends ConsumerWidget {
                 CustomSwitchTile(
                   title: 'Allow gestures in panels',
                   value: allowPanels,
-                  onChanged: (_) => ref.read(_allowGesturesInPanelsProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(allowGesturesInPanelsProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Swap volume and brightness slider',
                   value: swapVolBright,
-                  onChanged: (_) => ref.read(_swapVolBrightnessProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(swapVolumeBrightnessProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Show loading circle',
                   value: showLoading,
-                  onChanged: (_) => ref.read(_showLoadingCircleProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(showLoadingCircleProvider.notifier).toggle(),
                 ),
               ],
             ),
@@ -318,12 +292,12 @@ class PlayerSettingsScreen extends ConsumerWidget {
                 CustomSwitchTile(
                   title: 'Show system status bar with controls',
                   value: showStatus,
-                  onChanged: (_) => ref.read(_showStatusBarProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(showStatusBarProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Show navigation bar with controls',
                   value: showNav,
-                  onChanged: (_) => ref.read(_showNavBarProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(showNavBarProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Reduce player animation',

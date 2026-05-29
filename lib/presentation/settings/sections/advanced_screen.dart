@@ -5,37 +5,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/di/providers.dart';
 import '../../../services/logger.dart';
+import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
-
-NotifierProvider<_BoolNotifier, bool> _boolPref(String key, bool defaultValue) {
-  return NotifierProvider<_BoolNotifier, bool>(() => _BoolNotifier(key, defaultValue));
-}
-
-class _BoolNotifier extends Notifier<bool> {
-  final String _key;
-  final bool _defaultValue;
-  _BoolNotifier(this._key, this._defaultValue);
-
-  @override
-  bool build() => ref.watch(preferencesServiceProvider).getBool(_key, _defaultValue);
-  void toggle() {
-    state = !state;
-    ref.read(preferencesServiceProvider).setBool(_key, state);
-  }
-}
-
-final _luaScriptsProvider = _boolPref('lua_scripts', false);
-final _recentlyPlayedProvider = _boolPref('recently_played', true);
 
 class AdvancedScreen extends ConsumerWidget {
   const AdvancedScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final luaScripts = ref.watch(_luaScriptsProvider);
-    final recentlyPlayed = ref.watch(_recentlyPlayedProvider);
+    final luaScripts = ref.watch(luaScriptsProvider);
+    final recentlyPlayed = ref.watch(recentlyPlayedProvider);
+    final configStoragePath = ref.watch(configStoragePathProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -83,15 +65,15 @@ class AdvancedScreen extends ConsumerWidget {
               children: [
                 StandardActionTile(
                   title: 'Pick configuration storage location',
-                  subtitle: ref.watch(preferencesServiceProvider).getConfigStoragePath().isEmpty
+                  subtitle: configStoragePath.isEmpty
                       ? 'Not set (using default)'
-                      : ref.watch(preferencesServiceProvider).getConfigStoragePath(),
+                      : configStoragePath,
                   onTap: () async {
                     final result = await FilePicker.platform.getDirectoryPath(
                       dialogTitle: 'Select configuration storage location',
                     );
                     if (result != null) {
-                      await ref.read(preferencesServiceProvider).setConfigStoragePath(result);
+                      await ref.read(configStoragePathProvider.notifier).update(result);
                     }
                   },
                 ),
@@ -114,7 +96,7 @@ class AdvancedScreen extends ConsumerWidget {
                   title: 'Enable Lua Scripts',
                   subtitle: 'Load Lua scripts from configuration directory',
                   value: luaScripts,
-                  onChanged: (_) => ref.read(_luaScriptsProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(luaScriptsProvider.notifier).toggle(),
                 ),
                 const StandardActionTile(
                   title: 'Manage Lua Scripts',
@@ -135,7 +117,7 @@ class AdvancedScreen extends ConsumerWidget {
                   title: 'Recently Played',
                   subtitle: 'Track and display recently played videos and playlists',
                   value: recentlyPlayed,
-                  onChanged: (_) => ref.read(_recentlyPlayedProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(recentlyPlayedProvider.notifier).toggle(),
                 ),
                 StandardActionTile(
                   title: 'Clear playback history',
@@ -332,6 +314,7 @@ Future<void> _importSettings(BuildContext context, WidgetRef ref) async {
     final prefs = ref.read(preferencesServiceProvider);
     await prefs.importFromJson(json);
     ref.invalidate(preferencesServiceProvider);
+    ref.invalidate(settingsProvider);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Settings imported. Restart the app for all changes to take effect.')),

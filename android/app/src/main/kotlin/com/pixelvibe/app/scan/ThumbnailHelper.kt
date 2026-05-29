@@ -27,6 +27,8 @@ class ThumbnailHelper(private val context: Context) {
             val digest = MessageDigest.getInstance("MD5").digest(path.toByteArray())
             val hash = digest.joinToString("") { "%02x".format(it) }
             val file = File(cacheDir, "$hash.jpg")
+            if (file.exists()) return file.absolutePath
+            
             FileOutputStream(file).use { out ->
                 scaled.compress(Bitmap.CompressFormat.JPEG, 80, out)
             }

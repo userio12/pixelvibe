@@ -3,9 +3,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/di/providers.dart';
 import '../../../presentation/player/subtitle_settings_provider.dart';
 import '../../../services/logger.dart';
+import '../settings_provider.dart';
 import '../widgets/language_picker.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
@@ -19,6 +19,10 @@ class SubtitlesScreen extends ConsumerWidget {
     final autoLoad = ref.watch(autoloadSubtitlesProvider);
     final overrideAss = ref.watch(subtitleAssOverrideProvider);
     final scaleByWindow = ref.watch(subScaleByWindowProvider);
+    final subtitleLangs = ref.watch(preferredSubtitleLanguagesProvider);
+    final fontsDir = ref.watch(subtitleFontsDirectoryProvider);
+    final saveLoc = ref.watch(subtitleSaveLocationProvider);
+    final subSources = ref.watch(subtitleSourcesProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -49,8 +53,8 @@ class SubtitlesScreen extends ConsumerWidget {
               children: [
                 _SubtitleLanguageTile(
                   title: 'Preferred languages',
-                  currentValue: ref.watch(preferencesServiceProvider).getSubtitleLanguages(),
-                  onSave: (v) => ref.read(preferencesServiceProvider).setSubtitleLanguages(v),
+                  currentValue: subtitleLangs,
+                  onSave: (v) => ref.read(preferredSubtitleLanguagesProvider.notifier).update(v),
                 ),
                 CustomSwitchTile(
                   title: 'Automatically load subtitles',
@@ -72,9 +76,9 @@ class SubtitlesScreen extends ConsumerWidget {
                 ),
                 _DirectoryTile(
                   title: 'Fonts directory',
-                  subtitle: ref.watch(preferencesServiceProvider).getSubtitleFontsDirectory(),
+                  subtitle: fontsDir,
                   displayEmpty: 'Not set (using system fonts)',
-                  onSave: (v) => ref.read(preferencesServiceProvider).setSubtitleFontsDirectory(v),
+                  onSave: (v) async => ref.read(subtitleFontsDirectoryProvider.notifier).update(v),
                 ),
               ],
             ),
@@ -83,19 +87,19 @@ class SubtitlesScreen extends ConsumerWidget {
               children: [
                 _DirectoryTile(
                   title: 'Subtitle Save Location',
-                  subtitle: ref.watch(preferencesServiceProvider).getSubtitleSaveLocation(),
+                  subtitle: saveLoc,
                   displayEmpty: 'Not set (will use video default)',
-                  onSave: (v) => ref.read(preferencesServiceProvider).setSubtitleSaveLocation(v),
+                  onSave: (v) async => ref.read(subtitleSaveLocationProvider.notifier).update(v),
                 ),
                 _SubtitleSourcesTile(
                   title: 'Subtitle Sources',
-                  currentValue: ref.watch(preferencesServiceProvider).getSubtitleSources(),
-                  onSave: (v) => ref.read(preferencesServiceProvider).setSubtitleSources(v),
+                  currentValue: subSources,
+                  onSave: (v) async => ref.read(subtitleSourcesProvider.notifier).update(v),
                 ),
                 _SubtitleLanguageTile(
                   title: 'Subtitle Languages',
-                  currentValue: ref.watch(preferencesServiceProvider).getSubtitleLanguages(),
-                  onSave: (v) => ref.read(preferencesServiceProvider).setSubtitleLanguages(v),
+                  currentValue: subtitleLangs,
+                  onSave: (v) => ref.read(preferredSubtitleLanguagesProvider.notifier).update(v),
                 ),
                 StandardActionTile(
                   title: 'Advanced Search Filters',
@@ -111,7 +115,7 @@ class SubtitlesScreen extends ConsumerWidget {
                   title: 'Clear Subtitle Downloads',
                   subtitle: 'Delete all files in the current save location',
                   titleColor: const Color(0xFFDCA7A7),
-                  onTap: () => _clearSubtitleDownloads(context, ref),
+                  onTap: () => _clearSubtitleDownloads(context, saveLoc),
                 ),
               ],
             ),
@@ -139,8 +143,7 @@ class SubtitlesScreen extends ConsumerWidget {
   }
 }
 
-Future<void> _clearSubtitleDownloads(BuildContext context, WidgetRef ref) async {
-  final dir = ref.read(preferencesServiceProvider).getSubtitleSaveLocation();
+Future<void> _clearSubtitleDownloads(BuildContext context, String dir) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -184,8 +187,8 @@ Future<void> _clearSubtitleDownloads(BuildContext context, WidgetRef ref) async 
 
 class _SubtitleLanguageTile extends StatelessWidget {
   final String title;
-  final String currentValue;
-  final void Function(String) onSave;
+  final List<String> currentValue;
+  final ValueChanged<List<String>> onSave;
 
   const _SubtitleLanguageTile({
     required this.title,
@@ -197,8 +200,8 @@ class _SubtitleLanguageTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return StandardActionTile(
       title: title,
-      subtitle: currentValue.isEmpty ? 'Not set (will use video default)' : currentValue,
-      onTap: () => showLanguagePicker(context, currentValue, onSave),
+      subtitle: currentValue.isEmpty ? 'Not set (will use video default)' : currentValue.join(', '),
+      onTap: () => showLanguagePicker(context, currentValue.join(','), (v) => onSave(v.split(',').where((e) => e.isNotEmpty).toList())),
     );
   }
 }

@@ -4,6 +4,7 @@ import org.apache.commons.net.ftp.FTPClient as ApacheFTPClient
 import org.apache.commons.net.ftp.FTPFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.InputStream
 
 class FTPClient(
     private val host: String,
@@ -20,9 +21,10 @@ class FTPClient(
             val newClient = ApacheFTPClient()
             newClient.connectTimeout = 10000
             newClient.setDataTimeout(30000)
-            newClient.connect(host, port)
+            newClient.connect(host, port.takeIf { it > 0 } ?: 21)
             newClient.login(username, password)
             newClient.enterLocalPassiveMode()
+            newClient.setFileType(org.apache.commons.net.ftp.FTP.BINARY_FILE_TYPE)
             client = newClient
             return newClient
         }
@@ -35,7 +37,7 @@ class FTPClient(
         (ftp.listFiles() ?: emptyArray()).map { file: FTPFile ->
             NetworkFile(
                 name = file.name,
-                path = "$path/${file.name}",
+                path = "${path.removeSuffix("/")}/${file.name}",
                 isDirectory = file.isDirectory,
                 size = file.size,
                 lastModified = file.timestamp?.timeInMillis ?: 0
@@ -43,14 +45,23 @@ class FTPClient(
         }
     }
 
-    override suspend fun getInputStream(path: String): java.io.InputStream = withContext(Dispatchers.IO) {
+    override suspend fun getInputStream(path: String, offset: Long): InputStream = withContext(Dispatchers.IO) {
         val ftp = getClient()
+        if (offset > 0) {
+            ftp.setRestartOffset(offset)
+        }
         val stream = ftp.retrieveFileStream(path) ?: throw Exception("Failed to retrieve file: $path")
         object : java.io.FilterInputStream(stream) {
             override fun close() {
                 try { super.close() } finally { ftp.completePendingCommand() }
             }
         }
+    }
+
+    override suspend fun getFileSize(path: String): Long = withContext(Dispatchers.IO) {
+        val ftp = getClient()
+        val file = ftp.mlistFile(path)
+        file?.size ?: 0L
     }
 
     override suspend fun disconnect() = withContext(Dispatchers.IO) {

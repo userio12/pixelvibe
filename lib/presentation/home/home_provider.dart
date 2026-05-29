@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../bootstrap.dart';
 import '../../data/repositories/media_repository.dart';
 import '../../domain/models/media_file.dart';
 import '../../utils/permissions/permission_handler.dart';
+import '../../utils/media_filter_utils.dart';
 import 'enums/view_mode.dart';
 
 final currentDirectoryProvider = NotifierProvider.autoDispose<CurrentDirectoryNotifier, String?>(CurrentDirectoryNotifier.new);
@@ -119,44 +121,26 @@ final filteredVideosProvider = FutureProvider.autoDispose<List<MediaFile>>((ref)
   final filter = ref.watch(mediaTypeFilterProvider);
   final dir = ref.watch(currentDirectoryProvider);
 
-  var result = videos;
-
-  if (dir != null) {
-    result = result.where((v) => v.directory == dir).toList();
-  }
-
-  if (query.isNotEmpty) {
-    result = result.where((v) => v.name.toLowerCase().contains(query)).toList();
-  }
-
-  switch (filter) {
-    case MediaTypeFilter.video:
-      result = result.where((v) => v.isVideo).toList();
-    case MediaTypeFilter.playlist:
-      result = result.where((v) => v.isPlaylist).toList();
-    case MediaTypeFilter.all:
-      break;
-  }
-
-  result.sort((a, b) {
-    int cmp;
-    switch (sortMode) {
-      case SortMode.name:
-        cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      case SortMode.date:
-        final da = a.lastModified ?? DateTime(0);
-        final db = b.lastModified ?? DateTime(0);
-        cmp = da.compareTo(db);
-      case SortMode.size:
-        cmp = a.sizeBytes.compareTo(b.sizeBytes);
-      case SortMode.type:
-        cmp = a.extension.compareTo(b.extension);
-    }
-    return ascending ? cmp : -cmp;
+  return compute(_applyFiltersIsolate, {
+    'videos': videos,
+    'query': query,
+    'sortMode': sortMode,
+    'ascending': ascending,
+    'filter': filter,
+    'dir': dir,
   });
-
-  return result;
 });
+
+List<MediaFile> _applyFiltersIsolate(Map<String, dynamic> params) {
+  return MediaFilterUtils.applyFilters(
+    videos: params['videos'] as List<MediaFile>,
+    query: params['query'] as String,
+    sortMode: params['sortMode'] as SortMode,
+    ascending: params['ascending'] as bool,
+    filter: params['filter'] as MediaTypeFilter,
+    dir: params['dir'] as String?,
+  );
+}
 
 final folderListProvider = FutureProvider.autoDispose<List<String>>((ref) async {
   final videos = await ref.watch(homeProvider.future);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../subtitle_settings_provider.dart';
+import '../../settings/settings_provider.dart';
 
 class SubtitleSettingsSheet extends ConsumerWidget {
   const SubtitleSettingsSheet({super.key});
@@ -140,12 +141,75 @@ class SubtitleSettingsSheet extends ConsumerWidget {
                 ),
                 SwitchListTile(
                   title: const Text('Smart subtitle auto-select'),
-                  subtitle: const Text('Auto-pick English subs for anime (Japanese audio)'),
+                  subtitle: const Text('Auto-pick subs based on preferred languages'),
                   value: ref.watch(smartSubtitleAutoSelectProvider),
                   onChanged: (_) => ref.read(smartSubtitleAutoSelectProvider.notifier).toggle(),
                 ),
+                if (ref.watch(smartSubtitleAutoSelectProvider)) ...[
+                  ListTile(
+                    title: const Text('Preferred Audio Languages'),
+                    subtitle: Text(ref.watch(preferredAudioLanguagesProvider).join(', ')),
+                    onTap: () => _showLanguageDialog(
+                      context,
+                      ref,
+                      'Audio Languages',
+                      ref.read(preferredAudioLanguagesProvider),
+                      (langs) => ref.read(preferredAudioLanguagesProvider.notifier).update(langs),
+                    ),
+                  ),
+                  ListTile(
+                    title: const Text('Preferred Subtitle Languages'),
+                    subtitle: Text(ref.watch(preferredSubtitleLanguagesProvider).join(', ')),
+                    onTap: () => _showLanguageDialog(
+                      context,
+                      ref,
+                      'Subtitle Languages',
+                      ref.read(preferredSubtitleLanguagesProvider),
+                      (langs) => ref.read(preferredSubtitleLanguagesProvider.notifier).update(langs),
+                    ),
+                  ),
+                ],
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLanguageDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String title,
+    List<String> current,
+    ValueChanged<List<String>> onUpdate,
+  ) {
+    final controller = TextEditingController(text: current.join(', '));
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit $title'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'e.g. en, eng, ja, jpn',
+            helperText: 'Comma-separated ISO-639 codes',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              final langs = controller.text
+                  .split(',')
+                  .map((e) => e.trim().toLowerCase())
+                  .where((e) => e.isNotEmpty)
+                  .toList();
+              onUpdate(langs);
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
           ),
         ],
       ),

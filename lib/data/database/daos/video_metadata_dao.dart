@@ -15,6 +15,12 @@ class VideoMetadataDao extends DatabaseAccessor<AppDatabase> with _$VideoMetadat
     return into(videoMetadata).insertOnConflictUpdate(companion);
   }
 
+  Future<void> upsertBatch(List<VideoMetadataCompanion> companions) async {
+    await batch((b) {
+      b.insertAllOnConflictUpdate(videoMetadata, companions);
+    });
+  }
+
   Future<List<VideoMetadataData>> search(String query) {
     return (select(videoMetadata)..where((t) => t.title.like('%$query%'))).get();
   }

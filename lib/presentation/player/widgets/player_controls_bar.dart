@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
+import '../../../core/theme/app_theme_extensions.dart';
 import '../../settings/settings_provider.dart';
 import '../ab_loop_provider.dart';
 import '../control_layout_provider.dart';
@@ -14,13 +15,12 @@ import 'seek_bar.dart';
 import 'volume_slider.dart';
 
 class PlayerControlsBar extends ConsumerWidget {
-  final bool isPlaying;
-
-  const PlayerControlsBar({super.key, required this.isPlaying});
+  const PlayerControlsBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final player = ref.watch(playerProvider);
+    final isPlaying = ref.watch(playerIsPlayingProvider).asData?.value ?? false;
     final position = ref.watch(playerPositionProvider).asData?.value ?? Duration.zero;
     final duration = ref.watch(playerDurationProvider).asData?.value ?? Duration.zero;
     final buffer = ref.watch(playerBufferProvider).asData?.value ?? Duration.zero;
@@ -70,9 +70,10 @@ class _ConfigurableCenterControls extends ConsumerWidget {
   }
 
   Widget _buildCenterButton(BuildContext context, WidgetRef ref, PlayerButton btn) {
+    final playerColors = PixelvibeColors.of(context);
     switch (btn) {
       case PlayerButton.skipBack:
-        return _iconBtn(Icons.replay_10, btn.tooltip, () {
+        return _iconBtn(context, Icons.replay_10, btn.tooltip, () {
           final interval = ref.read(skipIntervalProvider);
           _skip(ref, -interval);
         });
@@ -87,6 +88,7 @@ class _ConfigurableCenterControls extends ConsumerWidget {
             child: IconButton(
               icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, fill: 1),
               iconSize: 40,
+              color: playerColors.playerControlColor,
               onPressed: () {
                 HapticFeedback.selectionClick();
                 final p = ref.read(playerProvider);
@@ -96,7 +98,7 @@ class _ConfigurableCenterControls extends ConsumerWidget {
           ),
         );
       case PlayerButton.skipForward:
-        return _iconBtn(Icons.forward_10, btn.tooltip, () {
+        return _iconBtn(context, Icons.forward_10, btn.tooltip, () {
           final interval = ref.read(skipIntervalProvider);
           _skip(ref, interval);
         });
@@ -106,13 +108,13 @@ class _ConfigurableCenterControls extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.skip_previous, color: Colors.white70, size: 20),
+              icon: Icon(Icons.skip_previous, color: playerColors.playerControlSecondaryColor, size: 20),
               tooltip: 'Frame back',
               onPressed: () => ref.read(frameStepProvider).stepBackward(),
             ),
-            Text('Frame', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white54)),
+            Text('Frame', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: playerColors.playerControlSecondaryColor)),
             IconButton(
-              icon: const Icon(Icons.skip_next, color: Colors.white70, size: 20),
+              icon: Icon(Icons.skip_next, color: playerColors.playerControlSecondaryColor, size: 20),
               tooltip: 'Frame forward',
               onPressed: () => ref.read(frameStepProvider).stepForward(),
             ),
@@ -127,7 +129,7 @@ class _ConfigurableCenterControls extends ConsumerWidget {
               LoopMode.one => Icons.repeat_one,
               LoopMode.all => Icons.repeat,
             };
-            return _iconBtn(icon, 'Repeat: ${mode.name}', () {
+            return _iconBtn(context, icon, 'Repeat: ${mode.name}', () {
               ref.read(repeatModeProvider.notifier).cycle();
               ref.read(playerOverlayProvider.notifier).show(RepeatModeChange(ref.read(repeatModeProvider).name));
             }, active: ref.read(repeatModeProvider) != LoopMode.off);
@@ -137,14 +139,14 @@ class _ConfigurableCenterControls extends ConsumerWidget {
         return Consumer(
           builder: (_, ref, child) {
             final shuffled = ref.watch(shuffleEnabledProvider);
-            return _iconBtn(Icons.shuffle, 'Shuffle: ${shuffled ? "On" : "Off"}',
+            return _iconBtn(context, Icons.shuffle, 'Shuffle: ${shuffled ? "On" : "Off"}',
               () => ref.read(shuffleEnabledProvider.notifier).toggle(),
               active: shuffled,
             );
           },
         );
       case PlayerButton.playlist:
-        return _iconBtn(Icons.playlist_play, btn.tooltip, () {
+        return _iconBtn(context, Icons.playlist_play, btn.tooltip, () {
           final queue = ref.read(playlistQueueProvider);
           showModalBottomSheet(
             context: context,
@@ -163,7 +165,7 @@ class _ConfigurableCenterControls extends ConsumerWidget {
         return Consumer(
           builder: (_, ref, child) {
             final ab = ref.watch(abLoopProvider);
-            return _iconBtn(ab.isActive ? Icons.loop : Icons.loop_outlined, btn.tooltip, () {
+            return _iconBtn(context, ab.isActive ? Icons.loop : Icons.loop_outlined, btn.tooltip, () {
               if (ab.isActive) {
                 ref.read(abLoopProvider.notifier).clear();
                 ref.read(playerOverlayProvider.notifier).show(const ABLoopUpdate(false));
@@ -190,11 +192,12 @@ class _ConfigurableCenterControls extends ConsumerWidget {
     }
   }
 
-  Widget _iconBtn(IconData icon, String tooltip, VoidCallback onPressed, {bool active = false}) {
+  Widget _iconBtn(BuildContext context, IconData icon, String tooltip, VoidCallback onPressed, {bool active = false}) {
+    final playerColors = PixelvibeColors.of(context);
     return IconButton(
       icon: Icon(icon),
       iconSize: 28,
-      color: active ? Colors.cyan : Colors.white70,
+      color: active ? playerColors.playerControlActiveColor : playerColors.playerControlSecondaryColor,
       onPressed: () {
         HapticFeedback.lightImpact();
         onPressed();
@@ -236,12 +239,14 @@ class _PlaylistNavRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _navButton(
+            context: context,
             icon: Icons.skip_previous,
             tooltip: 'Previous',
             onPressed: queue.hasPrev ? () => _playPrevious() : null,
           ),
           const SizedBox(width: 8),
           _navButton(
+            context: context,
             icon: Icons.shuffle,
             tooltip: 'Shuffle: ${queue.shuffled ? "On" : "Off"}',
             onPressed: () => _toggleShuffle(),
@@ -249,6 +254,7 @@ class _PlaylistNavRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _navButton(
+            context: context,
             icon: _repeatIcon(repeatMode),
             tooltip: 'Repeat: ${repeatMode.name}',
             onPressed: () => _cycleRepeat(),
@@ -256,12 +262,14 @@ class _PlaylistNavRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _navButton(
+            context: context,
             icon: Icons.skip_next,
             tooltip: 'Next',
             onPressed: () => _playNext(),
           ),
           const SizedBox(width: 8),
           _navButton(
+            context: context,
             icon: Icons.playlist_play,
             tooltip: 'Playlist',
             onPressed: () => _showPlaylistSheet(context),
@@ -272,15 +280,17 @@ class _PlaylistNavRow extends StatelessWidget {
   }
 
   Widget _navButton({
+    required BuildContext context,
     required IconData icon,
     required String tooltip,
     VoidCallback? onPressed,
     bool isActive = false,
   }) {
+    final playerColors = PixelvibeColors.of(context);
     return IconButton(
       icon: Icon(icon),
       iconSize: 24,
-      color: isActive ? Colors.cyan : Colors.white70,
+      color: isActive ? playerColors.playerControlActiveColor : playerColors.playerControlSecondaryColor,
       onPressed: onPressed,
       tooltip: tooltip,
     );

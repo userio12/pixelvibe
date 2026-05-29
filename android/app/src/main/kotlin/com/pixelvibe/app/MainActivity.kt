@@ -160,9 +160,11 @@ class MainActivity : FlutterActivity() {
             setMethodCallHandler { call, result ->
                 when (call.method) {
                     "scanVideos" -> {
+                        val offset = call.argument<Int>("offset") ?: 0
+                        val limit = call.argument<Int>("limit") ?: Int.MAX_VALUE
                         scanScope.launch {
                             try {
-                                val scanResult = withContext(Dispatchers.IO) { mediaScanner.scanVideos() }
+                                val scanResult = withContext(Dispatchers.IO) { mediaScanner.scanVideos(offset, limit) }
                                 result.success(scanResult)
                             } catch (e: Throwable) {
                                 result.error("SCAN_ERROR", e.message, null)
@@ -217,8 +219,14 @@ class MainActivity : FlutterActivity() {
         networkPlugin?.disconnectAll()
         networkPlugin?.cancel()
         mediaSessionCallback?.release()
-        unregisterReceiver(noisyReceiver)
-        unregisterReceiver(pipActionReceiver)
+        audioFocusHelper?.abandonFocus()
+        stopForegroundService()
+        try {
+            unregisterReceiver(noisyReceiver)
+        } catch (e: Exception) {}
+        try {
+            unregisterReceiver(pipActionReceiver)
+        } catch (e: Exception) {}
         super.onDestroy()
     }
 

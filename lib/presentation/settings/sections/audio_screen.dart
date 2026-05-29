@@ -1,25 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/di/providers.dart';
 import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
 import '../widgets/custom_slider_tile.dart';
 import '../widgets/language_picker.dart';
-
-final _volumeBoostCapProvider = NotifierProvider.autoDispose<_VolumeBoostNotifier, double>(
-  _VolumeBoostNotifier.new,
-);
-class _VolumeBoostNotifier extends Notifier<double> {
-  @override
-  double build() => ref.watch(preferencesServiceProvider).getVolumeBoostCap();
-  void update(double v) {
-    state = v;
-    ref.read(preferencesServiceProvider).setVolumeBoostCap(v);
-  }
-}
 
 const _audioChannelOptions = ['Auto Safe', 'Stereo', 'Surround', '5.1', '7.1'];
 
@@ -31,8 +18,9 @@ class AudioScreen extends ConsumerWidget {
     final pitchCorrection = ref.watch(audioPitchCorrectionProvider);
     final volumeNormalization = ref.watch(volumeNormalizationProvider);
     final backgroundPlayback = ref.watch(audioBackgroundProvider);
-    final volumeBoostCap = ref.watch(_volumeBoostCapProvider);
+    final volumeBoostCap = ref.watch(volumeBoostCapProvider);
     final audioChannels = ref.watch(audioChannelsProvider);
+    final preferredLangs = ref.watch(preferredAudioLanguagesProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -63,8 +51,8 @@ class AudioScreen extends ConsumerWidget {
               children: [
                 _LanguageTile(
                   title: 'Preferred languages',
-                  currentValue: ref.watch(preferencesServiceProvider).getPreferredAudioLanguages(),
-                  onSave: (v) => ref.read(preferencesServiceProvider).setPreferredAudioLanguages(v),
+                  currentValue: preferredLangs,
+                  onSave: (v) => ref.read(preferredAudioLanguagesProvider.notifier).update(v),
                 ),
                 CustomSwitchTile(
                   title: 'Enable audio pitch correction',
@@ -142,7 +130,7 @@ class AudioScreen extends ConsumerWidget {
                   min: 0.0,
                   max: 1.0,
                   divisions: 100,
-                  onChanged: (v) => ref.read(_volumeBoostCapProvider.notifier).update(v),
+                  onChanged: (v) => ref.read(volumeBoostCapProvider.notifier).update(v),
                 ),
               ],
             ),
@@ -156,8 +144,8 @@ class AudioScreen extends ConsumerWidget {
 
 class _LanguageTile extends StatelessWidget {
   final String title;
-  final String currentValue;
-  final void Function(String) onSave;
+  final List<String> currentValue;
+  final ValueChanged<List<String>> onSave;
 
   const _LanguageTile({
     required this.title,
@@ -167,8 +155,7 @@ class _LanguageTile extends StatelessWidget {
 
   String _displayValue() {
     if (currentValue.isEmpty) return 'Not set (will use video default)';
-    final codes = currentValue.split(',');
-    final names = codes.map((c) {
+    final names = currentValue.map((c) {
       final trimmed = c.trim().toLowerCase();
       final match = commonLanguages.firstWhere(
         (e) => e.$1 == trimmed,
@@ -184,7 +171,7 @@ class _LanguageTile extends StatelessWidget {
     return StandardActionTile(
       title: title,
       subtitle: _displayValue(),
-      onTap: () => showLanguagePicker(context, currentValue, onSave),
+      onTap: () => showLanguagePicker(context, currentValue.join(','), (v) => onSave(v.split(',').where((e) => e.isNotEmpty).toList())),
     );
   }
 }

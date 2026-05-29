@@ -2,33 +2,16 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/di/providers.dart';
+import '../settings_provider.dart';
 import '../../../core/widgets/app_states.dart';
 import '../../../services/logger.dart';
-
-final _blacklistedFoldersProvider = NotifierProvider.autoDispose<_BlacklistNotifier, List<String>>(
-  _BlacklistNotifier.new,
-);
-class _BlacklistNotifier extends Notifier<List<String>> {
-  @override
-  List<String> build() => ref.watch(preferencesServiceProvider).getBlacklistedFolders();
-  Future<void> add(String path) async {
-    if (state.contains(path)) return;
-    state = [...state, path];
-    await ref.read(preferencesServiceProvider).setBlacklistedFolders(state);
-  }
-  Future<void> remove(String path) async {
-    state = state.where((p) => p != path).toList();
-    await ref.read(preferencesServiceProvider).setBlacklistedFolders(state);
-  }
-}
 
 class FoldersScreen extends ConsumerWidget {
   const FoldersScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final folders = ref.watch(_blacklistedFoldersProvider);
+    final folders = ref.watch(blacklistedFoldersProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -131,7 +114,7 @@ class FoldersScreen extends ConsumerWidget {
                         return confirmed == true;
                       },
                       onDismissed: (_) {
-                        ref.read(_blacklistedFoldersProvider.notifier).remove(path);
+                        ref.read(blacklistedFoldersProvider.notifier).remove(path);
                       },
                       child: ListTile(
                         leading: const Icon(Icons.folder_off_outlined, color: Color(0xFF90959A)),
@@ -165,7 +148,7 @@ class FoldersScreen extends ConsumerWidget {
                           dialogTitle: 'Select folder to blacklist',
                         );
                         if (result != null) {
-                          await ref.read(_blacklistedFoldersProvider.notifier).add(result);
+                          await ref.read(blacklistedFoldersProvider.notifier).add(result);
                         }
                       } catch (e) {
                         Logger.error('Failed to pick folder', e);

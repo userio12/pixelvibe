@@ -18,11 +18,24 @@ class ScanService {
 
   Future<List<Map<String, dynamic>>> scanVideos() async {
     try {
-      final result = await _channel
-          .invokeMethod<String>('scanVideos')
-          .timeout(const Duration(seconds: 30));
-      if (result == null) return [];
-      return (json.decode(result) as List).cast<Map<String, dynamic>>();
+      final List<Map<String, dynamic>> allVideos = [];
+      const int limit = 500;
+      int offset = 0;
+      
+      while (true) {
+        final result = await _channel
+            .invokeMethod<List<dynamic>>('scanVideos', {'offset': offset, 'limit': limit})
+            .timeout(const Duration(seconds: 30));
+        
+        if (result == null || result.isEmpty) break;
+        
+        allVideos.addAll(result.map((e) => Map<String, dynamic>.from(e as Map)));
+        
+        if (result.length < limit) break;
+        offset += limit;
+      }
+      
+      return allVideos;
     } on TimeoutException {
       Logger.error('ScanService.scanVideos timed out after 30s');
       return [];

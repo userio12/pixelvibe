@@ -4,6 +4,12 @@ import 'dart:ui' as ui;
 class PixelvibeColors extends ThemeExtension<PixelvibeColors> {
   const PixelvibeColors({
     required this.playerControlColor,
+    required this.playerControlActiveColor,
+    required this.playerControlSecondaryColor,
+    required this.playerControlBgColor,
+    required this.playerErrorBg,
+    required this.playerErrorIcon,
+    required this.playerErrorText,
     required this.surfaceContainerLow,
     required this.surfaceContainerMid,
     required this.surfaceContainerHigh,
@@ -12,6 +18,12 @@ class PixelvibeColors extends ThemeExtension<PixelvibeColors> {
   });
 
   final Color playerControlColor;
+  final Color playerControlActiveColor;
+  final Color playerControlSecondaryColor;
+  final Color playerControlBgColor;
+  final Color playerErrorBg;
+  final Color playerErrorIcon;
+  final Color playerErrorText;
   final Color surfaceContainerLow;
   final Color surfaceContainerMid;
   final Color surfaceContainerHigh;
@@ -22,6 +34,12 @@ class PixelvibeColors extends ThemeExtension<PixelvibeColors> {
 
   static const light = PixelvibeColors(
     playerControlColor: _white,
+    playerControlActiveColor: Colors.cyan,
+    playerControlSecondaryColor: Colors.white70,
+    playerControlBgColor: Colors.white24,
+    playerErrorBg: Colors.black87,
+    playerErrorIcon: Colors.red,
+    playerErrorText: _white,
     surfaceContainerLow: Color(0x0D000000),
     surfaceContainerMid: Color(0x10000000),
     surfaceContainerHigh: Color(0x1C000000),
@@ -31,6 +49,12 @@ class PixelvibeColors extends ThemeExtension<PixelvibeColors> {
 
   static const dark = PixelvibeColors(
     playerControlColor: _white,
+    playerControlActiveColor: Colors.cyan,
+    playerControlSecondaryColor: Colors.white70,
+    playerControlBgColor: Colors.white24,
+    playerErrorBg: Colors.black87,
+    playerErrorIcon: Colors.red,
+    playerErrorText: _white,
     surfaceContainerLow: Color(0x0DFFFFFF),
     surfaceContainerMid: Color(0x10FFFFFF),
     surfaceContainerHigh: Color(0x1CFFFFFF),
@@ -40,6 +64,12 @@ class PixelvibeColors extends ThemeExtension<PixelvibeColors> {
 
   static const amoled = PixelvibeColors(
     playerControlColor: _white,
+    playerControlActiveColor: Colors.cyan,
+    playerControlSecondaryColor: Colors.white70,
+    playerControlBgColor: Colors.white24,
+    playerErrorBg: Colors.black87,
+    playerErrorIcon: Colors.red,
+    playerErrorText: _white,
     surfaceContainerLow: Color(0x0AFFFFFF),
     surfaceContainerMid: Color(0x0FFFFFFF),
     surfaceContainerHigh: Color(0x1AFFFFFF),
@@ -50,6 +80,12 @@ class PixelvibeColors extends ThemeExtension<PixelvibeColors> {
   @override
   PixelvibeColors copyWith({
     Color? playerControlColor,
+    Color? playerControlActiveColor,
+    Color? playerControlSecondaryColor,
+    Color? playerControlBgColor,
+    Color? playerErrorBg,
+    Color? playerErrorIcon,
+    Color? playerErrorText,
     Color? surfaceContainerLow,
     Color? surfaceContainerMid,
     Color? surfaceContainerHigh,
@@ -58,6 +94,12 @@ class PixelvibeColors extends ThemeExtension<PixelvibeColors> {
   }) {
     return PixelvibeColors(
       playerControlColor: playerControlColor ?? this.playerControlColor,
+      playerControlActiveColor: playerControlActiveColor ?? this.playerControlActiveColor,
+      playerControlSecondaryColor: playerControlSecondaryColor ?? this.playerControlSecondaryColor,
+      playerControlBgColor: playerControlBgColor ?? this.playerControlBgColor,
+      playerErrorBg: playerErrorBg ?? this.playerErrorBg,
+      playerErrorIcon: playerErrorIcon ?? this.playerErrorIcon,
+      playerErrorText: playerErrorText ?? this.playerErrorText,
       surfaceContainerLow: surfaceContainerLow ?? this.surfaceContainerLow,
       surfaceContainerMid: surfaceContainerMid ?? this.surfaceContainerMid,
       surfaceContainerHigh: surfaceContainerHigh ?? this.surfaceContainerHigh,
@@ -71,6 +113,12 @@ class PixelvibeColors extends ThemeExtension<PixelvibeColors> {
     if (other is! PixelvibeColors) return this;
     return PixelvibeColors(
       playerControlColor: Color.lerp(playerControlColor, other.playerControlColor, t)!,
+      playerControlActiveColor: Color.lerp(playerControlActiveColor, other.playerControlActiveColor, t)!,
+      playerControlSecondaryColor: Color.lerp(playerControlSecondaryColor, other.playerControlSecondaryColor, t)!,
+      playerControlBgColor: Color.lerp(playerControlBgColor, other.playerControlBgColor, t)!,
+      playerErrorBg: Color.lerp(playerErrorBg, other.playerErrorBg, t)!,
+      playerErrorIcon: Color.lerp(playerErrorIcon, other.playerErrorIcon, t)!,
+      playerErrorText: Color.lerp(playerErrorText, other.playerErrorText, t)!,
       surfaceContainerLow: Color.lerp(surfaceContainerLow, other.surfaceContainerLow, t)!,
       surfaceContainerMid: Color.lerp(surfaceContainerMid, other.surfaceContainerMid, t)!,
       surfaceContainerHigh: Color.lerp(surfaceContainerHigh, other.surfaceContainerHigh, t)!,

@@ -6,6 +6,8 @@ import java.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.util.Log
+import android.os.Build
+import java.io.InputStream
 
 class WebDAVClient(
     private val host: String,
@@ -77,7 +79,8 @@ class WebDAVClient(
                         name = name,
                         path = href,
                         isDirectory = isCollection,
-                        size = sizeStr.toLongOrNull() ?: 0
+                        size = sizeStr.toLongOrNull() ?: 0,
+                        lastModified = 0 // In a full implementation, parse dav:getlastmodified
                     ))
                 }
             } catch (_: Exception) { }
@@ -85,13 +88,31 @@ class WebDAVClient(
         return files
     }
 
-    override suspend fun getInputStream(path: String): java.io.InputStream = withContext(Dispatchers.IO) {
+    override suspend fun getInputStream(path: String, offset: Long): InputStream = withContext(Dispatchers.IO) {
         val conn = createConnection(path)
         conn.requestMethod = "GET"
+        if (offset > 0) {
+            conn.setRequestProperty("Range", "bytes=$offset-")
+        }
         object : java.io.FilterInputStream(conn.inputStream) {
             override fun close() {
                 try { super.close() } finally { conn.disconnect() }
             }
+        }
+    }
+
+    override suspend fun getFileSize(path: String): Long = withContext(Dispatchers.IO) {
+        val conn = createConnection(path)
+        conn.requestMethod = "HEAD"
+        try {
+            val length = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                conn.contentLengthLong
+            } else {
+                conn.contentLength.toLong()
+            }
+            length
+        } finally {
+            conn.disconnect()
         }
     }
 

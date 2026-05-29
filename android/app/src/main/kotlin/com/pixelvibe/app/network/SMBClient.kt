@@ -53,7 +53,11 @@ class SmbClient(
     override suspend fun listFiles(path: String): List<NetworkFile> = withContext(Dispatchers.IO) {
         val sess = getSession()
         val cleanPath = path.removePrefix("/").removeSuffix("/")
-        if (cleanPath.isEmpty()) return@withContext emptyList()
+        
+        if (cleanPath.isEmpty()) {
+            // List shares
+            return@withContext emptyList<NetworkFile>()
+        }
 
         val parts = cleanPath.split("/", limit = 2)
         val shareName = parts[0]
@@ -65,7 +69,7 @@ class SmbClient(
             files.map { f ->
                 NetworkFile(
                     name = f.fileName,
-                    path = "/$shareName/${f.fileName}",
+                    path = "/$shareName/${if (subPath.isEmpty()) "" else "$subPath/"}${f.fileName}",
                     isDirectory = (f.fileAttributes and FILE_ATTRIBUTE_DIRECTORY) != 0L,
                     size = f.endOfFile,
                     lastModified = f.lastWriteTime?.toInstant()?.toEpochMilli() ?: 0,
@@ -76,7 +80,7 @@ class SmbClient(
         }
     }
 
-    override suspend fun getInputStream(path: String): InputStream = withContext(Dispatchers.IO) {
+    override suspend fun getInputStream(path: String, offset: Long): InputStream = withContext(Dispatchers.IO) {
         val sess = getSession()
         val cleanPath = path.removePrefix("/")
         val parts = cleanPath.split("/", limit = 2)
@@ -98,10 +102,44 @@ class SmbClient(
             try { share.close() } catch (_: Exception) { }
             throw e
         }
-        object : java.io.FilterInputStream(smbFile.inputStream) {
-            override fun close() {
-                try { super.close() } finally { smbFile.close() }
+
+        object : InputStream() {
+            private var position = offset
+
+            override fun read(): Int {
+                val b = ByteArray(1)
+                val r = read(b, 0, 1)
+                return if (r <= 0) -1 else b[0].toInt() and 0xFF
             }
+
+            override fun read(b: ByteArray, off: Int, len: Int): Int {
+                val read = smbFile.read(b, position, off, len)
+                if (read > 0) {
+                    position += read
+                    return read
+                }
+                return -1
+            }
+
+            override fun close() {
+                try { smbFile.close() } finally { share.close() }
+            }
+        }
+    }
+
+    override suspend fun getFileSize(path: String): Long = withContext(Dispatchers.IO) {
+        val sess = getSession()
+        val cleanPath = path.removePrefix("/")
+        val parts = cleanPath.split("/", limit = 2)
+        if (parts.size < 2) return@withContext 0L
+        val shareName = parts[0]
+        val filePath = parts[1]
+        val share = sess.connectShare(shareName)
+        require(share is DiskShare) { "Share $shareName is not a DiskShare" }
+        try {
+            share.getFileInformation(filePath).standardInformation.endOfFile
+        } finally {
+            try { share.close() } catch (_: Exception) { }
         }
     }
 

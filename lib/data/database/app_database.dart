@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -45,6 +45,10 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(videoMetadata, videoMetadata.contentUri);
           await m.addColumn(videoMetadata, videoMetadata.playCount);
           await m.addColumn(videoMetadata, videoMetadata.watched);
+        }
+        if (from < 3) {
+          await m.createIndex(Index('video_added_at', 'CREATE INDEX video_added_at ON video_metadata (added_at)'));
+          await m.createIndex(Index('recent_played_at', 'CREATE INDEX recent_played_at ON recently_played (played_at)'));
         }
       },
     );

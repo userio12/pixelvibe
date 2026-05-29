@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_theme_extensions.dart';
 import '../../settings/settings_provider.dart';
 
-class SeekBar extends ConsumerWidget {
+class SeekBar extends ConsumerStatefulWidget {
   final Duration position;
   final Duration duration;
   final double bufferProgress;
@@ -16,6 +18,14 @@ class SeekBar extends ConsumerWidget {
     required this.onSeek,
   });
 
+  @override
+  ConsumerState<SeekBar> createState() => _SeekBarState();
+}
+
+class _SeekBarState extends ConsumerState<SeekBar> {
+  Duration? _dragPosition;
+  bool _isDragging = false;
+
   String _format(Duration d) {
     final h = d.inHours;
     final m = d.inMinutes.remainder(60);
@@ -25,17 +35,20 @@ class SeekBar extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final showRemaining = ref.watch(showTimeRemainingProvider);
     final style = ref.watch(seekbarStyleProvider);
-    final totalMs = duration.inMilliseconds.toDouble();
-    final posMs = position.inMilliseconds.toDouble().clamp(0, totalMs);
+    
+    final displayPosition = _isDragging && _dragPosition != null ? _dragPosition! : widget.position;
+    
+    final totalMs = widget.duration.inMilliseconds.toDouble();
+    final posMs = displayPosition.inMilliseconds.toDouble().clamp(0, totalMs);
     final progress = totalMs > 0 ? posMs / totalMs : 0.0;
 
     final rightText = showRemaining
-        ? '-${_format(duration - position)}'
-        : _format(duration);
+        ? '-${_format(widget.duration - displayPosition)}'
+        : _format(widget.duration);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -51,20 +64,29 @@ class SeekBar extends ConsumerWidget {
               label: 'Seek position',
               child: Slider(
                 value: progress,
-                onChanged: (v) => onSeek(Duration(milliseconds: (v * totalMs).round())),
+                onChangeStart: (_) {
+                  HapticFeedback.lightImpact();
+                  setState(() => _isDragging = true);
+                },
+                onChangeEnd: (v) {
+                  HapticFeedback.mediumImpact();
+                  setState(() => _isDragging = false);
+                  widget.onSeek(Duration(milliseconds: (v * totalMs).round()));
+                },
+                onChanged: (v) => setState(() => _dragPosition = Duration(milliseconds: (v * totalMs).round())),
               ),
             ),
           ),
         if (style == SeekbarStyle.wavy)
-          _WavySeekbar(progress: progress, totalMs: totalMs, onSeek: onSeek),
+          _WavySeekbar(progress: progress, totalMs: totalMs, onSeek: widget.onSeek),
         if (style == SeekbarStyle.thick)
-          _ThickSeekbar(progress: progress, totalMs: totalMs, onSeek: onSeek),
+          _ThickSeekbar(progress: progress, totalMs: totalMs, onSeek: widget.onSeek),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(_format(position), style: theme.textTheme.labelSmall),
+              Text(_format(displayPosition), style: theme.textTheme.labelSmall),
               Text(rightText, style: theme.textTheme.labelSmall),
             ],
           ),
@@ -89,12 +111,15 @@ class _WavySeekbar extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: GestureDetector(
-          onTapDown: (d) => onSeek(Duration(milliseconds: (d.localPosition.dx / (MediaQuery.of(context).size.width - 32) * totalMs).round().clamp(0, totalMs.toInt()))),
+          onTapDown: (d) {
+            HapticFeedback.lightImpact();
+            onSeek(Duration(milliseconds: (d.localPosition.dx / (MediaQuery.of(context).size.width - 32) * totalMs).round().clamp(0, totalMs.toInt())));
+          },
           child: CustomPaint(
             size: const Size(double.infinity, 32),
             painter: _WavyPainter(
               progress: progress,
-              color: theme.colorScheme.primary,
+              color: PixelvibeColors.of(context).playerControlActiveColor,
               trackColor: theme.colorScheme.surfaceContainerHighest,
             ),
           ),
@@ -168,12 +193,15 @@ class _ThickSeekbar extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: GestureDetector(
-          onTapDown: (d) => onSeek(Duration(milliseconds: (d.localPosition.dx / (MediaQuery.of(context).size.width - 32) * totalMs).round().clamp(0, totalMs.toInt()))),
+          onTapDown: (d) {
+            HapticFeedback.lightImpact();
+            onSeek(Duration(milliseconds: (d.localPosition.dx / (MediaQuery.of(context).size.width - 32) * totalMs).round().clamp(0, totalMs.toInt())));
+          },
           child: CustomPaint(
             size: const Size(double.infinity, 16),
             painter: _ThickPainter(
               progress: progress,
-              color: theme.colorScheme.primary,
+              color: PixelvibeColors.of(context).playerControlActiveColor,
               trackColor: theme.colorScheme.surfaceContainerHighest,
             ),
           ),

@@ -1,87 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/di/providers.dart';
+import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
 import '../widgets/info_block.dart';
-
-NotifierProvider<_BoolNotifier, bool> _boolPref(String key, bool defaultValue) {
-  return NotifierProvider<_BoolNotifier, bool>(() => _BoolNotifier(key, defaultValue));
-}
-
-class _BoolNotifier extends Notifier<bool> {
-  final String _key;
-  final bool _defaultValue;
-  _BoolNotifier(this._key, this._defaultValue);
-
-  @override
-  bool build() => ref.watch(preferencesServiceProvider).getBool(_key, _defaultValue);
-  void toggle() {
-    state = !state;
-    ref.read(preferencesServiceProvider).setBool(_key, state);
-  }
-}
-
-NotifierProvider<_IntNotifier, int> _intPref(String key, int defaultValue) {
-  return NotifierProvider<_IntNotifier, int>(() => _IntNotifier(key, defaultValue));
-}
-
-class _IntNotifier extends Notifier<int> {
-  final String _key;
-  final int _defaultValue;
-  _IntNotifier(this._key, this._defaultValue);
-
-  @override
-  int build() => ref.watch(preferencesServiceProvider).getInt(_key, _defaultValue);
-  void update(int v) {
-    state = v;
-    ref.read(preferencesServiceProvider).setInt(_key, v);
-  }
-}
-
-NotifierProvider<_StringNotifier, String> _stringPref(String key, String defaultValue) {
-  return NotifierProvider<_StringNotifier, String>(() => _StringNotifier(key, defaultValue));
-}
-
-class _StringNotifier extends Notifier<String> {
-  final String _key;
-  final String _defaultValue;
-  _StringNotifier(this._key, this._defaultValue);
-
-  @override
-  String build() => ref.watch(preferencesServiceProvider).getString(_key, _defaultValue);
-  void update(String v) {
-    state = v;
-    ref.read(preferencesServiceProvider).setString(_key, v);
-  }
-}
-
-final _doubleTapSeekDurationProvider = _intPref('double_tap_seek_duration', 10);
-final _doubleTapSeekAreaWidthProvider = _intPref('double_tap_seek_area_width', 35);
-final _centerGestureSingleTapProvider = _boolPref('center_gesture_single_tap', false);
-final _doubleTapLeftActionProvider = _stringPref('double_tap_left_action', 'Seek');
-final _doubleTapRightActionProvider = _stringPref('double_tap_right_action', 'Seek');
-final _mediaControlsDoubleTapProvider = _boolPref('media_controls_double_tap', true);
-final _mediaControlsSingleTapProvider = _boolPref('media_controls_single_tap', true);
-final _mediaControlsLongPressProvider = _boolPref('media_controls_long_press', true);
-final _mediaControlsSwipeProvider = _boolPref('media_controls_swipe', true);
 
 class GesturesScreen extends ConsumerWidget {
   const GesturesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final doubleTapSeekDuration = ref.watch(_doubleTapSeekDurationProvider);
-    final doubleTapSeekAreaWidth = ref.watch(_doubleTapSeekAreaWidthProvider);
-    final centerGestureSingleTap = ref.watch(_centerGestureSingleTapProvider);
-    final doubleTapLeftAction = ref.watch(_doubleTapLeftActionProvider);
-    final doubleTapRightAction = ref.watch(_doubleTapRightActionProvider);
-    final mediaControlsDoubleTap = ref.watch(_mediaControlsDoubleTapProvider);
-    final mediaControlsSingleTap = ref.watch(_mediaControlsSingleTapProvider);
-    final mediaControlsLongPress = ref.watch(_mediaControlsLongPressProvider);
-    final mediaControlsSwipe = ref.watch(_mediaControlsSwipeProvider);
+    final doubleTapSeekDuration = ref.watch(doubleTapSeekDurationProvider);
+    final doubleTapSeekAreaWidth = ref.watch(doubleTapSeekAreaWidthProvider);
+    final centerGestureSingleTap = ref.watch(centerGestureSingleTapProvider);
+    final doubleTapLeftAction = ref.watch(doubleTapLeftActionProvider);
+    final doubleTapRightAction = ref.watch(doubleTapRightActionProvider);
+    final mediaControlsDoubleTap = ref.watch(mediaControlsDoubleTapProvider);
+    final mediaControlsSingleTap = ref.watch(mediaControlsSingleTapProvider);
+    final mediaControlsLongPress = ref.watch(mediaControlsLongPressProvider);
+    final mediaControlsSwipe = ref.watch(mediaControlsSwipeProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -119,7 +58,7 @@ class GesturesScreen extends ConsumerWidget {
                   max: 60,
                   divisions: 11,
                   labelSuffix: 's',
-                  onChanged: (v) => ref.read(_doubleTapSeekDurationProvider.notifier).update(v.round()),
+                  onChanged: (v) => ref.read(doubleTapSeekDurationProvider.notifier).update(v.round()),
                 ),
                 _SliderTile(
                   title: 'Double Tap Seek Area Width',
@@ -129,7 +68,7 @@ class GesturesScreen extends ConsumerWidget {
                   max: 50,
                   divisions: 8,
                   labelSuffix: '%',
-                  onChanged: (v) => ref.read(_doubleTapSeekAreaWidthProvider.notifier).update(v.round()),
+                  onChanged: (v) => ref.read(doubleTapSeekAreaWidthProvider.notifier).update(v.round()),
                 ),
                 StandardActionTile(
                   title: 'Double tap (left)',
@@ -153,7 +92,7 @@ class GesturesScreen extends ConsumerWidget {
                   title: 'Use single tap for center gesture',
                   subtitle: 'Use a single tap in the center for gestures (like play/pause) instead of a double tap.',
                   value: centerGestureSingleTap,
-                  onChanged: (_) => ref.read(_centerGestureSingleTapProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(centerGestureSingleTapProvider.notifier).toggle(),
                 ),
                 const InfoBlock(
                   text:
@@ -183,22 +122,22 @@ class GesturesScreen extends ConsumerWidget {
                 CustomSwitchTile(
                   title: 'Double tap',
                   value: mediaControlsDoubleTap,
-                  onChanged: (_) => ref.read(_mediaControlsDoubleTapProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(mediaControlsDoubleTapProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Single tap',
                   value: mediaControlsSingleTap,
-                  onChanged: (_) => ref.read(_mediaControlsSingleTapProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(mediaControlsSingleTapProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Long press',
                   value: mediaControlsLongPress,
-                  onChanged: (_) => ref.read(_mediaControlsLongPressProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(mediaControlsLongPressProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Swipe',
                   value: mediaControlsSwipe,
-                  onChanged: (_) => ref.read(_mediaControlsSwipeProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(mediaControlsSwipeProvider.notifier).toggle(),
                 ),
                 const InfoBlock(
                   text:

@@ -1,18 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/di/providers.dart';
 import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/custom_switch_tile.dart';
 import '../widgets/custom_slider_tile.dart';
-import '../widgets/pref_notifiers.dart';
-
-final _showFullNamesProvider = boolPref('show_full_file_names', false);
-final _showNewLabelProvider = boolPref('show_new_label', true);
-final _daysThresholdProvider = intPref('days_threshold', 7);
-final _autoScrollProvider = boolPref('auto_scroll_to_last_played', false);
-final _tapThumbnailProvider = boolPref('tap_thumbnail_to_select', false);
-final _showNetworkThumbsProvider = boolPref('show_network_thumbnails', false);
 
 class AppearanceScreen extends ConsumerWidget {
   const AppearanceScreen({super.key});
@@ -21,13 +12,13 @@ class AppearanceScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     final amoled = ref.watch(amoledModeProvider);
-    final showFullNames = ref.watch(_showFullNamesProvider);
-    final showNewLabel = ref.watch(_showNewLabelProvider);
-    final daysThreshold = ref.watch(_daysThresholdProvider);
-    final autoScroll = ref.watch(_autoScrollProvider);
-    final watchedThreshold = ref.watch(preferencesServiceProvider).getWatchedThreshold();
-    final tapThumbnail = ref.watch(_tapThumbnailProvider);
-    final showNetworkThumbs = ref.watch(_showNetworkThumbsProvider);
+    final showFullNames = ref.watch(showFullFileNamesProvider);
+    final showNewLabel = ref.watch(showNewLabelProvider);
+    final daysThreshold = ref.watch(daysThresholdProvider);
+    final autoScroll = ref.watch(autoScrollToLastPlayedProvider);
+    final watchedThreshold = ref.watch(watchedThresholdProvider);
+    final tapThumbnail = ref.watch(tapThumbnailToSelectProvider);
+    final showNetworkThumbs = ref.watch(showNetworkThumbnailsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -78,13 +69,13 @@ class AppearanceScreen extends ConsumerWidget {
                   title: 'Show full file names',
                   subtitle: 'Display complete file names instead of truncated ones',
                   value: showFullNames,
-                  onChanged: (_) => ref.read(_showFullNamesProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(showFullFileNamesProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Show new label',
                   subtitle: 'Show a "New" label on files added within the threshold',
                   value: showNewLabel,
-                  onChanged: (_) => ref.read(_showNewLabelProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(showNewLabelProvider.notifier).toggle(),
                 ),
                 CustomSliderTile(
                   title: 'Days threshold',
@@ -93,13 +84,13 @@ class AppearanceScreen extends ConsumerWidget {
                   min: 1,
                   max: 30,
                   divisions: 29,
-                  onChanged: (v) => ref.read(_daysThresholdProvider.notifier).update(v.round()),
+                  onChanged: (v) => ref.read(daysThresholdProvider.notifier).update(v.round()),
                 ),
                 CustomSwitchTile(
                   title: 'Auto-scroll to last played',
                   subtitle: 'Automatically scroll to the last played file when opening a folder',
                   value: autoScroll,
-                  onChanged: (_) => ref.read(_autoScrollProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(autoScrollToLastPlayedProvider.notifier).toggle(),
                 ),
                 CustomSliderTile(
                   title: 'Watched threshold',
@@ -108,19 +99,19 @@ class AppearanceScreen extends ConsumerWidget {
                   min: 50,
                   max: 100,
                   divisions: 50,
-                  onChanged: (v) => ref.read(preferencesServiceProvider).setWatchedThreshold(v.round()),
+                  onChanged: (v) => ref.read(watchedThresholdProvider.notifier).update(v.round()),
                 ),
                 CustomSwitchTile(
                   title: 'Tap thumbnail to select',
                   subtitle: 'Tap a thumbnail to enter selection mode',
                   value: tapThumbnail,
-                  onChanged: (_) => ref.read(_tapThumbnailProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(tapThumbnailToSelectProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Show network thumbnails',
                   subtitle: 'Download and cache thumbnails for network files',
                   value: showNetworkThumbs,
-                  onChanged: (_) => ref.read(_showNetworkThumbsProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(showNetworkThumbnailsProvider.notifier).toggle(),
                 ),
               ],
             ),

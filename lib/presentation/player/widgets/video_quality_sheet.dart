@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../video_quality_provider.dart';
+import '../../settings/settings_provider.dart';
 
 class VideoQualitySheet extends ConsumerWidget {
   const VideoQualitySheet({super.key});

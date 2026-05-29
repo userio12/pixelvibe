@@ -30,6 +30,10 @@ class PixelvibePlugin(private val channel: MethodChannel) {
             "listFiles" -> listFiles(call, result)
             "streamFile" -> streamFile(call, result)
             "disconnect" -> disconnect(call, result)
+            "stopProxy" -> {
+                proxy.stopProxy()
+                result.success(true)
+            }
             else -> result.notImplemented()
         }
     }
@@ -64,17 +68,16 @@ class PixelvibePlugin(private val channel: MethodChannel) {
         scope.launch {
             try {
                 val files = client.listFiles(path)
-                val jsonArray = JSONArray()
-                files.forEach { file ->
-                    jsonArray.put(JSONObject().apply {
-                        put("name", file.name)
-                        put("path", file.path)
-                        put("isDirectory", file.isDirectory)
-                        put("size", file.size)
-                        put("lastModified", file.lastModified)
-                    })
+                val fileList = files.map { file ->
+                    mapOf(
+                        "name" to file.name,
+                        "path" to file.path,
+                        "isDirectory" to file.isDirectory,
+                        "size" to file.size,
+                        "lastModified" to file.lastModified
+                    )
                 }
-                result.success(jsonArray.toString())
+                result.success(fileList)
             } catch (e: Exception) {
                 Log.e(TAG, "List failed", e)
                 result.error("LIST_FAILED", e.message ?: "List failed", null)

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../domain/models/media_file.dart';
 import '../../../utils/format_utils.dart';
@@ -35,7 +36,16 @@ class VideoGridTile extends StatelessWidget {
                   Container(
                     color: theme.colorScheme.surfaceContainerHighest,
                     child: Center(
-                      child: Icon(Icons.movie_outlined, size: 48, color: theme.colorScheme.onSurfaceVariant),
+                      child: Hero(
+                        tag: file.path,
+                        child: file.thumbnailPath != null
+                            ? Image.file(
+                                File(file.thumbnailPath!),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Icon(Icons.movie_outlined, size: 48, color: theme.colorScheme.onSurfaceVariant),
+                              )
+                            : Icon(Icons.movie_outlined, size: 48, color: theme.colorScheme.onSurfaceVariant),
+                      ),
                     ),
                   ),
                   if (file.resolutionLabel.isNotEmpty)

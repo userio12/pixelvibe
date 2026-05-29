@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/di/providers.dart';
 import '../../../services/logger.dart';
 import '../settings_provider.dart';
 import '../widgets/settings_card_group.dart';
 import '../widgets/standard_action_tile.dart';
 import '../widgets/custom_switch_tile.dart';
 import '../widgets/custom_slider_tile.dart';
-import '../widgets/pref_notifiers.dart';
-
-final _tapToToggleVisibilityProvider = boolPref('tap_to_toggle_visibility', true);
-final _displaySeekbarSecondsProvider = boolPref('display_seekbar_seconds', true);
-final _doubleTapAnimationProvider = boolPref('double_tap_animation', true);
-final _disableControlsTouchInputProvider = boolPref('disable_controls_touch_input', false);
 
 void _showControlPicker(BuildContext context,
     String title, String currentValue,
@@ -105,11 +98,14 @@ class PlayerLayoutScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final seekbarStyle = ref.watch(seekbarStyleProvider);
-    final tapToToggle = ref.watch(_tapToToggleVisibilityProvider);
-    final displaySeconds = ref.watch(_displaySeekbarSecondsProvider);
-    final dimSeconds = ref.watch(preferencesServiceProvider).getDimControlsSeconds();
-    final doubleTapAnim = ref.watch(_doubleTapAnimationProvider);
-    final disableTouch = ref.watch(_disableControlsTouchInputProvider);
+    final tapToToggle = ref.watch(tapToToggleVisibilityProvider);
+    final displaySeconds = ref.watch(displaySeekbarSecondsProvider);
+    final dimSeconds = ref.watch(dimControlsSecondsProvider);
+    final doubleTapAnim = ref.watch(doubleTapAnimationProvider);
+    final disableTouch = ref.watch(disableControlsTouchInputProvider);
+    final topLeft = ref.watch(topLeftControlsProvider);
+    final topRight = ref.watch(topRightControlsProvider);
+    final bottomCenter = ref.watch(bottomCenterControlsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121518),
@@ -163,18 +159,18 @@ class PlayerLayoutScreen extends ConsumerWidget {
               children: [
                 _ControlPickerTile(
                   title: 'Top left controls',
-                  currentValue: ref.watch(preferencesServiceProvider).getTopLeftControls(),
-                  onSave: (v) => ref.read(preferencesServiceProvider).setTopLeftControls(v),
+                  currentValue: topLeft,
+                  onSave: (v) async => ref.read(topLeftControlsProvider.notifier).update(v),
                 ),
                 _ControlPickerTile(
                   title: 'Top right controls',
-                  currentValue: ref.watch(preferencesServiceProvider).getTopRightControls(),
-                  onSave: (v) => ref.read(preferencesServiceProvider).setTopRightControls(v),
+                  currentValue: topRight,
+                  onSave: (v) async => ref.read(topRightControlsProvider.notifier).update(v),
                 ),
                 _ControlPickerTile(
                   title: 'Bottom center controls',
-                  currentValue: ref.watch(preferencesServiceProvider).getBottomCenterControls(),
-                  onSave: (v) => ref.read(preferencesServiceProvider).setBottomCenterControls(v),
+                  currentValue: bottomCenter,
+                  onSave: (v) async => ref.read(bottomCenterControlsProvider.notifier).update(v),
                 ),
                 StandardActionTile(
                   title: 'Reset to defaults',
@@ -195,10 +191,9 @@ class PlayerLayoutScreen extends ConsumerWidget {
                           ),
                           TextButton(
                             onPressed: () {
-                              final prefs = ref.read(preferencesServiceProvider);
-                              prefs.setTopLeftControls('backArrow');
-                              prefs.setTopRightControls('info,loadSubtitle,addToPlaylist,more,lock,pip,sleepTimer,volume');
-                              prefs.setBottomCenterControls('skipBack,playPause,skipForward');
+                              ref.read(topLeftControlsProvider.notifier).update('backArrow');
+                              ref.read(topRightControlsProvider.notifier).update('info,loadSubtitle,addToPlaylist,more,lock,pip,sleepTimer,volume');
+                              ref.read(bottomCenterControlsProvider.notifier).update('skipBack,playPause,skipForward');
                               Navigator.of(ctx).pop();
                               Logger.info('Controls reset to defaults');
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -221,13 +216,13 @@ class PlayerLayoutScreen extends ConsumerWidget {
                   title: 'Tap to toggle visibility',
                   subtitle: 'Tap on player to show or hide controls',
                   value: tapToToggle,
-                  onChanged: (_) => ref.read(_tapToToggleVisibilityProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(tapToToggleVisibilityProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Display seekbar seconds',
                   subtitle: 'Show remaining time next to the seekbar',
                   value: displaySeconds,
-                  onChanged: (_) => ref.read(_displaySeekbarSecondsProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(displaySeekbarSecondsProvider.notifier).toggle(),
                 ),
                 CustomSliderTile(
                   title: 'Dim controls after (s)',
@@ -236,19 +231,19 @@ class PlayerLayoutScreen extends ConsumerWidget {
                   min: 2,
                   max: 30,
                   divisions: 28,
-                  onChanged: (v) => ref.read(preferencesServiceProvider).setDimControlsSeconds(v.round()),
+                  onChanged: (v) => ref.read(dimControlsSecondsProvider.notifier).update(v.round()),
                 ),
                 CustomSwitchTile(
                   title: 'Double tap animation',
                   subtitle: 'Show ripple animation on double tap',
                   value: doubleTapAnim,
-                  onChanged: (_) => ref.read(_doubleTapAnimationProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(doubleTapAnimationProvider.notifier).toggle(),
                 ),
                 CustomSwitchTile(
                   title: 'Disable controls with touch input',
                   subtitle: 'Disable on-screen playback controls while using touch input',
                   value: disableTouch,
-                  onChanged: (_) => ref.read(_disableControlsTouchInputProvider.notifier).toggle(),
+                  onChanged: (_) => ref.read(disableControlsTouchInputProvider.notifier).toggle(),
                 ),
               ],
             ),

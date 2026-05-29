@@ -2,8 +2,11 @@ import 'package:permission_handler/permission_handler.dart';
 
 Future<bool> requestStoragePermission() async {
   if (await Permission.videos.isGranted) return true;
+  if (await Permission.storage.isGranted) return true;
   if (await Permission.manageExternalStorage.isGranted) return true;
+  
   if (await Permission.videos.request().isGranted) return true;
+  if (await Permission.storage.request().isGranted) return true;
   if (await Permission.manageExternalStorage.request().isGranted) return true;
   return false;
 }

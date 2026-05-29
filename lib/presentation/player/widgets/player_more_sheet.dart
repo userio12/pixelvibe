@@ -13,6 +13,7 @@ import 'filter_sheet.dart';
 import 'filter_presets.dart';
 import 'subtitle_settings_sheet.dart';
 import 'subtitle_search_sheet.dart';
+import 'external_tracks_sheet.dart';
 import '../ambient_glow.dart';
 
 class PlayerMoreSheet extends ConsumerWidget {
@@ -26,7 +27,7 @@ class PlayerMoreSheet extends ConsumerWidget {
     return DraggableScrollableSheet(
       initialChildSize: 0.5,
       minChildSize: 0.3,
-      maxChildSize: 0.7,
+      maxChildSize: 0.8,
       expand: false,
       builder: (_, scrollCtrl) => Column(
         children: [
@@ -39,6 +40,18 @@ class PlayerMoreSheet extends ConsumerWidget {
             child: ListView(
               controller: scrollCtrl,
               children: [
+                _OptionTile(
+                  icon: Icons.add_to_photos_outlined,
+                  title: 'External Tracks',
+                  subtitle: 'Load subtitles or audio',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    showModalBottomSheet(
+                      context: context,
+                      builder: (_) => const ExternalTracksSheet(),
+                    );
+                  },
+                ),
                 _OptionTile(
                   icon: Icons.filter_vintage,
                   title: 'Video Filters',

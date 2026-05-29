@@ -1,4 +1,4 @@
-storeFile=../android/app/upload-keystore.jks
-storePassword=
-keyAlias=upload
-keyPassword=
+storePassword=<PASSWORD>
+keyPassword=<PASSWORD>
+keyAlias=<ALIAS>
+storeFile=<PATH_TO_KEYSTORE>

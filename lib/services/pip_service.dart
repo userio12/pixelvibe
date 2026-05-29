@@ -11,7 +11,6 @@ class PiPService {
   Stream<void> get onTogglePlayback => _toggleController.stream;
   Stream<void> get onNoisy => _noisyController.stream;
   Stream<int> get onAudioFocusChange => _audioFocusController.stream;
-  bool _handlerSet = false;
   bool _disposed = false;
 
   Future<bool> isPipSupported() async {
@@ -53,8 +52,6 @@ class PiPService {
   }
 
   void onPipModeChanged(void Function(bool isInPip) callback) {
-    if (_handlerSet) return;
-    _handlerSet = true;
     _channel.setMethodCallHandler((call) async {
       if (_disposed) return null;
       if (call.method == 'onPictureInPictureModeChanged') {
