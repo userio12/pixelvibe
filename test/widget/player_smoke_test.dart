@@ -106,7 +106,7 @@ class FakePreferencesService extends Fake implements PreferencesService {
   int getSubtitleJustify() => 0;
   int getSubtitleSecondarySid() => -1;
   bool getSubtitleAssOverride() => false;
-  String getShaderPreset() => '';
+  @override String getShaderPreset() => '';
   @override bool getGpuNext() => false;
   @override bool getYuv420p() => false;
   @override bool getAnime4k() => false;
@@ -213,8 +213,4 @@ class _MockPlayerStream extends Mock implements PlayerStream {
   @override Stream<AudioDevice> get audioDevice => const Stream.empty();
   @override Stream<List<AudioDevice>> get audioDevices => const Stream.empty();
   @override Stream<bool> get completed => const Stream.empty();
-}
-t Stream.empty();
-}
-Stream.empty();
 }
