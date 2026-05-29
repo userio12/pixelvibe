@@ -214,5 +214,7 @@ class _MockPlayerStream extends Mock implements PlayerStream {
   @override Stream<List<AudioDevice>> get audioDevices => const Stream.empty();
   @override Stream<bool> get completed => const Stream.empty();
 }
+t Stream.empty();
+}
 Stream.empty();
 }
