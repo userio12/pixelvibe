@@ -1,10 +1,10 @@
 name: release-build
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, dev]
     tags: ['v*']
   pull_request:
-    branches: [main, master]
+    branches: [main, master, dev]
   workflow_dispatch:
 
 jobs:
